@@ -1,6 +1,7 @@
 Django>=5.0,<6.0
 wagtail>=6.0,<7.0
 psycopg2-binary>=2.9
+django-cors-headers>=4.0
 
 # Testing
 pytest>=8.0

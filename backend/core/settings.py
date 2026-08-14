@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'corsheaders',
     'wagtail.contrib.forms',
     'wagtail.contrib.redirects',
     'wagtail.embeds',
@@ -41,11 +42,14 @@ INSTALLED_APPS = [
     'wagtail.search',
     'wagtail.admin',
     'wagtail',
+    'wagtail.api.v2',
     'modelcluster',
     'taggit',
+    'portfolio',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -107,3 +111,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SITE_ID = 1
 
 WAGTAIL_SITE_NAME = 'MG Drywall USA'
+
+# --- CORS ---
+CORS_ALLOWED_ORIGINS = [
+    os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
+]
