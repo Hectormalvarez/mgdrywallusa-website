@@ -5,12 +5,23 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-scaffold-key-not-for-production'
+# --- Security: load secrets from environment ---
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('1', 'true', 'yes')
 
-DEBUG = True
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
+if not DEBUG and not SECRET_KEY:
+    raise ValueError('DJANGO_SECRET_KEY must be set in production')
+if not SECRET_KEY:
+    # Local-dev fallback only — never reaches production
+    SECRET_KEY = 'django-insecure-scaffold-key-not-for-production'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if h.strip()
+]
 
+# --- Django core apps ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -65,14 +76,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+# --- Database: credentials from environment, no hardcoded fallback ---
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'mgdrywall'),
-        'USER': os.environ.get('DB_USER', 'mgdrywall'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'mgdrywall'),
-        'HOST': os.environ.get('DB_HOST', 'db'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ['DB_USER'],
+        'PASSWORD': os.environ['DB_PASSWORD'],
+        'HOST': os.environ['DB_HOST'],
+        'PORT': os.environ['DB_PORT'],
     }
 }
 
