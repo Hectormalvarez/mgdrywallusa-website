@@ -25,8 +25,8 @@ PASSWORD_HASHERS = [
 # Disable Wagtail image feature detection (requires libimagequant)
 WAGTAILIMAGES_FEATURE_DETECTION = False
 
-# Use PostgreSQL in CI (when DB_HOST is set), SQLite otherwise
-if os.environ.get('DB_HOST'):
+# Use PostgreSQL in CI (GITHUB_ACTIONS is set by the runner), SQLite otherwise
+if os.environ.get('DB_HOST') and os.environ.get('GITHUB_ACTIONS') == 'true':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
