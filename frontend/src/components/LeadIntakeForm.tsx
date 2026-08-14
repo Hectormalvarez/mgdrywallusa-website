@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { MAX_FILES, MAX_FILE_SIZE_BYTES, type ProjectTier } from '@/lib/leads';
 
 interface LeadIntakeFormProps {
@@ -68,7 +68,7 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
     setFiles(selected);
   }
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     // Honeypot: silently abort
