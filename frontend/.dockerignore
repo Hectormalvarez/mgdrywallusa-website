@@ -5,3 +5,9 @@ node_modules
 README.md
 Dockerfile
 .dockerignore
+__tests__
+jest.config.ts
+jest.setup.ts
+jest-env-jsdom-extended.ts
+babel.config.js
+tsconfig.tsbuildinfo
