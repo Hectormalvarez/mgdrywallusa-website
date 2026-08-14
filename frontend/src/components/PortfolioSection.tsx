@@ -37,6 +37,7 @@ export default function PortfolioSection({ apiUrl }: PortfolioSectionProps) {
       {items.map((item) => (
         <article key={item.id}>
           {item.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={item.image_url} alt={item.title} />
           )}
           <h3>{item.title}</h3>
