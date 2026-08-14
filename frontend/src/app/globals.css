@@ -10,6 +10,10 @@
   --color-accent-strong: #8F1334;
   --color-accent-tint: #FBE9ED;
 
+  /* ── Feedback ── */
+  --color-success: #166534;
+  --color-success-tint: #F0FDF4;
+
   /* ── Neutrals (ink slightly navy-shifted for cohesion) ── */
   --color-surface: #FFFFFF;
   --color-ink: #0F1A2E;
