@@ -1,1 +1,58 @@
-/* globals.css – minimal reset; Tailwind to be added later */
+@import "tailwindcss";
+
+@theme {
+  /* ── Patriotic palette: Old Glory Blue & Red ── */
+  --color-brand: #0A3161;
+  --color-brand-strong: #072448;
+  --color-brand-tint: #B9CBF2;
+
+  --color-accent: #B31942;
+  --color-accent-strong: #8F1334;
+  --color-accent-tint: #FBE9ED;
+
+  /* ── Neutrals (ink slightly navy-shifted for cohesion) ── */
+  --color-surface: #FFFFFF;
+  --color-ink: #0F1A2E;
+  --color-muted: #475569;
+  --color-border: #D7DEE8;
+
+  /* ── Type ── */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+    color: var(--color-ink);
+    background-color: var(--color-surface);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+}
