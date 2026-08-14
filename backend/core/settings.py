@@ -112,6 +112,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SITE_ID = 1
 
 WAGTAIL_SITE_NAME = 'MG Drywall USA'
+WAGTAILADMIN_BASE_URL = os.environ.get('WAGTAILADMIN_BASE_URL', 'http://localhost:8000')
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [

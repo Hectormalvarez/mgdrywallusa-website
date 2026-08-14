@@ -60,8 +60,11 @@ def test_image(db):
 
 
 @pytest.fixture
-def portfolio_item(db, home_page, test_image):
-    """Create a sample PortfolioItem under home_page."""
+def portfolio_item(db, home_page, test_image, site):
+    """Create a sample PortfolioItem under home_page.
+
+    Requires the ``site`` fixture so the Wagtail API can resolve the page tree.
+    """
     from portfolio.models import PortfolioItem
 
     item = PortfolioItem(
