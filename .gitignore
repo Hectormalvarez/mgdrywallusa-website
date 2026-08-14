@@ -10,6 +10,10 @@ __pycache__/
 .env
 venv/
 *.sqlite3
+.pytest_cache/
 
 # Docker
 *.log
+
+# Media uploads (local dev)
+media/

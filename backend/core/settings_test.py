@@ -6,7 +6,13 @@
 
 import os
 
-from core.settings import *  # noqa: F401, F403
+# Guarantee DB_* env vars and DJANGO_SECRET_KEY exist before settings.py reads them
+# with os.environ[...] so that SQLite local-dev runs don't KeyError on the
+# unconditional DB config block or the production secret-key guard.
+for _key in ('DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT', 'DJANGO_SECRET_KEY'):
+    os.environ.setdefault(_key, 'test-secret-key-not-for-production')
+
+from core.settings import *  # noqa: F401, E402
 
 # Test-safe secret key
 SECRET_KEY = 'test-secret-key-not-for-production'
@@ -25,7 +31,7 @@ PASSWORD_HASHERS = [
 # Disable Wagtail image feature detection (requires libimagequant)
 WAGTAILIMAGES_FEATURE_DETECTION = False
 
-# Use PostgreSQL in CI (GITHUB_ACTIONS is set by the runner), SQLite otherwise
+# Use PostgreSQL in CI (DB_HOST + GITHUB_ACTIONS are set by the runner), SQLite otherwise
 if os.environ.get('DB_HOST') and os.environ.get('GITHUB_ACTIONS') == 'true':
     DATABASES = {
         'default': {
