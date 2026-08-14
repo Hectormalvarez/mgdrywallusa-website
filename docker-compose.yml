@@ -29,6 +29,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./backend:/app
 
   frontend:
     build: ./frontend
@@ -36,3 +38,6 @@ services:
       - "${FRONTEND_HOST_PORT:-3000}:3000"
     depends_on:
       - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
