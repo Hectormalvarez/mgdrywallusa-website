@@ -31,4 +31,21 @@ export const handlers = [
   http.get('*/api/v1/pages/', () => {
     return HttpResponse.json(defaultPortfolioResponse);
   }),
+  http.post('*/api/v1/leads/', async ({ request }) => {
+    let payload: Record<string, unknown> = { id: 1, status: 'created' };
+    try {
+      const formData = await request.formData();
+      payload = {
+        ...payload,
+        name: formData.get('name'),
+        phone: formData.get('phone'),
+        email: formData.get('email'),
+        project_tier: formData.get('project_tier'),
+        details: formData.get('details'),
+      };
+    } catch {
+      // undici in jsdom may fail to parse multipart; fall through with minimal payload
+    }
+    return HttpResponse.json(payload, { status: 201 });
+  }),
 ];
