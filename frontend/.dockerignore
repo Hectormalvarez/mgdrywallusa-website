@@ -9,5 +9,5 @@ __tests__
 jest.config.ts
 jest.setup.ts
 jest-env-jsdom-extended.ts
-babel.config.js
+jest.babel.config.js
 tsconfig.tsbuildinfo
