@@ -1,24 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-export interface WagtailPageMeta {
-  type: string;
-  detail_url: string;
-}
-
-export interface PortfolioItem {
-  id: number;
-  meta: WagtailPageMeta;
-  title: string;
-  description: string;
-  image_url: string;
-}
-
-export interface PortfolioApiResponse {
-  meta: { total_count: number };
-  items: PortfolioItem[];
-}
+import { fetchPortfolioItems, type PortfolioItem } from '@/lib/api';
 
 interface PortfolioSectionProps {
   apiUrl: string;
@@ -30,14 +13,8 @@ export default function PortfolioSection({ apiUrl }: PortfolioSectionProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(apiUrl)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Failed to load portfolio: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data: PortfolioApiResponse) => {
+    fetchPortfolioItems(apiUrl)
+      .then((data) => {
         setItems(data.items);
         setLoading(false);
       })
