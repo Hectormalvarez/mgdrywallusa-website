@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/admin/", "/draft/", "/_next/"],
       },
     ],
-    sitemap: "https://mgdrywallusa.com/sitemap.xml",
+    sitemap: "https://mgdrywall.taylormadetech.net/sitemap.xml",
   };
 }
