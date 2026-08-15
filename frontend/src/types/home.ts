@@ -12,20 +12,26 @@ export interface ImageRendition {
  * Fields exposed by the HomePage model via Wagtail API (api_fields).
  */
 export interface HomePageData {
-  hero_kicker: string;
-  hero_heading: string;
-  hero_subheading: string;
-  hero_image_url: ImageRendition | null;
-  cta_primary_label: string;
-  cta_primary_url: string;
-  cta_secondary_label: string;
-  cta_secondary_url: string;
+  id: number;
+  title: string;
+  hero_kicker?: string;
+  hero_heading?: string;
+  hero_subheading?: string;
+  hero_image?: ImageRendition | null;
+  cta_primary_label?: string;
+  cta_primary_url?: string;
+  cta_secondary_label?: string;
+  cta_secondary_url?: string;
+  portfolio_heading?: string;
+  portfolio_empty_text?: string;
+  lead_section_heading?: string;
+  lead_section_description?: string;
 }
 
 /**
  * Wagtail pages API response wrapper.
  */
-export interface WagtailPagesResponse {
+export interface WagtailPagesResponse<T = HomePageData> {
   meta: { total_count: number };
-  items: Array<{ id: number; meta: { type: string }; title: string } & HomePageData>;
+  items: T[];
 }

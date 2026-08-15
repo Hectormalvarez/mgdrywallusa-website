@@ -3,6 +3,7 @@
  */
 
 import type { HomePageData, WagtailPagesResponse } from "@/types/home";
+import type { SiteSettingsData } from "@/types/settings";
 
 export interface WagtailPageMeta {
   type: string;
@@ -74,13 +75,57 @@ export async function fetchPortfolioItems(
 }
 
 // ---------------------------------------------------------------------------
-// Home Page
+// Site Settings
 // ---------------------------------------------------------------------------
 
 // Server-side only — avoids leaking the internal Docker-network URL to the
 // browser.  Falls back to localhost for local `npm run dev` usage.
 const WAGTAIL_API_BASE =
   process.env.WAGTAIL_API_BASE_URL ?? "http://localhost:8000/api/v1";
+
+/** Fallback settings used when the backend is unreachable. */
+const SITE_SETTINGS_FALLBACK: SiteSettingsData = {
+  site_name: "MG Drywall USA",
+  tagline:
+    "Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
+  phone_number: "+1-555-DRYWALL",
+  contact_email: "info@mgdrywallusa.com",
+  seo: {
+    address_locality: "Austin",
+    address_region: "TX",
+    postal_code: "78701",
+    country: "US",
+    price_range: "$$",
+  },
+  nav: [
+    { label: "Services", href: "#services" },
+    { label: "Our Work", href: "#portfolio" },
+    { label: "Contact", href: "#lead-form" },
+  ],
+};
+
+/**
+ * Fetch global site settings from the Wagtail backend.
+ *
+ * Returns a hard-coded fallback when the backend is unreachable so that
+ * the layout (Header / Footer / metadata) can still render during local
+ * development or if the API is temporarily down.
+ */
+export async function fetchSiteSettings(): Promise<SiteSettingsData> {
+  try {
+    const res = await fetch(`${WAGTAIL_API_BASE}/settings/`, {
+      next: { revalidate: 3600, tags: ["wagtail-settings"] },
+    });
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    return (await res.json()) as SiteSettingsData;
+  } catch (error) {
+    console.error("[Settings Fetch Error]", error);
+    return SITE_SETTINGS_FALLBACK;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Home Page
 
 /**
  * Fetch the HomePage data from the Wagtail backend.
@@ -104,7 +149,7 @@ export async function fetchHomePage(
 
     // --- Published path ---
     const res = await fetch(
-      `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=hero_kicker,hero_heading,hero_subheading,hero_image_url,cta_primary_label,cta_primary_url,cta_secondary_label,cta_secondary_url`,
+      `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=hero_kicker,hero_heading,hero_subheading,hero_image,cta_primary_label,cta_primary_url,cta_secondary_label,cta_secondary_url,portfolio_heading,portfolio_empty_text,lead_section_heading,lead_section_description`,
     );
     if (!res.ok) return null;
     const body = (await res.json()) as WagtailPagesResponse;
