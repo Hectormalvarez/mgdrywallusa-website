@@ -15,6 +15,8 @@ export default function Header() {
 
   useEffect(() => {
     if (open) {
+      panelRef.current?.querySelector<HTMLElement>("a")?.focus();
+    } else {
       toggleRef.current?.focus();
     }
   }, [open]);
@@ -137,46 +139,88 @@ export default function Header() {
             </svg>
           </button>
         </div>
+      </header>
 
-        {/* Mobile drawer */}
+      {/* Mobile overlay */}
+      {open && (
         <div
-          id="mobile-menu"
-          ref={panelRef}
-          role="dialog"
-          aria-modal={open}
-          aria-label="Main navigation"
-          className={cn(
-            "fixed inset-x-0 top-16 bottom-0 bg-surface z-50 md:hidden transition-transform duration-200 ease-in-out",
-            open ? "translate-x-0" : "translate-x-full"
-          )}
-          hidden={!open}
-        >
-          <nav aria-label="Main" className="px-4 pt-6">
+          aria-hidden="true"
+          onClick={close}
+          className="fixed inset-0 top-0 z-40 bg-ink/50 md:hidden"
+        />
+      )}
+
+      {/* Mobile drawer — slide-in panel from right */}
+      <div
+        id="mobile-menu"
+        ref={panelRef}
+        role="dialog"
+        aria-modal={open}
+        aria-label="Main navigation"
+        className={cn(
+          "fixed inset-y-0 right-0 z-50 w-full max-w-sm md:hidden transition-transform duration-300 ease-out",
+          open ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        <div className="flex h-full flex-col bg-surface shadow-2xl">
+          {/* Drawer header */}
+          <div className="flex items-center justify-between h-16 px-4 border-b border-border shrink-0">
+            <span className="font-extrabold text-lg text-brand tracking-tight">
+              {SITE.name}
+            </span>
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Close menu"
+              className="inline-flex items-center justify-center w-11 h-11 rounded-md text-brand transition-colors hover:bg-brand/10"
+            >
+              <svg aria-hidden="true" className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Nav links */}
+          <nav aria-label="Main" className="flex-1 overflow-y-auto px-4 py-6">
             <ul className="flex flex-col gap-1">
-              {SITE.nav.map((item) => (
+              {SITE.nav.map((item, i) => (
                 <li key={item.href}>
                   <a
                     href={item.href}
                     onClick={close}
-                    className="block h-11 leading-[2.75rem] px-4 text-base font-semibold text-brand rounded-md transition-colors hover:bg-brand/10"
+                    className="group flex items-center gap-3 rounded-lg px-4 py-3.5 text-base font-semibold text-ink transition-colors hover:bg-brand/5"
                   >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand/10 text-sm font-bold text-brand group-hover:bg-brand group-hover:text-white transition-colors">
+                      {i + 1}
+                    </span>
                     {item.label}
                   </a>
                 </li>
               ))}
             </ul>
           </nav>
-        </div>
-      </header>
 
-      {/* Overlay */}
-      {open && (
-        <div
-          aria-hidden="true"
-          onClick={close}
-          className="fixed inset-0 top-16 z-40 bg-ink/40 md:hidden"
-        />
-      )}
+          {/* Drawer footer */}
+          <div className="shrink-0 border-t border-border px-4 py-6 space-y-3">
+            <a
+              href={`tel:${SITE.phone}`}
+              className="flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors"
+            >
+              <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+              </svg>
+              {SITE.phone}
+            </a>
+            <a
+              href="#lead-form"
+              onClick={close}
+              className="flex items-center justify-center w-full h-12 rounded-lg bg-accent text-white font-semibold text-base transition-colors hover:bg-accent-strong"
+            >
+              Get a Free Quote
+            </a>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
