@@ -93,9 +93,17 @@ export default function Header({ settings }: HeaderProps) {
         <div className="mx-auto max-w-7xl flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
           <a
             href="#"
-            className="font-extrabold text-lg text-brand tracking-tight"
+            className="flex items-center gap-2 font-extrabold text-lg text-brand tracking-tight"
           >
-            {settings.site_name}
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt={settings.site_name}
+                className="h-10 w-auto"
+              />
+            ) : (
+              settings.site_name
+            )}
           </a>
 
           {/* Desktop nav */}
@@ -170,7 +178,15 @@ export default function Header({ settings }: HeaderProps) {
           {/* Drawer header */}
           <div className="flex items-center justify-between h-16 px-4 border-b border-border shrink-0">
             <span className="font-extrabold text-lg text-brand tracking-tight">
-              {settings.site_name}
+              {settings.logo_url ? (
+                <img
+                  src={settings.logo_url}
+                  alt={settings.site_name}
+                  className="h-8 w-auto"
+                />
+              ) : (
+                settings.site_name
+              )}
             </span>
             <button
               type="button"

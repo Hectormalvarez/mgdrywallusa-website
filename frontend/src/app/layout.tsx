@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
@@ -48,6 +48,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+export async function generateViewport(): Promise<Viewport> {
+  const settings = await fetchSiteSettings();
+  return { themeColor: settings.primary_color };
+}
+
 export default async function RootLayout({
   children,
 }: {
@@ -76,6 +81,20 @@ export default async function RootLayout({
     url: siteUrl,
   };
 
+  // Owner-configured CSS variables injected via <style> so the frontend
+  // reflects the Wagtail-picked palette without touching Tailwind config.
+  // Fallbacks are hardcoded in globals.css; these override at runtime.
+  const brandStyles = `
+    :root {
+      --color-brand: ${settings.primary_color};
+      --color-brand-strong: ${settings.primary_color}dd;
+      --color-brand-tint: ${settings.primary_color}33;
+      --color-accent: ${settings.accent_color};
+      --color-accent-strong: ${settings.accent_color}cc;
+      --color-accent-tint: ${settings.accent_color}1a;
+    }
+  `;
+
   return (
     <html lang="en" className={inter.variable}>
       <head>
@@ -83,8 +102,25 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {settings.favicon_url && (
+          <link rel="icon" href={settings.favicon_url} />
+        )}
+        <style dangerouslySetInnerHTML={{ __html: brandStyles }} />
       </head>
       <body>
+        {settings.banner_enabled && settings.banner_text && (
+          <div
+            className="bg-accent text-white text-center text-sm font-semibold py-2 px-4"
+            role="banner"
+          >
+            <a
+              href={settings.banner_link || "#lead-form"}
+              className="hover:underline underline-offset-2"
+            >
+              {settings.banner_text}
+            </a>
+          </div>
+        )}
         <Header settings={settings} />
         {children}
         <Footer settings={settings} />
