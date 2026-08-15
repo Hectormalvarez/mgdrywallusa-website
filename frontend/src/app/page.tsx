@@ -1,5 +1,5 @@
 import HeroSection from "@/components/sections/HeroSection";
-import PortfolioSection from "@/components/PortfolioSection";
+import PortfolioSection from "@/components/sections/PortfolioSection";
 import LeadIntakeForm from "@/components/LeadIntakeForm";
 
 const PORTFOLIO_API_URL =

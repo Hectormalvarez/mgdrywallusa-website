@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
-import PortfolioSection from '@/components/PortfolioSection';
+import PortfolioSection from '@/components/sections/PortfolioSection';
 
 describe('PortfolioSection', () => {
   it('renders portfolio items fetched from the API', async () => {
@@ -12,7 +12,7 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Commercial office partition walls')).toBeInTheDocument();
+    expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
     expect(screen.getByText('residential')).toBeInTheDocument();
     expect(screen.getByText('commercial')).toBeInTheDocument();
     expect(screen.getByText('smooth')).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe('PortfolioSection', () => {
     });
   });
 
-  it('displays a loading state initially', () => {
+  it('displays a skeleton loading state initially', () => {
     server.use(
       http.get('*/api/v1/pages/', () => {
         return new Promise(() => {}); // never resolves
@@ -49,7 +49,9 @@ describe('PortfolioSection', () => {
 
     render(<PortfolioSection apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*" />);
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /our work/i })).toBeInTheDocument();
+    const skeletonCards = document.querySelectorAll('article[aria-hidden="true"]');
+    expect(skeletonCards.length).toBeGreaterThan(0);
   });
 });
 
