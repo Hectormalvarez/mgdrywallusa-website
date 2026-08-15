@@ -32,6 +32,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
+    ports:
+      - "${BACKEND_HOST_PORT:-9418}:8000"
     environment:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
       DEBUG: 'False'
@@ -60,7 +62,7 @@ services:
       dockerfile: Dockerfile.prod
     restart: unless-stopped
     ports:
-      - "${FRONTEND_HOST_PORT:-3000}:3000"
+      - "${FRONTEND_HOST_PORT:-9417}:3000"
     environment:
       NEXT_PUBLIC_LEAD_API_URL: ${NEXT_PUBLIC_LEAD_API_URL:-http://localhost:8000/api/v1/leads/}
       NEXT_PUBLIC_WAGTAIL_API_URL: ${NEXT_PUBLIC_WAGTAIL_API_URL:-http://localhost:8000/api/v1/pages/?type=portfolio.PortfolioItem&fields=*}
