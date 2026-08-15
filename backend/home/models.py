@@ -1,6 +1,7 @@
 from django.db import models
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
+from rest_framework.fields import Field
 from wagtail.models import Page, Orderable
 from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel, InlinePanel
@@ -8,6 +9,20 @@ from wagtail.api import APIField
 from wagtail.images.api.fields import ImageRenditionField
 from wagtail_headless_preview.models import HeadlessPreviewMixin
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
+
+
+class ServicesField(Field):
+    """Serializes HomePageServiceItem orderables into a clean JSON list."""
+
+    def to_representation(self, relation):
+        return [
+            {
+                "title": item.title,
+                "description": item.description,
+                "icon_name": item.icon_name,
+            }
+            for item in relation.all()
+        ]
 
 
 @register_setting(icon="globe")
@@ -137,6 +152,18 @@ class HomePage(HeadlessPreviewMixin, Page):
         help_text="Fallback text when no portfolio items are published",
     )
 
+    # Services section metadata
+    services_heading = models.CharField(
+        max_length=255,
+        default="Our Services",
+        help_text="Header text for the services grid",
+    )
+    services_subheading = models.TextField(
+        blank=True,
+        default="Specialized drywall installation, repair, and finishing solutions tailored to residential and commercial needs.",
+        help_text="Subtitle instruction text below the services header",
+    )
+
     # Lead intake section metadata
     lead_section_heading = models.CharField(
         max_length=255,
@@ -162,6 +189,14 @@ class HomePage(HeadlessPreviewMixin, Page):
             ],
             heading="Hero Section",
         ),
+        MultiFieldPanel(
+            [
+                FieldPanel("services_heading"),
+                FieldPanel("services_subheading"),
+            ],
+            heading="Services Section Header",
+        ),
+        InlinePanel("services", label="Service Items"),
         MultiFieldPanel(
             [
                 FieldPanel("portfolio_heading"),
@@ -190,8 +225,36 @@ class HomePage(HeadlessPreviewMixin, Page):
         APIField("cta_primary_url"),
         APIField("cta_secondary_label"),
         APIField("cta_secondary_url"),
+        APIField("services_heading"),
+        APIField("services_subheading"),
+        APIField("services", serializer=ServicesField()),
         APIField("portfolio_heading"),
         APIField("portfolio_empty_text"),
         APIField("lead_section_heading"),
         APIField("lead_section_description"),
     ]
+
+
+class HomePageServiceItem(Orderable):
+    page = ParentalKey(
+        HomePage,
+        on_delete=models.CASCADE,
+        related_name="services",
+    )
+    title = models.CharField(max_length=150)
+    description = models.TextField()
+    icon_name = models.CharField(
+        max_length=50,
+        default="shield",
+        help_text="Icon identifier (e.g. wall, patch, paint, building)",
+        blank=True,
+    )
+
+    panels = [
+        FieldPanel("title"),
+        FieldPanel("description"),
+        FieldPanel("icon_name"),
+    ]
+
+    def __str__(self):
+        return self.title
