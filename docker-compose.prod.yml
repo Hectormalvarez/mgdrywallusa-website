@@ -1,0 +1,78 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-mgdrywall}
+      POSTGRES_USER: ${DB_USER:-mgdrywall}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER:-mgdrywall}", "-d", "${DB_NAME:-mgdrywall}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
+      DEBUG: 'False'
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?ALLOWED_HOSTS is required}
+      DB_NAME: ${DB_NAME:-mgdrywall}
+      DB_USER: ${DB_USER:-mgdrywall}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_HOST: db
+      DB_PORT: 5432
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      WAGTAILADMIN_BASE_URL: ${WAGTAILADMIN_BASE_URL:-http://localhost:8000}
+    depends_on:
+      db:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:3000"
+    environment:
+      NEXT_PUBLIC_LEAD_API_URL: ${NEXT_PUBLIC_LEAD_API_URL:-http://localhost:8000/api/v1/leads/}
+      NEXT_PUBLIC_WAGTAIL_API_URL: ${NEXT_PUBLIC_WAGTAIL_API_URL:-http://localhost:8000/api/v1/pages/?type=portfolio.PortfolioItem&fields=*}
+    depends_on:
+      - backend
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:
