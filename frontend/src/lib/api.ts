@@ -7,12 +7,23 @@ export interface WagtailPageMeta {
   detail_url: string;
 }
 
+export interface GalleryImage {
+  url: string;
+  width: number;
+  height: number;
+  alt: string;
+  caption: string;
+}
+
 export interface PortfolioItem {
   id: number;
   meta: WagtailPageMeta;
   title: string;
   description: string;
-  image_url: string;
+  scope: string;
+  finish_tags: string[];
+  featured_image_url: string | null;
+  gallery_images: GalleryImage[];
 }
 
 export interface PortfolioApiResponse {
