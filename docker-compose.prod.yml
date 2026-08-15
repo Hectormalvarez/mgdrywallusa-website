@@ -3,14 +3,11 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME:-mgdrywall}
-      POSTGRES_USER: ${DB_USER:-mgdrywall}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    env_file: .env.prod
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${DB_USER:-mgdrywall}", "-d", "${DB_NAME:-mgdrywall}"]
+      test: ["CMD", "pg_isready", "-U", "mgdrywall", "-d", "mgdrywall"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -33,20 +30,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
+    env_file: .env.prod
     ports:
-      - "${BACKEND_HOST_PORT:-9418}:8000"
-    environment:
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
-      DEBUG: 'False'
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?ALLOWED_HOSTS is required}
-      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://mgdrywallusa.taylormadetech.net,https://mgdrywallusa-api.taylormadetech.net}
-      DB_NAME: ${DB_NAME:-mgdrywall}
-      DB_USER: ${DB_USER:-mgdrywall}
-      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-      DB_HOST: db
-      DB_PORT: 5432
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
-      WAGTAILADMIN_BASE_URL: ${WAGTAILADMIN_BASE_URL:-http://localhost:8000}
+      - "9418:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -65,12 +51,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
+    env_file: .env.prod
     ports:
-      - "${FRONTEND_HOST_PORT:-9417}:3000"
-    environment:
-      NEXT_PUBLIC_LEAD_API_URL: ${NEXT_PUBLIC_LEAD_API_URL:-http://localhost:8000/api/v1/leads/}
-      NEXT_PUBLIC_WAGTAIL_API_URL: ${NEXT_PUBLIC_WAGTAIL_API_URL:-http://localhost:8000/api/v1/pages/?type=portfolio.PortfolioItem&fields=*}
-      WAGTAIL_API_BASE_URL: ${WAGTAIL_API_BASE_URL:-http://backend:8000/api/v1}
+      - "9417:3000"
     depends_on:
       - backend
     cap_drop:

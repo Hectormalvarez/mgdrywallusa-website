@@ -219,7 +219,7 @@ class HomePage(HeadlessPreviewMixin, Page):
         APIField("hero_subheading"),
         APIField(
             "hero_image",
-            serializer=ImageRenditionField("fill-1920x1080", source="hero_image"),
+            serializer=ImageRenditionField("fill-1920x1080"),
         ),
         APIField("cta_primary_label"),
         APIField("cta_primary_url"),
