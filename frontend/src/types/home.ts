@@ -9,6 +9,15 @@ export interface ImageRendition {
 }
 
 /**
+ * Shape of a single service item from the CMS.
+ */
+export interface ServiceItem {
+  title: string;
+  description: string;
+  icon_name: string;
+}
+
+/**
  * Fields exposed by the HomePage model via Wagtail API (api_fields).
  */
 export interface HomePageData {
@@ -22,6 +31,11 @@ export interface HomePageData {
   cta_primary_url?: string;
   cta_secondary_label?: string;
   cta_secondary_url?: string;
+  // Services
+  services_heading?: string;
+  services_subheading?: string;
+  services?: ServiceItem[];
+  // Portfolio & Lead
   portfolio_heading?: string;
   portfolio_empty_text?: string;
   lead_section_heading?: string;

@@ -1,5 +1,6 @@
 import { draftMode, cookies } from "next/headers";
 import HeroSection from "@/components/sections/HeroSection";
+import ServicesSection from "@/components/sections/ServicesSection";
 
 // Prevent static prerender — this page fetches live CMS data on every request.
 export const dynamic = "force-dynamic";
@@ -36,6 +37,11 @@ export default async function Home() {
         cta_primary_url={homeData?.cta_primary_url}
         cta_secondary_label={homeData?.cta_secondary_label}
         cta_secondary_url={homeData?.cta_secondary_url}
+      />
+      <ServicesSection
+        heading={homeData?.services_heading}
+        subheading={homeData?.services_subheading}
+        services={homeData?.services}
       />
       <PortfolioSection
         apiUrl={PORTFOLIO_API_URL}

@@ -153,7 +153,7 @@ export async function fetchHomePage(
 
     // --- Published path ---
     const res = await fetch(
-      `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=hero_kicker,hero_heading,hero_subheading,hero_image,cta_primary_label,cta_primary_url,cta_secondary_label,cta_secondary_url,portfolio_heading,portfolio_empty_text,lead_section_heading,lead_section_description`,
+      `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=hero_kicker,hero_heading,hero_subheading,hero_image,cta_primary_label,cta_primary_url,cta_secondary_label,cta_secondary_url,services_heading,services_subheading,services,portfolio_heading,portfolio_empty_text,lead_section_heading,lead_section_description`,
     );
     if (!res.ok) return null;
     const body = (await res.json()) as WagtailPagesResponse;
