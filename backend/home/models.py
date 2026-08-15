@@ -25,8 +25,9 @@ class ServicesField(Field):
         ]
 
 
-@register_setting(icon="globe")
+@register_setting(icon="cog-full")
 class SiteSettings(BaseSiteSetting, ClusterableModel):
+    # ── General & Identity ─────────────────────────────────────────────
     site_name = models.CharField(
         max_length=255,
         default="MG Drywall USA",
@@ -46,8 +47,91 @@ class SiteSettings(BaseSiteSetting, ClusterableModel):
         default="info@mgdrywallusa.com",
         help_text="Primary public contact email address",
     )
+    license_number = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="State contractor license number – rendered in trust badges",
+    )
 
-    # Local SEO & Schema.org defaults
+    # ── Brand Theme & Logos ────────────────────────────────────────────
+    logo = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Company logo (PNG or SVG recommended)",
+    )
+    favicon = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Browser tab icon (square, 32×32 or 64×64)",
+    )
+    primary_color = models.CharField(
+        max_length=7,
+        default="#0A3161",
+        help_text="Hex code for primary brand color (e.g. #0A3161)",
+    )
+    accent_color = models.CharField(
+        max_length=7,
+        default="#B31942",
+        help_text="Hex code for action buttons and accents (e.g. #B31942)",
+    )
+
+    # ── Lead Alerts & Auto-Responder ───────────────────────────────────
+    notification_emails = models.CharField(
+        max_length=500,
+        default="info@mgdrywallusa.com",
+        help_text="Comma-separated emails to receive incoming quote requests",
+    )
+    auto_responder_subject = models.CharField(
+        max_length=255,
+        default="Thank you for contacting MG Drywall USA",
+        help_text="Subject line for homeowner confirmation email",
+    )
+    auto_responder_message = models.TextField(
+        default=(
+            "Hi {name},\n\n"
+            "Thank you for requesting a quote for your {project_tier} project. "
+            "We have received your request and will follow up within one business day.\n\n"
+            "— MG Drywall USA"
+        ),
+        help_text="Email body sent to homeowners. Placeholders: {name}, {project_tier}, {phone}",
+    )
+
+    # ── Promotional / Announcement Banner ──────────────────────────────
+    banner_enabled = models.BooleanField(
+        default=False,
+        help_text="Show announcement bar at the very top of the site",
+    )
+    banner_text = models.CharField(
+        max_length=255,
+        blank=True,
+        default="Free on-site estimates for all residential projects!",
+        help_text="Text shown inside the announcement bar",
+    )
+    banner_link = models.CharField(
+        max_length=255,
+        blank=True,
+        default="#lead-form",
+        help_text="URL or anchor the banner links to",
+    )
+
+    # ── Social & Review Links ──────────────────────────────────────────
+    google_review_url = models.URLField(
+        blank=True,
+        default="",
+        help_text="Direct link to leave a Google Review",
+    )
+    yelp_url = models.URLField(blank=True, default="")
+    facebook_url = models.URLField(blank=True, default="")
+    instagram_url = models.URLField(blank=True, default="")
+
+    # ── Local SEO & Schema.org defaults ────────────────────────────────
     address_locality = models.CharField(max_length=100, default="Austin", blank=True)
     address_region = models.CharField(max_length=100, default="TX", blank=True)
     postal_code = models.CharField(max_length=20, default="78701", blank=True)
@@ -61,8 +145,43 @@ class SiteSettings(BaseSiteSetting, ClusterableModel):
                 FieldPanel("tagline"),
                 FieldPanel("phone_number"),
                 FieldPanel("contact_email"),
+                FieldPanel("license_number"),
             ],
             heading="General Information",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("logo"),
+                FieldPanel("favicon"),
+                FieldPanel("primary_color"),
+                FieldPanel("accent_color"),
+            ],
+            heading="Brand Theme & Logos",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("notification_emails"),
+                FieldPanel("auto_responder_subject"),
+                FieldPanel("auto_responder_message"),
+            ],
+            heading="Lead Alerts & Auto-Responder",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("banner_enabled"),
+                FieldPanel("banner_text"),
+                FieldPanel("banner_link"),
+            ],
+            heading="Announcement Banner",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("google_review_url"),
+                FieldPanel("yelp_url"),
+                FieldPanel("facebook_url"),
+                FieldPanel("instagram_url"),
+            ],
+            heading="Social & Review Links",
         ),
         InlinePanel("navigation_items", label="Navigation Links"),
         MultiFieldPanel(
