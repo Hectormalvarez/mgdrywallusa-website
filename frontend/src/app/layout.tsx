@@ -10,7 +10,7 @@ const inter = Inter({
   display: "swap",
 });
 
-const siteUrl = "https://mgdrywall.taylormadetech.net";
+const siteUrl = "https://mgdrywallusa.taylormadetech.net";
 
 const jsonLd = {
   "@context": "https://schema.org",
