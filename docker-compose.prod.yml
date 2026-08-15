@@ -38,6 +38,7 @@ services:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
       DEBUG: 'False'
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:?ALLOWED_HOSTS is required}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://mgdrywallusa.taylormadetech.net,https://mgdrywallusa-api.taylormadetech.net}
       DB_NAME: ${DB_NAME:-mgdrywall}
       DB_USER: ${DB_USER:-mgdrywall}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
