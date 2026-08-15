@@ -1,6 +1,7 @@
 Django>=5.2,<6.0
 djangorestframework>=3.15,<4.0
 wagtail>=7.0,<8.0
+wagtail-headless-preview>=0.8,<1.0
 psycopg2-binary>=2.9
 django-cors-headers>=4.0
 
