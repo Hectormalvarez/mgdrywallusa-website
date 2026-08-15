@@ -1,6 +1,11 @@
+import { draftMode, cookies } from "next/headers";
 import HeroSection from "@/components/sections/HeroSection";
+
+// Prevent static prerender — this page fetches live CMS data on every request.
+export const dynamic = "force-dynamic";
 import PortfolioSection from "@/components/sections/PortfolioSection";
 import LeadIntakeForm from "@/components/LeadIntakeForm";
+import { fetchHomePage } from "@/lib/api";
 
 const PORTFOLIO_API_URL =
   process.env.NEXT_PUBLIC_WAGTAIL_API_URL ??
@@ -10,10 +15,28 @@ const LEAD_API_URL =
   process.env.NEXT_PUBLIC_LEAD_API_URL ??
   "http://localhost:8000/api/v1/leads/";
 
-export default function Home() {
+export default async function Home() {
+  const { isEnabled: isDraft } = await draftMode();
+  const previewToken = isDraft
+    ? (await cookies()).get("preview_token")?.value ?? null
+    : null;
+
+  // fetchHomePage returns null on any error; HeroSection renders static
+  // fallbacks when all props are undefined.
+  const homeData = await fetchHomePage(isDraft, previewToken).catch(() => null);
+
   return (
     <main id="main-content">
-      <HeroSection />
+      <HeroSection
+        hero_kicker={homeData?.hero_kicker}
+        hero_heading={homeData?.hero_heading}
+        hero_subheading={homeData?.hero_subheading}
+        hero_image_url={homeData?.hero_image_url}
+        cta_primary_label={homeData?.cta_primary_label}
+        cta_primary_url={homeData?.cta_primary_url}
+        cta_secondary_label={homeData?.cta_secondary_label}
+        cta_secondary_url={homeData?.cta_secondary_url}
+      />
       <PortfolioSection apiUrl={PORTFOLIO_API_URL} />
       <section
         id="lead-form"
@@ -35,5 +58,3 @@ export default function Home() {
     </main>
   );
 }
-
-
