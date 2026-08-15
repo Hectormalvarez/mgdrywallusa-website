@@ -31,11 +31,37 @@ class HomePage(Page):
         related_name="+",
     )
 
+    # Call-to-action buttons
+    cta_primary_label = models.CharField(
+        max_length=60,
+        blank=True,
+        help_text="Primary CTA button text (e.g. 'Get a Free Quote')",
+    )
+    cta_primary_url = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Primary CTA destination URL or anchor (e.g. '#lead-form')",
+    )
+    cta_secondary_label = models.CharField(
+        max_length=60,
+        blank=True,
+        help_text="Secondary CTA button text (e.g. 'View Our Work')",
+    )
+    cta_secondary_url = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Secondary CTA destination URL or anchor (e.g. '#portfolio')",
+    )
+
     content_panels = Page.content_panels + [
         FieldPanel("hero_kicker"),
         FieldPanel("hero_heading"),
         FieldPanel("hero_subheading"),
         FieldPanel("hero_image"),
+        FieldPanel("cta_primary_label"),
+        FieldPanel("cta_primary_url"),
+        FieldPanel("cta_secondary_label"),
+        FieldPanel("cta_secondary_url"),
     ]
 
     api_fields = [
@@ -46,4 +72,8 @@ class HomePage(Page):
             "hero_image_url",
             serializer=ImageRenditionField("fill-1920x1080", source="hero_image"),
         ),
+        APIField("cta_primary_label"),
+        APIField("cta_primary_url"),
+        APIField("cta_secondary_label"),
+        APIField("cta_secondary_url"),
     ]
