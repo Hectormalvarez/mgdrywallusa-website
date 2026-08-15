@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'corsheaders',
+    'rest_framework',
     'wagtail.contrib.forms',
     'wagtail.contrib.redirects',
     'wagtail.embeds',
@@ -133,3 +134,8 @@ LEAD_NOTIFICATION_EMAILS = [
     for email in os.environ.get('LEAD_NOTIFICATION_EMAILS', '').split(',')
     if email.strip()
 ]
+
+# --- DRF ---
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'leads.exceptions.custom_exception_handler',
+}

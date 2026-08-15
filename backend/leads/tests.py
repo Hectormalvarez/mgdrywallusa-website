@@ -254,39 +254,28 @@ class TestLeadCreateEndpoint:
         assert resp.status_code == 201
         assert Lead.objects.count() == 0
 
-    # ---- Notification email -----------------------------------------------
+    # ---- Notification --------------------------------------------------------
 
-    def test_email_notification_sent_on_valid_submission(self, settings):
-        settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
-        settings.LEAD_NOTIFICATION_EMAILS = ["owner@example.com"]
-        settings.DEFAULT_FROM_EMAIL = "noreply@example.com"
-
-        from django.core import mail
-
-        mail.outbox = []
+    def test_notification_called_on_valid_submission(self, monkeypatch):
+        called_with = []
+        monkeypatch.setattr("leads.views.notify_lead_created", lambda lead: called_with.append(lead.pk))
 
         client = Client()
         resp = client.post(LEAD_URL, _valid_payload())
         assert resp.status_code == 201
-        assert len(mail.outbox) == 1
-        msg = mail.outbox[0]
-        assert "owner@example.com" in msg.to
-        assert "Jane Doe" in msg.body
+        assert len(called_with) == 1
+        assert Lead.objects.filter(pk=called_with[0]).exists()
 
-    def test_no_email_sent_on_honeypot(self, settings):
-        settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
-        settings.LEAD_NOTIFICATION_EMAILS = ["owner@example.com"]
-
-        from django.core import mail
-
-        mail.outbox = []
+    def test_no_notification_on_honeypot(self, monkeypatch):
+        called_with = []
+        monkeypatch.setattr("leads.views.notify_lead_created", lambda lead: called_with.append(lead.pk))
 
         client = Client()
         data = _valid_payload()
         data["company"] = "spammer"
         resp = client.post(LEAD_URL, data)
         assert resp.status_code == 201
-        assert len(mail.outbox) == 0
+        assert len(called_with) == 0
 
     def test_get_returns_405(self):
         client = Client()
@@ -310,3 +299,127 @@ class TestLeadAdminRegistration:
         assert len(registered) == 1, (
             f"Lead not found in Wagtail SNIPPET_MODELS; got {registered}"
         )
+
+
+# ===================================================================
+# SERIALIZER TESTS
+# ===================================================================
+
+
+@pytest.mark.django_db
+class TestLeadSerializer:
+    """Unit tests for LeadSerializer validation logic."""
+
+    def test_valid_data_passes(self):
+        from leads.serializers import LeadSerializer
+
+        s = LeadSerializer(data={
+            "name": "Jane Doe",
+            "phone": "555-123-4567",
+            "email": "jane@example.com",
+            "project_tier": "repair",
+        })
+        assert s.is_valid(), s.errors
+
+    def test_blank_name_fails(self):
+        from leads.serializers import LeadSerializer
+
+        s = LeadSerializer(data={
+            "name": "",
+            "phone": "555-1234",
+            "email": "jane@example.com",
+            "project_tier": "repair",
+        })
+        assert not s.is_valid()
+        assert "name" in s.errors
+
+    def test_invalid_phone_fails(self):
+        from leads.serializers import LeadSerializer
+
+        s = LeadSerializer(data={
+            "name": "Jane",
+            "phone": "abc",
+            "email": "jane@example.com",
+            "project_tier": "repair",
+        })
+        assert not s.is_valid()
+        assert "phone" in s.errors
+
+    def test_invalid_tier_fails(self):
+        from leads.serializers import LeadSerializer
+
+        s = LeadSerializer(data={
+            "name": "Jane",
+            "phone": "555-1234",
+            "email": "jane@example.com",
+            "project_tier": "kitchen",
+        })
+        assert not s.is_valid()
+        assert "project_tier" in s.errors
+
+    def test_honeypot_field_rejects(self):
+        from leads.serializers import LeadSerializer
+
+        s = LeadSerializer(data={
+            "name": "Jane",
+            "phone": "555-1234",
+            "email": "jane@example.com",
+            "project_tier": "repair",
+            "company": "bot",
+        })
+        assert not s.is_valid()
+        assert "non_field_errors" in s.errors or "company" in s.errors
+
+    def test_empty_honeypot_passes(self):
+        from leads.serializers import LeadSerializer
+
+        s = LeadSerializer(data={
+            "name": "Jane",
+            "phone": "555-1234",
+            "email": "jane@example.com",
+            "project_tier": "repair",
+            "company": "",
+        })
+        assert s.is_valid(), s.errors
+
+    def test_optional_details_defaults_empty(self):
+        from leads.serializers import LeadSerializer
+
+        s = LeadSerializer(data={
+            "name": "Jane",
+            "phone": "555-1234",
+            "email": "jane@example.com",
+            "project_tier": "repair",
+        })
+        assert s.is_valid(), s.errors
+        assert s.validated_data["details"] == ""
+
+
+@pytest.mark.django_db
+class TestStorageService:
+    """Unit tests for StorageService.store_photos."""
+
+    def test_store_photos_creates_attachments(self):
+        from leads.services import StorageService
+
+        lead = Lead.objects.create(
+            name="Photo Test",
+            phone="555-0000",
+            email="photo@test.com",
+            project_tier="repair",
+        )
+        photos = [_make_photo(name=f"p{i}.jpg") for i in range(2)]
+        StorageService.store_photos(lead, photos)
+        assert lead.attachments.count() == 2
+
+    def test_store_photos_empty_list(self):
+        from leads.services import StorageService
+
+        lead = Lead.objects.create(
+            name="No Photos",
+            phone="555-0001",
+            email="nophoto@test.com",
+            project_tier="adu",
+        )
+        StorageService.store_photos(lead, [])
+        assert lead.attachments.count() == 0
