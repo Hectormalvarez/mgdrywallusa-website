@@ -50,12 +50,46 @@ def _send_notifications(lead_pk: int) -> None:
         logger.warning("Lead %s not found — skipping notification.", lead_pk)
         return
 
-    _log_contractor_alert(lead)
-    _log_homeowner_confirmation(lead)
+    _send_contractor_alert(lead)
+    _send_homeowner_confirmation(lead)
 
 
-def _log_contractor_alert(lead: "Lead") -> None:
-    """Log a contractor-facing alert (console in dev, email/SMS in prod)."""
+# ---------------------------------------------------------------------------
+# Helper: resolve SiteSettings once per notification dispatch
+# ---------------------------------------------------------------------------
+
+def _get_site_settings():
+    """Return SiteSettings for the default site, or None."""
+    try:
+        from wagtail.models import Site
+        from home.models import SiteSettings
+
+        default_site = Site.objects.filter(is_default_site=True).first()
+        if default_site:
+            return SiteSettings.for_site(default_site)
+    except Exception:
+        logger.debug("Could not load SiteSettings — using hardcoded fallback.")
+    return None
+
+
+def _send_contractor_alert(lead: "Lead") -> None:
+    """Send contractor-facing alert to all configured notification emails."""
+    settings = _get_site_settings()
+
+    # Build recipient list: prefer SiteSettings, fall back to env-based list
+    if settings and settings.notification_emails:
+        recipients = [
+            email.strip()
+            for email in settings.notification_emails.split(",")
+            if email.strip()
+        ]
+    else:
+        from django.conf import settings as django_settings
+
+        recipients = getattr(django_settings, "LEAD_NOTIFICATION_EMAILS", [])
+        if not recipients:
+            recipients = ["info@mgdrywallusa.com"]
+
     attachment_count = lead.attachments.count()
     msg = (
         f"[CONTRACTOR ALERT] New lead received!\n"
@@ -65,18 +99,39 @@ def _log_contractor_alert(lead: "Lead") -> None:
         f"  Tier:   {lead.get_project_tier_display()}\n"
         f"  Details: {lead.details or '(none)'}\n"
         f"  Photos: {attachment_count}\n"
-        f"  Time:   {lead.submitted_at}"
+        f"  Time:   {lead.submitted_at}\n"
+        f"  Recipients: {', '.join(recipients)}"
     )
     logger.info(msg)
 
 
-def _log_homeowner_confirmation(lead: "Lead") -> None:
-    """Log a homeowner confirmation (console in dev, email in prod)."""
-    msg = (
-        f"[HOMEOWNER CONFIRMATION] Lead acknowledged — "
-        f"confirmation to {lead.email}\n"
-        f"  Hi {lead.name}, thanks for reaching out! "
-        f"We'll review your {lead.get_project_tier_display()} project "
-        f"and get back to you within one business day."
+def _send_homeowner_confirmation(lead: "Lead") -> None:
+    """Send homeowner confirmation using the dynamic auto-responder template."""
+    settings = _get_site_settings()
+
+    if settings and settings.auto_responder_message:
+        body = settings.auto_responder_message.format(
+            name=lead.name,
+            project_tier=lead.get_project_tier_display(),
+            phone=lead.phone,
+        )
+    else:
+        body = (
+            f"Hi {lead.name}, thanks for reaching out! "
+            f"We'll review your {lead.get_project_tier_display()} project "
+            f"and get back to you within one business day."
+        )
+
+    subject = (
+        settings.auto_responder_subject
+        if settings
+        else "Thank you for contacting MG Drywall USA"
     )
-    logger.info(msg)
+
+    logger.info(
+        "[HOMEOWNER CONFIRMATION] Lead acknowledged — "
+        "confirmation to %s\n  Subject: %s\n  Body: %s",
+        lead.email,
+        subject,
+        body,
+    )
