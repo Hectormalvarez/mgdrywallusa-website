@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { draftMode } from "next/headers";
 
 /**
  * Headless CMS preview entry-point.
@@ -30,5 +31,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true });
+  // --- Activate Draft Mode ---
+  const draft = await draftMode();
+  draft.enable();
+
+  // Redirect to home — the page will detect draft mode and fetch preview data.
+  return NextResponse.redirect(new URL("/", request.url));
 }
