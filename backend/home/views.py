@@ -47,12 +47,43 @@ class SiteSettingsAPIView(APIView):
         # Remap "url" key to "href" for frontend contract consistency
         formatted_nav = [{"label": item["label"], "href": item["url"]} for item in nav_items]
 
+        # Resolve logo URL from the Wagtail image if uploaded
+        logo_url = None
+        if settings.logo:
+            try:
+                logo_url = settings.logo.get_rendition("original").url
+            except Exception:
+                logo_url = None
+
+        favicon_url = None
+        if settings.favicon:
+            try:
+                favicon_url = settings.favicon.get_rendition("original").url
+            except Exception:
+                favicon_url = None
+
         return Response(
             {
                 "site_name": settings.site_name,
                 "tagline": settings.tagline,
                 "phone_number": settings.phone_number,
                 "contact_email": settings.contact_email,
+                "license_number": settings.license_number,
+                # Branding
+                "logo_url": logo_url,
+                "favicon_url": favicon_url,
+                "primary_color": settings.primary_color,
+                "accent_color": settings.accent_color,
+                # Banner
+                "banner_enabled": settings.banner_enabled,
+                "banner_text": settings.banner_text,
+                "banner_link": settings.banner_link,
+                # Social links
+                "google_review_url": settings.google_review_url,
+                "yelp_url": settings.yelp_url,
+                "facebook_url": settings.facebook_url,
+                "instagram_url": settings.instagram_url,
+                # SEO
                 "seo": {
                     "address_locality": settings.address_locality,
                     "address_region": settings.address_region,
