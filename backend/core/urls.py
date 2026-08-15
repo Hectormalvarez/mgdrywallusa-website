@@ -16,6 +16,7 @@ urlpatterns = [
     path('admin/', include(wagtailadmin_urls)),
     path('api/v1/leads/', LeadCreateView.as_view(), name='lead-create'),
     path('api/v1/', api_router.urls),
+    path('api/v1/', include('home.urls')),
 ]
 
 if settings.DEBUG:

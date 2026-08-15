@@ -4,27 +4,30 @@ import { draftMode } from "next/headers";
 /**
  * Headless CMS preview entry-point.
  *
- * Wagtail redirects editors here with ?content_type=home.HomePage&token=<secret>.
- * We validate the shared secret, activate Next.js Draft Mode, then redirect
- * to the front page which will detect draft mode and fetch preview data.
+ * Wagtail `wagtail-headless-preview` redirects editors here:
+ *   /api/preview?content_type=home.HomePage&token=<PagePreview.token>
+ *
+ * We validate the content type, activate Next.js Draft Mode, persist the
+ * preview token in a cookie, then redirect to `/` where the page component
+ * detects draft mode and fetches preview data from the backend.
  */
-const PREVIEW_SECRET = process.env.WAGTAIL_PREVIEW_SECRET ?? "";
+const ALLOWED_CONTENT_TYPES = ["home.HomePage"] as const;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const token = searchParams.get("token");
   const contentType = searchParams.get("content_type");
 
-  // --- Token validation ---
-  if (!PREVIEW_SECRET || token !== PREVIEW_SECRET) {
+  // --- Token presence ---
+  if (!token) {
     return NextResponse.json(
-      { error: "Invalid or missing preview token" },
+      { error: "Missing preview token" },
       { status: 401 },
     );
   }
 
-  // --- Content-type gate ---
-  if (contentType !== "home.HomePage") {
+  // --- Content-type whitelist ---
+  if (!contentType || !(ALLOWED_CONTENT_TYPES as readonly string[]).includes(contentType)) {
     return NextResponse.json(
       { error: "Unsupported content type" },
       { status: 400 },
@@ -35,6 +38,14 @@ export async function GET(request: NextRequest) {
   const draft = await draftMode();
   draft.enable();
 
-  // Redirect to home — the page will detect draft mode and fetch preview data.
-  return NextResponse.redirect(new URL("/", request.url));
+  // Persist the preview token so the page component can fetch draft data.
+  const response = NextResponse.redirect(new URL("/", request.url));
+  response.cookies.set("preview_token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+
+  return response;
 }
