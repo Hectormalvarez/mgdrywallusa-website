@@ -1,20 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { MAX_FILES, MAX_FILE_SIZE_BYTES, type ProjectTier } from "@/lib/leads";
+import { useRef, useState, type RefObject } from "react";
+import { type ProjectTier } from "@/lib/leads";
+import { submitLead } from "@/lib/api";
+import type { LeadApiErrors } from "@/types/lead";
+import {
+  type FormErrors,
+  type ErrorFieldKey,
+  validateName,
+  validatePhone,
+  validateEmail,
+  validateProjectTier,
+  validateFiles,
+  validateForm,
+  formatPhone,
+} from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 
 interface LeadIntakeFormProps {
   apiUrl?: string;
-}
-
-interface FormErrors {
-  name?: string;
-  phone?: string;
-  email?: string;
-  projectTier?: string;
-  files?: string;
 }
 
 const PROJECT_TIERS: { value: ProjectTier; label: string }[] = [
@@ -30,6 +35,8 @@ function fieldClass(error?: string) {
   return cn(fieldBase, error ? "border-accent" : "border-border");
 }
 
+const FOCUS_ORDER: ErrorFieldKey[] = ["name", "phone", "email", "projectTier", "files"];
+
 export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntakeFormProps) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -43,30 +50,41 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  function validate(): FormErrors {
-    const errs: FormErrors = {};
-    if (!name.trim()) errs.name = 'Name is required';
-    if (!phone.trim()) errs.phone = 'Phone is required';
-    if (!email.trim()) errs.email = 'Email is required';
-    if (!projectTier) errs.projectTier = 'Project tier is required';
-    return errs;
+  const nameRef = useRef<HTMLInputElement | null>(null);
+  const phoneRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const projectTierRef = useRef<HTMLSelectElement | null>(null);
+  const filesRef = useRef<HTMLInputElement | null>(null);
+
+  function handleNameBlur() {
+    const err = validateName(name);
+    setErrors((prev) => ({ ...prev, name: err }));
+  }
+
+  function handlePhoneBlur() {
+    const formatted = formatPhone(phone);
+    if (formatted !== phone) setPhone(formatted);
+    const err = validatePhone(formatted);
+    setErrors((prev) => ({ ...prev, phone: err }));
+  }
+
+  function handleEmailBlur() {
+    const err = validateEmail(email);
+    setErrors((prev) => ({ ...prev, email: err }));
+  }
+
+  function handleTierChange(value: string) {
+    setProjectTier(value);
+    const err = validateProjectTier(value);
+    setErrors((prev) => ({ ...prev, projectTier: err }));
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files ?? []);
-    const validationErrors: string[] = [];
+    const result = validateFiles(selected);
 
-    if (selected.length > MAX_FILES) {
-      validationErrors.push(`No more than ${MAX_FILES} files allowed`);
-    }
-
-    const oversized = selected.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
-    if (oversized.length > 0) {
-      validationErrors.push('Each file must be under 10MB');
-    }
-
-    if (validationErrors.length > 0) {
-      setErrors((prev) => ({ ...prev, files: validationErrors.join('. ') }));
+    if (result.errors.length > 0) {
+      setErrors((prev) => ({ ...prev, files: result.errors.join('. ') }));
       setFileValidationError(true);
       setFiles([]);
       return;
@@ -74,32 +92,45 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
 
     setErrors((prev) => ({ ...prev, files: undefined }));
     setFileValidationError(false);
-    setFiles(selected);
+    setFiles(result.accepted);
+  }
+
+  function focusFirstInvalid(errs: FormErrors) {
+    const refMap: Record<ErrorFieldKey, RefObject<HTMLInputElement | HTMLSelectElement | null> | undefined> = {
+      name: nameRef,
+      phone: phoneRef,
+      email: emailRef,
+      projectTier: projectTierRef,
+      files: filesRef,
+    };
+    for (const key of FOCUS_ORDER) {
+      if (errs[key]) {
+        const el = refMap[key]?.current;
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // Honeypot: silently abort
     if (honeypot) return;
 
-    const fieldErrors = validate();
-    const fileErrors: FormErrors = {};
+    const allErrors = validateForm({
+      name, phone, email, projectTier, files, fileValidationError,
+    });
 
-    if (files.length > MAX_FILES) {
-      fileErrors.files = `No more than ${MAX_FILES} files allowed`;
-    }
-    const oversized = files.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
-    if (oversized.length > 0) {
-      fileErrors.files = 'Each file must be under 10MB';
-    }
-
-    const allErrors = { ...fieldErrors, ...fileErrors };
-    if (Object.keys(allErrors).length > 0 || Object.keys(fieldErrors).length > 0 || fileValidationError) {
-      setErrors((prev) => ({ ...prev, ...allErrors }));
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+      focusFirstInvalid(allErrors);
       return;
     }
 
+    setErrors({});
     setSubmitting(true);
 
     try {
@@ -111,17 +142,24 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
       formData.append('details', details);
       files.forEach((file) => formData.append('photos', file));
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-
+      await submitLead(formData, apiUrl);
       setSubmitted(true);
-      setErrors({});
-    } catch {
-      setErrors({ files: 'Submission failed. Please try again.' });
+    } catch (err: unknown) {
+      const apiErr = err as { status?: number; data?: { errors?: LeadApiErrors } };
+      if (apiErr?.data?.errors) {
+        const serverErrors: FormErrors = {};
+        const src = apiErr.data.errors;
+        if (src.name) serverErrors.name = Array.isArray(src.name) ? src.name[0] : src.name;
+        if (src.phone) serverErrors.phone = Array.isArray(src.phone) ? src.phone[0] : src.phone;
+        if (src.email) serverErrors.email = Array.isArray(src.email) ? src.email[0] : src.email;
+        if (src.project_tier) serverErrors.projectTier = Array.isArray(src.project_tier) ? src.project_tier[0] : src.project_tier;
+        if (src.photos) serverErrors.files = Array.isArray(src.photos) ? src.photos[0] : src.photos;
+        setErrors(serverErrors);
+        focusFirstInvalid(serverErrors);
+      } else {
+        const netErr: FormErrors = { files: 'Submission failed. Please try again.' };
+        setErrors(netErr);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -131,25 +169,13 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
     return (
       <div
         role="status"
-        className="rounded-lg border border-success/30 bg-success-tint px-6 py-8 text-center"
+        className="rounded-lg border border-green-300 bg-green-50 p-6 text-center"
       >
-        <svg
-          aria-hidden="true"
-          className="mx-auto h-12 w-12 text-success"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <h3 className="mt-3 text-lg font-semibold text-success">Thank you!</h3>
-        <p className="mt-1 text-sm text-success/80">
-          Your submission was received successfully.
+        <h3 className="text-lg font-semibold text-green-800">
+          Thank you!
+        </h3>
+        <p className="mt-2 text-green-700">
+          Your request has been submitted successfully. We&apos;ll be in touch shortly.
         </p>
       </div>
     );
@@ -157,24 +183,6 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
-      {/* Honeypot — hidden from real users */}
-      <input
-        type="text"
-        name="company"
-        autoComplete="off"
-        tabIndex={-1}
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          left: "-9999px",
-          opacity: 0,
-          height: 0,
-          width: 0,
-        }}
-        value={honeypot}
-        onChange={(e) => setHoneypot(e.target.value)}
-      />
-
       {/* Name */}
       <div>
         <label htmlFor="lead-name" className="mb-1.5 block text-sm font-medium text-ink">
@@ -182,14 +190,17 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
           <span className="sr-only">(required)</span>
         </label>
         <input
+          ref={nameRef}
           id="lead-name"
           type="text"
+          required
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onBlur={handleNameBlur}
           aria-invalid={!!errors.name}
           aria-describedby={errors.name ? "lead-name-error" : undefined}
           className={fieldClass(errors.name)}
-          placeholder="Full name"
+          placeholder="Your full name"
         />
         {errors.name && (
           <span id="lead-name-error" role="alert" className="mt-1.5 block text-sm text-accent">
@@ -205,14 +216,17 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
           <span className="sr-only">(required)</span>
         </label>
         <input
+          ref={phoneRef}
           id="lead-phone"
           type="tel"
+          required
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          onBlur={handlePhoneBlur}
           aria-invalid={!!errors.phone}
           aria-describedby={errors.phone ? "lead-phone-error" : undefined}
           className={fieldClass(errors.phone)}
-          placeholder="(555) 123-4567"
+          placeholder="555-123-4567"
         />
         {errors.phone && (
           <span id="lead-phone-error" role="alert" className="mt-1.5 block text-sm text-accent">
@@ -228,10 +242,13 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
           <span className="sr-only">(required)</span>
         </label>
         <input
+          ref={emailRef}
           id="lead-email"
           type="email"
+          required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onBlur={handleEmailBlur}
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? "lead-email-error" : undefined}
           className={fieldClass(errors.email)}
@@ -251,9 +268,10 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
           <span className="sr-only">(required)</span>
         </label>
         <select
+          ref={projectTierRef}
           id="lead-project"
           value={projectTier}
-          onChange={(e) => setProjectTier(e.target.value)}
+          onChange={(e) => handleTierChange(e.target.value)}
           aria-invalid={!!errors.projectTier}
           aria-describedby={errors.projectTier ? "lead-project-error" : undefined}
           className={fieldClass(errors.projectTier)}
@@ -286,19 +304,34 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
         />
       </div>
 
+      {/* Honeypot — hidden from real users, bots fill it */}
+      <div className="absolute -left-[9999px]" aria-hidden="true">
+        <label htmlFor="lead-company">Company</label>
+        <input
+          id="lead-company"
+          type="text"
+          name="company"
+          autoComplete="off"
+          tabIndex={-1}
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </div>
+
       {/* Photos */}
       <div>
         <label htmlFor="lead-photos" className="mb-1.5 block text-sm font-medium text-ink">
           Photos (up to 3)
         </label>
         <input
+          ref={filesRef}
           id="lead-photos"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           multiple
           onChange={handleFileChange}
           aria-invalid={!!errors.files}
-          aria-describedby="lead-photos-hint"
+          aria-describedby={errors.files ? "lead-photos-error" : "lead-photos-hint"}
           className={cn(
             "w-full rounded-md border bg-surface px-4 text-sm text-ink transition-colors",
             "file:mr-4 file:rounded-md file:border-0 file:bg-brand file:px-4 file:py-2.5",
@@ -308,7 +341,7 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
           )}
         />
         <span id="lead-photos-hint" className="mt-1.5 block text-xs text-muted">
-          Up to 3 images, 10 MB each
+          JPEG, PNG, or WebP — up to 3 images, 10 MB each
         </span>
         {errors.files && (
           <span id="lead-photos-error" role="alert" className="mt-1.5 block text-sm text-accent">

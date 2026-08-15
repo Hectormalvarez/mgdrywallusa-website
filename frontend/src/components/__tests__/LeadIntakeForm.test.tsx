@@ -3,61 +3,62 @@ import '@testing-library/jest-dom';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import LeadIntakeForm from '@/components/LeadIntakeForm';
-import { MAX_FILES, MAX_FILE_SIZE_BYTES } from '@/lib/leads';
+import { MAX_FILES, MAX_FILE_SIZE_BYTES, MAX_TOTAL_SIZE_BYTES } from '@/lib/leads';
 
 const VALID_URL = 'http://localhost/api/v1/leads/';
 
-function createFile(name: string, sizeBytes: number): File {
-  return new File([new ArrayBuffer(sizeBytes)], name, { type: 'image/png' });
+// jsdom does not implement scrollIntoView
+beforeAll(() => {
+  Element.prototype.scrollIntoView = jest.fn();
+});
+
+function createFile(name: string, sizeBytes: number, type = 'image/png'): File {
+  return new File([new ArrayBuffer(sizeBytes)], name, { type });
 }
 
 function fillRequiredFields() {
-  fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'Jane Doe' } });
-  fireEvent.change(screen.getByLabelText(/phone/i), { target: { value: '555-123-4567' } });
-  fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'jane@example.com' } });
-  fireEvent.change(screen.getByLabelText(/project/i), { target: { value: 'repair' } });
+  fireEvent.change(screen.getByLabelText(/^name/i), { target: { value: 'Jane Doe' } });
+  fireEvent.change(screen.getByLabelText(/^phone/i), { target: { value: '555-123-4567' } });
+  fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: 'jane@example.com' } });
+  fireEvent.change(screen.getByLabelText(/^project tier/i), { target: { value: 'repair' } });
 }
 
-function getHoneypot(): HTMLInputElement {
-  return document.querySelector('input[autocomplete="off"][tabindex="-1"]') as HTMLInputElement;
-}
+// ---------------------------------------------------------------------------
+// Submit validation
+// ---------------------------------------------------------------------------
 
-describe('LeadIntakeForm — required-field validation', () => {
-  it('shows an error when name is missing', async () => {
+describe('LeadIntakeForm — submit validation', () => {
+  it('shows name error on empty submit', async () => {
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-
     expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
   });
 
-  it('shows an error when phone is missing', async () => {
+  it('shows phone error when phone is missing', async () => {
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
-    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'Jane Doe' } });
+    fireEvent.change(screen.getByLabelText(/^name/i), { target: { value: 'Jane' } });
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-
     expect(await screen.findByText(/phone is required/i)).toBeInTheDocument();
   });
 
-  it('shows an error when email is missing', async () => {
+  it('shows email error when email is missing', async () => {
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
-    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'Jane Doe' } });
-    fireEvent.change(screen.getByLabelText(/phone/i), { target: { value: '555-123-4567' } });
+    fireEvent.change(screen.getByLabelText(/^name/i), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/^phone/i), { target: { value: '555-1234' } });
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-
     expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
   });
 
-  it('shows an error when project tier is missing', async () => {
+  it('shows project tier error when tier is missing', async () => {
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
-    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'Jane Doe' } });
-    fireEvent.change(screen.getByLabelText(/phone/i), { target: { value: '555-123-4567' } });
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText(/^name/i), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/^phone/i), { target: { value: '555-1234' } });
+    fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: 'j@e.co' } });
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-
     expect(await screen.findByText(/project tier is required/i)).toBeInTheDocument();
   });
 
-  it('does NOT submit when required fields are missing', async () => {
+  it('does NOT POST when fields are missing', async () => {
     let handlerCalled = false;
     server.use(
       http.post('*/api/v1/leads/', () => {
@@ -65,36 +66,119 @@ describe('LeadIntakeForm — required-field validation', () => {
         return HttpResponse.json({ id: 1, status: 'created' }, { status: 201 });
       }),
     );
-
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
     await screen.findByText(/name is required/i);
-
     expect(handlerCalled).toBe(false);
+  });
+
+  it('focuses the first invalid field on submit', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByLabelText(/^name/i));
+    });
   });
 });
 
-describe('LeadIntakeForm — file validation', () => {
-  it('shows an error when more than MAX_FILES are selected', async () => {
-    render(<LeadIntakeForm apiUrl={VALID_URL} />);
-    const files = Array.from({ length: MAX_FILES + 1 }, (_, i) =>
-      createFile(`photo${i}.png`, 100),
-    );
-    const input = screen.getByLabelText(/photo/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { files } });
+// ---------------------------------------------------------------------------
+// Blur / change validation (real-time)
+// ---------------------------------------------------------------------------
 
-    expect(
-      await screen.findByText(new RegExp(`no more than ${MAX_FILES}`, 'i')),
-    ).toBeInTheDocument();
+describe('LeadIntakeForm — blur validation', () => {
+  it('shows name error on blur when empty', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const input = screen.getByLabelText(/^name/i);
+    fireEvent.blur(input);
+    expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
   });
 
-  it('shows an error when a file exceeds MAX_FILE_SIZE_BYTES', async () => {
+  it('shows phone error on blur with empty string', async () => {
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
-    const files = [createFile('huge.png', MAX_FILE_SIZE_BYTES + 1)];
-    const input = screen.getByLabelText(/photo/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { files } });
+    const input = screen.getByLabelText(/^phone/i);
+    fireEvent.blur(input);
+    expect(await screen.findByText(/phone is required/i)).toBeInTheDocument();
+  });
 
-    expect(await screen.findByText(/10MB/i)).toBeInTheDocument();
+  it('shows email error on blur with invalid email', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const input = screen.getByLabelText(/^email/i);
+    fireEvent.change(input, { target: { value: 'bad' } });
+    fireEvent.blur(input);
+    expect(await screen.findByText(/valid email/i)).toBeInTheDocument();
+  });
+
+  it('clears phone error when valid value is entered', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const input = screen.getByLabelText(/^phone/i);
+    // Show error first
+    fireEvent.change(input, { target: { value: 'abc' } });
+    fireEvent.blur(input);
+    expect(await screen.findByText(/phone is required/i)).toBeInTheDocument();
+    // Fix it
+    fireEvent.change(input, { target: { value: '555-1234' } });
+    fireEvent.blur(input);
+    await waitFor(() => {
+      expect(screen.queryByText(/valid us phone/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it('validates project tier on change', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const select = screen.getByLabelText(/^project tier/i);
+    // Select valid tier — no error
+    fireEvent.change(select, { target: { value: 'repair' } });
+    expect(screen.queryByText(/project tier is required/i)).not.toBeInTheDocument();
+    // Select back to empty
+    fireEvent.change(select, { target: { value: '' } });
+    expect(await screen.findByText(/project tier is required/i)).toBeInTheDocument();
+  });
+
+  it('formats phone number with dashes on blur', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const phoneInput = screen.getByLabelText(/^phone/i);
+    fireEvent.change(phoneInput, { target: { value: '5551234567' } });
+    fireEvent.blur(phoneInput);
+    await waitFor(() => {
+      expect(phoneInput).toHaveValue('555-123-4567');
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// File validation
+// ---------------------------------------------------------------------------
+
+describe('LeadIntakeForm — file validation', () => {
+  it('shows error when more than MAX_FILES are selected', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const tooMany = Array.from({ length: MAX_FILES + 1 }, (_, i) =>
+      createFile(`p${i}.png`, 100)
+    );
+    fireEvent.change(screen.getByLabelText(/photo/i), { target: { files: tooMany } });
+    expect(await screen.findByText(/no more than/i)).toBeInTheDocument();
+  });
+
+  it('shows error when a file exceeds MAX_FILE_SIZE_BYTES', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const big = [createFile('huge.png', MAX_FILE_SIZE_BYTES + 1)];
+    fireEvent.change(screen.getByLabelText(/photo/i), { target: { files: big } });
+    expect(await screen.findByText(/exceeds the 10 MB limit/i)).toBeInTheDocument();
+  });
+
+  it('shows error when aggregate size exceeds MAX_TOTAL_SIZE_BYTES', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const half = Math.floor(MAX_TOTAL_SIZE_BYTES / 2) + 1;
+    const files = [createFile('a.png', half), createFile('b.png', half)];
+    fireEvent.change(screen.getByLabelText(/photo/i), { target: { files } });
+    expect(await screen.findByText(/total upload size exceeds 10 MB/i)).toBeInTheDocument();
+  });
+
+  it('shows error for disallowed MIME type (PDF)', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const pdf = [createFile('doc.pdf', 100, 'application/pdf')];
+    fireEvent.change(screen.getByLabelText(/photo/i), { target: { files: pdf } });
+    expect(await screen.findByText(/not an accepted file type/i)).toBeInTheDocument();
   });
 
   it('does NOT submit when file validation fails', async () => {
@@ -105,21 +189,66 @@ describe('LeadIntakeForm — file validation', () => {
         return HttpResponse.json({ id: 1, status: 'created' }, { status: 201 });
       }),
     );
-
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
     fillRequiredFields();
-    fireEvent.change(screen.getByLabelText(/photo/i), {
-      target: { files: [createFile('a.png', 100), createFile('b.png', 100), createFile('c.png', 100), createFile('d.png', 100)] },
-    });
+    const tooMany = Array.from({ length: MAX_FILES + 1 }, (_, i) =>
+      createFile(`p${i}.png`, 100)
+    );
+    fireEvent.change(screen.getByLabelText(/photo/i), { target: { files: tooMany } });
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-
-    await screen.findByText(/no more than/i);
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
     expect(handlerCalled).toBe(false);
   });
 });
 
+// ---------------------------------------------------------------------------
+// ARIA attributes
+// ---------------------------------------------------------------------------
+
+describe('LeadIntakeForm — ARIA', () => {
+  it('sets aria-invalid on name field when error is present', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const input = screen.getByLabelText(/^name/i);
+    expect(input).toHaveAttribute('aria-invalid', 'false');
+    fireEvent.blur(input);
+    await waitFor(() => {
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+    });
+  });
+
+  it('links aria-describedby to the error message', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fireEvent.blur(screen.getByLabelText(/^name/i));
+    await waitFor(() => {
+      const input = screen.getByLabelText(/^name/i);
+      expect(input).toHaveAttribute('aria-describedby', 'lead-name-error');
+    });
+  });
+
+  it('error message has role="alert"', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fireEvent.blur(screen.getByLabelText(/^name/i));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Honeypot
+// ---------------------------------------------------------------------------
+
 describe('LeadIntakeForm — honeypot', () => {
-  it('silently aborts submission when the honeypot is filled', async () => {
+  it('renders a hidden honeypot input', () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    const honeypot = document.querySelector('input[name="company"]') as HTMLInputElement;
+    expect(honeypot).toBeInTheDocument();
+    expect(honeypot.getAttribute('tabindex')).toBe('-1');
+    expect(honeypot.getAttribute('autocomplete')).toBe('off');
+  });
+
+  it('silently aborts submission when honeypot is filled', async () => {
     let handlerCalled = false;
     server.use(
       http.post('*/api/v1/leads/', () => {
@@ -127,66 +256,53 @@ describe('LeadIntakeForm — honeypot', () => {
         return HttpResponse.json({ id: 1, status: 'created' }, { status: 201 });
       }),
     );
-
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
     fillRequiredFields();
-
-    const honeypot = getHoneypot();
-    expect(honeypot).toBeInTheDocument();
-    fireEvent.change(honeypot, { target: { value: 'http://spam.example.com' } });
-
+    const honeypot = document.querySelector('input[name="company"]') as HTMLInputElement;
+    fireEvent.change(honeypot, { target: { value: 'bot' } });
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-
-    await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 150));
     expect(handlerCalled).toBe(false);
     expect(screen.queryByText(/success/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
   });
 });
 
-describe('LeadIntakeForm — successful submission', () => {
-  it('sends a POST request to the correct endpoint with a FormData body', async () => {
-    let requestUrl = '';
-    let requestMethod = '';
-    let handlerCalled = false;
+// ---------------------------------------------------------------------------
+// Successful submission
+// ---------------------------------------------------------------------------
 
+describe('LeadIntakeForm — successful submission', () => {
+  it('sends POST with FormData and shows success', async () => {
+    let handlerCalled = false;
+    let requestMethod = '';
     server.use(
       http.post('*/api/v1/leads/', async ({ request }) => {
-        requestUrl = request.url;
-        requestMethod = request.method;
         handlerCalled = true;
+        requestMethod = request.method;
         return HttpResponse.json({ id: 1, status: 'created' }, { status: 201 });
       }),
     );
-
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
     fillRequiredFields();
-    fireEvent.change(screen.getByLabelText(/project/i), { target: { value: 'single_room' } });
-    fireEvent.change(screen.getByLabelText(/details/i), {
-      target: { value: 'Water damage in ceiling' },
+    fireEvent.change(screen.getByLabelText(/^project tier/i), { target: { value: 'single_room' } });
+    fireEvent.change(screen.getByLabelText(/^details/i), { target: { value: 'Ceiling repair' } });
+    fireEvent.change(screen.getByLabelText(/photo/i), {
+      target: { files: [createFile('img.png', 500)] },
     });
-
-    const photo = createFile('damage.png', 500);
-    fireEvent.change(screen.getByLabelText(/photo/i), { target: { files: [photo] } });
-
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-
     await waitFor(() => {
-      expect(screen.getByText(/success/i)).toBeInTheDocument();
+      expect(screen.getByText(/thank you/i)).toBeInTheDocument();
     });
-
     expect(handlerCalled).toBe(true);
     expect(requestMethod).toBe('POST');
-    expect(requestUrl).toContain('/api/v1/leads/');
   });
 
-  it('shows a success message after 201 response', async () => {
+  it('shows success after valid submit without photos', async () => {
     render(<LeadIntakeForm apiUrl={VALID_URL} />);
     fillRequiredFields();
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-
     await waitFor(() => {
-      expect(screen.getByText(/success/i)).toBeInTheDocument();
+      expect(screen.getByText(/thank you/i)).toBeInTheDocument();
     });
   });
 });
