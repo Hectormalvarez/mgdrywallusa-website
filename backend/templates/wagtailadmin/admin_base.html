@@ -1,9 +1,19 @@
 {% extends "wagtailadmin/admin_base.html" %}
+{% load wagtailsettings_tags wagtailimages_tags %}
 
 {% block branding_title %}
-  MG Drywall USA Admin
+  {% get_settings use_default_site=True as site_settings %}
+  {{ site_settings.home.sitesettings.site_name }} Admin
 {% endblock %}
 
 {% block branding_favicon %}
-  <link rel="shortcut icon" href="/admin/static/wagtailadmin/images/favicon.ico" />
+  {% get_settings use_default_site=True as site_settings %}
+  {% with s=site_settings.home.sitesettings %}
+    {% if s.favicon %}
+      {% image s.favicon max-64x64 as favicon_img %}
+      <link rel="shortcut icon" href="{{ favicon_img.url }}" />
+    {% else %}
+      <link rel="shortcut icon" href="/static/wagtailadmin/images/favicon.ico" />
+    {% endif %}
+  {% endwith %}
 {% endblock %}

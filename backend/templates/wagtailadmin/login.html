@@ -1,17 +1,28 @@
 {% extends "wagtailadmin/login.html" %}
+{% load wagtailsettings_tags wagtailimages_tags %}
 
 {% block branding_login %}
-  Sign in to MG Drywall USA Portal
+  {% get_settings use_default_site=True as site_settings %}
+  Sign in to {{ site_settings.home.sitesettings.site_name }} Portal
 {% endblock %}
 
 {% block above_login %}
+  {% get_settings use_default_site=True as site_settings %}
   <div style="text-align: center; margin-bottom: 1rem;">
     <p style="color: #64748B; font-size: 0.9rem;">Contractor Content &amp; Lead Management</p>
   </div>
 {% endblock %}
 
 {% block branding_logo %}
-  <div class="login-logo">
-    <span style="font-size: 1.4rem; font-weight: 700; color: #072448; letter-spacing: -0.02em;">MG Drywall USA</span>
-  </div>
+  {% get_settings use_default_site=True as site_settings %}
+  {% with s=site_settings.home.sitesettings %}
+    <div class="login-logo">
+      {% if s.logo %}
+        {% image s.logo max-200x60 as login_logo %}
+        <img src="{{ login_logo.url }}" alt="{{ s.site_name }}" style="max-height:48px;width:auto;" />
+      {% else %}
+        <span style="font-size: 1.4rem; font-weight: 700; color: {{ s.primary_color|default:'#072448' }}; letter-spacing: -0.02em;">{{ s.site_name }}</span>
+      {% endif %}
+    </div>
+  {% endwith %}
 {% endblock %}

@@ -55,6 +55,16 @@ def global_admin_css():
 def add_operations_panel(request, panels):
     """Prepend an operations summary panel to the admin homepage."""
     from wagtail.admin.ui.components import Component
+    from wagtail.models import Site
+    from home.models import SiteSettings
+
+    primary = "#0A3161"
+    site_name = "MG Drywall USA"
+    site = Site.objects.filter(is_default_site=True).first()
+    if site:
+        s = SiteSettings.for_site(site)
+        primary = getattr(s, "primary_color", primary) or primary
+        site_name = getattr(s, "site_name", site_name) or site_name
 
     class OperationsPanel(Component):
         order = 10
@@ -68,18 +78,19 @@ def add_operations_panel(request, panels):
             return format_html(
                 """
                 <section class="w-panel" style="padding:1.5rem;background:#fff;
-                    border-left:4px solid #0A3161;margin-bottom:1.5rem;">
+                    border-left:4px solid {primary};margin-bottom:1.5rem;">
                     <h2 style="margin:0;font-size:1.25rem;font-weight:700;
-                        color:#0A3161;">Operations Hub</h2>
+                        color:{primary};">Operations Hub</h2>
                     <p style="color:#64748B;margin:0.25rem 0 1rem 0;">
                         You have <strong>{}</strong> customer lead{}.</p>
                     <a href="{}" class="button button-primary"
-                       style="background-color:#0A3161;">View Lead Queue</a>
+                       style="background-color:{primary};">View Lead Queue</a>
                 </section>
                 """,
                 new_count,
                 "" if new_count == 1 else "s",
                 leads_url,
+                primary=primary,
             )
 
     panels.insert(0, OperationsPanel())

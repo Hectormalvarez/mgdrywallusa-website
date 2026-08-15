@@ -1,0 +1,14 @@
+{% extends "wagtailadmin/base.html" %}
+{% load wagtailsettings_tags wagtailimages_tags %}
+
+{% block branding_logo %}
+  {% get_settings use_default_site=True as site_settings %}
+  {% with s=site_settings.home.sitesettings %}
+    {% if s.logo %}
+      {% image s.logo max-120x40 as sidebar_logo %}
+      <img src="{{ sidebar_logo.url }}" alt="{{ s.site_name }}" style="height:28px;width:auto;" />
+    {% else %}
+      <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:0.9rem;color:#fff;letter-spacing:-0.02em;">{{ s.site_name }}</span>
+    {% endif %}
+  {% endwith %}
+{% endblock %}

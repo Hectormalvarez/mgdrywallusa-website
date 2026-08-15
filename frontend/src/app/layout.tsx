@@ -102,8 +102,10 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {settings.favicon_url && (
+        {settings.favicon_url ? (
           <link rel="icon" href={settings.favicon_url} />
+        ) : (
+          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         )}
         <style dangerouslySetInnerHTML={{ __html: brandStyles }} />
       </head>
