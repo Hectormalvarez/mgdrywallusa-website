@@ -6,6 +6,10 @@ const PORTFOLIO_API_URL =
   process.env.NEXT_PUBLIC_WAGTAIL_API_URL ??
   "http://localhost:8000/api/v1/pages/?type=portfolio.PortfolioItem&fields=*";
 
+const LEAD_API_URL =
+  process.env.NEXT_PUBLIC_LEAD_API_URL ??
+  "http://localhost:8000/api/v1/leads/";
+
 export default function Home() {
   return (
     <main id="main-content">
@@ -24,7 +28,7 @@ export default function Home() {
             Tell us about your project and we&apos;ll get back to you promptly.
           </p>
           <div className="mt-8">
-            <LeadIntakeForm />
+            <LeadIntakeForm apiUrl={LEAD_API_URL} />
           </div>
         </div>
       </section>
