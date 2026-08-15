@@ -10,20 +10,19 @@ describe('PortfolioSection', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+      expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
+      expect(screen.getByText('residential')).toBeInTheDocument();
+      expect(screen.getByText('commercial')).toBeInTheDocument();
+      expect(screen.getByText('smooth')).toBeInTheDocument();
+      expect(screen.getAllByText('level-5')).toHaveLength(2);
+
+      const images = screen.getAllByRole('img');
+      expect(images).toHaveLength(4);
+      expect(images[0]).toHaveAttribute('src', 'http://localhost:8000/media/fill-800x600/test1.png');
+      expect(images[1]).toHaveAttribute('src', 'http://localhost:8000/media/fill-800x600/test1.png');
+      expect(images[2]).toHaveAttribute('src', 'http://localhost:8000/media/fill-800x600/test2.png');
+      expect(images[3]).toHaveAttribute('src', 'http://localhost:8000/media/fill-800x600/test2.png');
     });
-
-    expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
-    expect(screen.getByText('residential')).toBeInTheDocument();
-    expect(screen.getByText('commercial')).toBeInTheDocument();
-    expect(screen.getByText('smooth')).toBeInTheDocument();
-    expect(screen.getAllByText('level-5')).toHaveLength(2);
-
-    const images = screen.getAllByRole('img');
-    expect(images).toHaveLength(4);
-    expect(images[0]).toHaveAttribute('src', 'http://localhost:8000/media/fill-800x600/test1.png');
-    expect(images[1]).toHaveAttribute('src', 'http://localhost:8000/media/fill-800x600/test1.png');
-    expect(images[2]).toHaveAttribute('src', 'http://localhost:8000/media/fill-800x600/test2.png');
-    expect(images[3]).toHaveAttribute('src', 'http://localhost:8000/media/fill-800x600/test2.png');
   });
 
   it('displays an error message when the API request fails', async () => {

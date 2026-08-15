@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Mock next/headers — Home is an async Server Component
@@ -33,26 +33,42 @@ import Home from '../src/app/page';
 
 describe('Home page', () => {
   it('renders the hero heading', async () => {
-    render(await Home());
+    await act(async () => {
+      render(await Home());
+    });
     const heading = screen.getByRole('heading', { name: /mg drywall usa/i });
     expect(heading).toBeInTheDocument();
   });
 
   it('renders the CTA link that anchors to the lead form', async () => {
-    render(await Home());
+    await act(async () => {
+      render(await Home());
+    });
     const cta = screen.getByRole('link', { name: /get a free quote/i });
     expect(cta).toHaveAttribute('href', '#lead-form');
   });
 
   it('renders the portfolio section with fetched items', async () => {
-    render(await Home());
+    await act(async () => {
+      render(await Home());
+    });
     await waitFor(() => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
     });
   });
 
+  it('renders the services section', async () => {
+    await act(async () => {
+      render(await Home());
+    });
+    expect(screen.getByRole('heading', { name: /our services/i })).toBeInTheDocument();
+    expect(screen.getByText('Level 5 Finishing')).toBeInTheDocument();
+  });
+
   it('renders the lead intake form', async () => {
-    render(await Home());
+    await act(async () => {
+      render(await Home());
+    });
     expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
   });
 });
