@@ -2,6 +2,7 @@
  * Typed API client for the Wagtail backend.
  */
 
+import { cache } from "react";
 import type { HomePageData, WagtailPagesResponse } from "@/types/home";
 import type { SiteSettingsData } from "@/types/settings";
 
@@ -110,8 +111,11 @@ const SITE_SETTINGS_FALLBACK: SiteSettingsData = {
  * Returns a hard-coded fallback when the backend is unreachable so that
  * the layout (Header / Footer / metadata) can still render during local
  * development or if the API is temporarily down.
+ *
+ * Wrapped with `react.cache` so multiple callers in the same server request
+ * (e.g. `generateMetadata` + `RootLayout`) share a single fetch.
  */
-export async function fetchSiteSettings(): Promise<SiteSettingsData> {
+export const fetchSiteSettings = cache(async (): Promise<SiteSettingsData> => {
   try {
     const res = await fetch(`${WAGTAIL_API_BASE}/settings/`, {
       next: { revalidate: 3600, tags: ["wagtail-settings"] },
@@ -122,7 +126,7 @@ export async function fetchSiteSettings(): Promise<SiteSettingsData> {
     console.error("[Settings Fetch Error]", error);
     return SITE_SETTINGS_FALLBACK;
   }
-}
+});
 
 // ---------------------------------------------------------------------------
 // Home Page
