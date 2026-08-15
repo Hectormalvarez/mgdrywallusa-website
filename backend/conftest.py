@@ -65,13 +65,23 @@ def portfolio_item(db, home_page, test_image, site):
 
     Requires the ``site`` fixture so the Wagtail API can resolve the page tree.
     """
-    from portfolio.models import PortfolioItem
+    from portfolio.models import PortfolioItem, PortfolioItemImage
 
     item = PortfolioItem(
         title="Test Portfolio Item",
         description="This is a test portfolio item.",
         slug="test-portfolio-item",
-        image=test_image,
+        scope="residential",
+        featured_image=test_image,
     )
     home_page.add_child(instance=item)
+    item.finish_tags.add("smooth", "level-5")
+    PortfolioItemImage.objects.create(
+        page=item,
+        image=test_image,
+        sort_order=0,
+    )
+    # Persist django-modelcluster tag changes by saving the parent page again.
+    item.save()
     return item
+

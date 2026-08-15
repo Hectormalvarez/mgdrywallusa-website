@@ -17,6 +17,14 @@ def test_portfolio_api_returns_items(portfolio_item):
     item = data["items"][0]
     assert item["title"] == "Test Portfolio Item"
     assert item["description"] == "This is a test portfolio item."
-    assert "image_url" in item
-    assert item["image_url"] is not None
+    assert item["scope"] == "residential"
+    assert sorted(item["finish_tags"]) == ["level-5", "smooth"]
+    assert "featured_image_url" in item
+
+    assert item["featured_image_url"] is not None
+    assert "gallery_images" in item
+    assert isinstance(item["gallery_images"], list)
+    assert len(item["gallery_images"]) == 1
+    assert item["gallery_images"][0]["url"] is not None
+    assert item["gallery_images"][0]["caption"] == ""
 
