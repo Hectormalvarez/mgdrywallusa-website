@@ -31,13 +31,17 @@ export default async function Home() {
         hero_kicker={homeData?.hero_kicker}
         hero_heading={homeData?.hero_heading}
         hero_subheading={homeData?.hero_subheading}
-        hero_image_url={homeData?.hero_image_url}
+        hero_image={homeData?.hero_image}
         cta_primary_label={homeData?.cta_primary_label}
         cta_primary_url={homeData?.cta_primary_url}
         cta_secondary_label={homeData?.cta_secondary_label}
         cta_secondary_url={homeData?.cta_secondary_url}
       />
-      <PortfolioSection apiUrl={PORTFOLIO_API_URL} />
+      <PortfolioSection
+        apiUrl={PORTFOLIO_API_URL}
+        heading={homeData?.portfolio_heading}
+        emptyText={homeData?.portfolio_empty_text}
+      />
       <section
         id="lead-form"
         aria-label="Contact"
@@ -45,10 +49,11 @@ export default async function Home() {
       >
         <div className="mx-auto max-w-xl">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
-            Request a Quote
+            {homeData?.lead_section_heading ?? "Request a Quote"}
           </h2>
           <p className="mt-2 text-muted">
-            Tell us about your project and we&apos;ll get back to you promptly.
+            {homeData?.lead_section_description ??
+              "Tell us about your project and we'll get back to you promptly."}
           </p>
           <div className="mt-8">
             <LeadIntakeForm apiUrl={LEAD_API_URL} />

@@ -7,9 +7,15 @@ import PortfolioSkeleton from '@/components/ui/PortfolioSkeleton';
 
 interface PortfolioSectionProps {
   apiUrl: string;
+  heading?: string;
+  emptyText?: string;
 }
 
-export default function PortfolioSection({ apiUrl }: PortfolioSectionProps) {
+export default function PortfolioSection({
+  apiUrl,
+  heading = "Our Work",
+  emptyText = "No projects to display yet.",
+}: PortfolioSectionProps) {
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +43,7 @@ export default function PortfolioSection({ apiUrl }: PortfolioSectionProps) {
           id="portfolio-heading"
           className="text-2xl sm:text-3xl font-bold tracking-tight text-ink"
         >
-          Our Work
+          {heading}
         </h2>
 
         {loading && (
@@ -53,9 +59,7 @@ export default function PortfolioSection({ apiUrl }: PortfolioSectionProps) {
         )}
 
         {!loading && !error && items.length === 0 && (
-          <p className="mt-8 text-muted">
-            No projects to display yet.
-          </p>
+          <p className="mt-8 text-muted">{emptyText}</p>
         )}
 
         {!loading && !error && items.length > 0 && (

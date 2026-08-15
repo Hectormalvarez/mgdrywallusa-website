@@ -14,7 +14,7 @@ export type HeroSectionProps = Partial<
     | "hero_kicker"
     | "hero_heading"
     | "hero_subheading"
-    | "hero_image_url"
+    | "hero_image"
     | "cta_primary_label"
     | "cta_primary_url"
     | "cta_secondary_label"
@@ -53,7 +53,7 @@ export default function HeroSection(props: HeroSectionProps) {
   const secondaryLabel = props.cta_secondary_label || FALLBACK.cta_secondary_label;
   const secondaryUrl = props.cta_secondary_url || FALLBACK.cta_secondary_url;
 
-  const heroImageSrc = props.hero_image_url?.url ?? "/images/hero-drywall.png";
+  const heroImageSrc = props.hero_image?.url ?? "/images/hero-drywall.png";
 
   return (
     <section aria-labelledby="hero-heading" className="relative isolate min-h-[480px] lg:min-h-[600px]">
