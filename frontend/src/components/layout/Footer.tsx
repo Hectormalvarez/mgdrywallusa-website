@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/Button";
-import { SITE } from "@/lib/site";
+import type { SiteSettingsData } from "@/types/settings";
 
 const currentYear = new Date().getFullYear();
 
-export default function Footer() {
+interface FooterProps {
+  settings: SiteSettingsData;
+}
+
+export default function Footer({ settings }: FooterProps) {
   return (
     <footer className="bg-brand text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
@@ -11,11 +15,10 @@ export default function Footer() {
           {/* Brand column */}
           <div>
             <h2 className="text-lg font-extrabold tracking-tight">
-              {SITE.name}
+              {settings.site_name}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-white/80 max-w-xs">
-              Professional drywall installation, repair, and finishing for
-              residential and commercial projects across the nation.
+              {settings.tagline}
             </p>
           </div>
 
@@ -25,7 +28,7 @@ export default function Footer() {
               Quick Links
             </h3>
             <ul className="mt-4 flex flex-col gap-1">
-              {SITE.nav.map((item) => (
+              {settings.nav.map((item) => (
                 <li key={item.href}>
                   <a
                     href={item.href}
@@ -45,16 +48,16 @@ export default function Footer() {
             </h3>
             <address className="mt-4 not-italic flex flex-col gap-1 text-sm">
               <a
-                href={`tel:${SITE.phone}`}
+                href={`tel:${settings.phone_number}`}
                 className="inline-flex items-center h-11 text-white/90 transition-colors hover:text-white hover:underline underline-offset-4"
               >
-                {SITE.phone}
+                {settings.phone_number}
               </a>
               <a
-                href={`mailto:${SITE.email}`}
+                href={`mailto:${settings.contact_email}`}
                 className="inline-flex items-center h-11 text-white/90 transition-colors hover:text-white hover:underline underline-offset-4"
               >
-                {SITE.email}
+                {settings.contact_email}
               </a>
             </address>
 
@@ -69,7 +72,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-12 border-t border-white/20 pt-6">
           <p className="text-xs text-white/60">
-            &copy; {currentYear} {SITE.name}. All rights reserved.
+            &copy; {currentYear} {settings.site_name}. All rights reserved.
           </p>
         </div>
       </div>

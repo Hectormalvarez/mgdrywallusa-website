@@ -2,9 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/cn";
-import { SITE } from "@/lib/site";
+import type { SiteSettingsData } from "@/types/settings";
 
-export default function Header() {
+interface HeaderProps {
+  settings: SiteSettingsData;
+}
+
+export default function Header({ settings }: HeaderProps) {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -91,13 +95,13 @@ export default function Header() {
             href="#"
             className="font-extrabold text-lg text-brand tracking-tight"
           >
-            {SITE.name}
+            {settings.site_name}
           </a>
 
           {/* Desktop nav */}
           <nav aria-label="Main" className="hidden md:block">
             <ul className="flex items-center gap-1">
-              {SITE.nav.map((item) => (
+              {settings.nav.map((item) => (
                 <li key={item.href}>
                   <a
                     href={item.href}
@@ -166,7 +170,7 @@ export default function Header() {
           {/* Drawer header */}
           <div className="flex items-center justify-between h-16 px-4 border-b border-border shrink-0">
             <span className="font-extrabold text-lg text-brand tracking-tight">
-              {SITE.name}
+              {settings.site_name}
             </span>
             <button
               type="button"
@@ -183,7 +187,7 @@ export default function Header() {
           {/* Nav links */}
           <nav aria-label="Main" className="flex-1 overflow-y-auto px-4 py-6">
             <ul className="flex flex-col gap-1">
-              {SITE.nav.map((item, i) => (
+              {settings.nav.map((item, i) => (
                 <li key={item.href}>
                   <a
                     href={item.href}
@@ -203,13 +207,13 @@ export default function Header() {
           {/* Drawer footer */}
           <div className="shrink-0 border-t border-border px-4 py-6 space-y-3">
             <a
-              href={`tel:${SITE.phone}`}
+              href={`tel:${settings.phone_number}`}
               className="flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors"
             >
               <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
               </svg>
-              {SITE.phone}
+              {settings.phone_number}
             </a>
             <a
               href="#lead-form"
