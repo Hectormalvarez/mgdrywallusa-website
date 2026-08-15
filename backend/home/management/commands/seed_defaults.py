@@ -1,0 +1,80 @@
+from django.core.management.base import BaseCommand
+from wagtail.models import Site
+from home.models import (
+    HomePage,
+    HomePageServiceItem,
+    NavigationItem,
+    SiteSettings,
+)
+
+
+class Command(BaseCommand):
+    help = "Seeds default site settings, navigation, home page, and services if not present."
+
+    def handle(self, *args, **options):
+        self._seed_site_settings()
+        self._seed_homepage_services()
+        self.stdout.write(self.style.SUCCESS("Seed defaults verified successfully."))
+
+    def _seed_site_settings(self):
+        default_site = Site.objects.filter(is_default_site=True).first()
+        if not default_site:
+            self.stdout.write(self.style.WARNING("No default site found -- skipping site settings seed."))
+            return
+
+        existing = SiteSettings.for_site(default_site)
+        if existing is None:
+            SiteSettings.objects.create(
+                site=default_site,
+                site_name="MG Drywall USA",
+                tagline="Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
+                phone_number="+1-555-DRYWALL",
+                contact_email="info@mgdrywallusa.com",
+            )
+            settings = SiteSettings.for_site(default_site)
+            self.stdout.write(self.style.SUCCESS("Created SiteSettings instance."))
+        else:
+            settings = existing
+            self.stdout.write("SiteSettings already exists -- skipping creation.")
+
+        # Seed navigation items if empty
+        if settings.navigation_items.count() == 0:
+            nav_items = [
+                ("Services", "#services", 0),
+                ("Our Work", "#portfolio", 1),
+                ("Contact", "#lead-form", 2),
+            ]
+            for label, url, order in nav_items:
+                NavigationItem.objects.create(
+                    setting=settings,
+                    label=label,
+                    url=url,
+                    sort_order=order,
+                )
+            self.stdout.write(self.style.SUCCESS(f"Seeded {len(nav_items)} navigation items."))
+        else:
+            self.stdout.write("Navigation items already exist -- skipping.")
+
+    def _seed_homepage_services(self):
+        home = HomePage.objects.first()
+        if home is None:
+            self.stdout.write(self.style.WARNING("No HomePage found -- skipping service seed."))
+            return
+
+        if home.services.count() == 0:
+            service_data = [
+                ("Level 5 Finishing", "Flawless, glass-smooth surfaces for high-end residential interiors and architectural accent walls.", "paint", 0),
+                ("Drywall Repair & Patching", "Seamless water damage repairs, stress crack fixes, and texture-matching for ceilings and walls.", "patch", 1),
+                ("ADU & Renovation Framing", "Full-service drywall hanging and finishing for garage conversions, room additions, and basements.", "wall", 2),
+            ]
+            for title, desc, icon, order in service_data:
+                HomePageServiceItem.objects.create(
+                    page=home,
+                    title=title,
+                    description=desc,
+                    icon_name=icon,
+                    sort_order=order,
+                )
+            self.stdout.write(self.style.SUCCESS(f"Seeded {len(service_data)} default services."))
+        else:
+            self.stdout.write("HomePage services already exist -- skipping.")
