@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'wagtail.contrib.forms',
     'wagtail.contrib.redirects',
+    'wagtail.contrib.settings',
     'wagtail.embeds',
     'wagtail.sites',
     'wagtail.users',
@@ -50,11 +51,11 @@ INSTALLED_APPS = [
     'wagtail.admin',
     'wagtail',
     'wagtail.api.v2',
+    'wagtail_headless_preview',
     'modelcluster',
     'taggit',
-    'wagtail_headless_preview',
-    'portfolio',
     'home',
+    'portfolio',
     'leads',
 ]
 
