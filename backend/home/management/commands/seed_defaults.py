@@ -30,6 +30,12 @@ class Command(BaseCommand):
                 tagline="Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
                 phone_number="+1-555-DRYWALL",
                 contact_email="info@mgdrywallusa.com",
+                license_number="",
+                primary_color="#0A3161",
+                accent_color="#B31942",
+                notification_emails="info@mgdrywallusa.com",
+                auto_responder_subject="Thank you for contacting MG Drywall USA",
+                banner_enabled=False,
             )
             settings = SiteSettings.for_site(default_site)
             self.stdout.write(self.style.SUCCESS("Created SiteSettings instance."))
