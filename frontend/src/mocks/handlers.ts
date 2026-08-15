@@ -50,6 +50,27 @@ const defaultPortfolioResponse: PortfolioApiResponse = {
 };
 
 export const handlers = [
+  http.get('*/api/v1/settings/', () => {
+    return HttpResponse.json({
+      site_name: 'MG Drywall USA',
+      tagline:
+        'Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.',
+      phone_number: '+1-555-DRYWALL',
+      contact_email: 'info@mgdrywallusa.com',
+      seo: {
+        address_locality: 'Austin',
+        address_region: 'TX',
+        postal_code: '78701',
+        country: 'US',
+        price_range: '$$',
+      },
+      nav: [
+        { label: 'Services', href: '#services' },
+        { label: 'Our Work', href: '#portfolio' },
+        { label: 'Contact', href: '#lead-form' },
+      ],
+    });
+  }),
   http.get('*/api/v1/pages/', () => {
     return HttpResponse.json(defaultPortfolioResponse);
   }),
