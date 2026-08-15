@@ -33,6 +33,20 @@ class SiteSettingsAPIView(APIView):
             return Response({"error": "Site not configured"}, status=status.HTTP_404_NOT_FOUND)
 
         settings = SiteSettings.for_site(current_site)
+
+        # Build navigation from InlinePanel records; fall back to sensible
+        # defaults when no items have been saved in Wagtail admin yet.
+        nav_items = list(settings.navigation_items.values("label", "url"))
+        if not nav_items:
+            nav_items = [
+                {"label": "Services", "url": "#services"},
+                {"label": "Our Work", "url": "#portfolio"},
+                {"label": "Contact", "url": "#lead-form"},
+            ]
+
+        # Remap "url" key to "href" for frontend contract consistency
+        formatted_nav = [{"label": item["label"], "href": item["url"]} for item in nav_items]
+
         return Response(
             {
                 "site_name": settings.site_name,
@@ -46,10 +60,6 @@ class SiteSettingsAPIView(APIView):
                     "country": settings.country,
                     "price_range": settings.price_range,
                 },
-                "nav": [
-                    {"label": "Services", "href": "#services"},
-                    {"label": "Our Work", "href": "#portfolio"},
-                    {"label": "Contact", "href": "#lead-form"},
-                ],
+                "nav": formatted_nav,
             }
         )

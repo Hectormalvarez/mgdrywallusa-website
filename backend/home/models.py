@@ -1,7 +1,9 @@
 from django.db import models
-from wagtail.models import Page
+from modelcluster.fields import ParentalKey
+from modelcluster.models import ClusterableModel
+from wagtail.models import Page, Orderable
 from wagtail.fields import RichTextField
-from wagtail.admin.panels import FieldPanel, MultiFieldPanel
+from wagtail.admin.panels import FieldPanel, MultiFieldPanel, InlinePanel
 from wagtail.api import APIField
 from wagtail.images.api.fields import ImageRenditionField
 from wagtail_headless_preview.models import HeadlessPreviewMixin
@@ -9,7 +11,7 @@ from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 
 
 @register_setting(icon="globe")
-class SiteSettings(BaseSiteSetting):
+class SiteSettings(BaseSiteSetting, ClusterableModel):
     site_name = models.CharField(
         max_length=255,
         default="MG Drywall USA",
@@ -47,6 +49,7 @@ class SiteSettings(BaseSiteSetting):
             ],
             heading="General Information",
         ),
+        InlinePanel("navigation_items", label="Navigation Links"),
         MultiFieldPanel(
             [
                 FieldPanel("address_locality"),
@@ -61,6 +64,24 @@ class SiteSettings(BaseSiteSetting):
 
     def __str__(self):
         return self.site_name
+
+
+class NavigationItem(Orderable):
+    setting = ParentalKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="navigation_items",
+    )
+    label = models.CharField(max_length=100, help_text="Link text displayed in menu")
+    url = models.CharField(max_length=255, help_text="Target URL or anchor (e.g. #portfolio)")
+
+    panels = [
+        FieldPanel("label"),
+        FieldPanel("url"),
+    ]
+
+    def __str__(self):
+        return self.label
 
 
 class HomePage(HeadlessPreviewMixin, Page):
