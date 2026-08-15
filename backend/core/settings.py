@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'wagtail.api.v2',
     'modelcluster',
     'taggit',
+    'wagtail_headless_preview',
     'portfolio',
     'leads',
 ]
@@ -131,6 +132,15 @@ SITE_ID = 1
 
 WAGTAIL_SITE_NAME = 'MG Drywall USA'
 WAGTAILADMIN_BASE_URL = os.environ.get('WAGTAILADMIN_BASE_URL', 'http://localhost:8000')
+
+# --- Headless Preview ---
+WAGTAIL_HEADLESS_PREVIEW = {
+    'CLIENT_URLS': {
+        'default': os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
+    },
+    'REDIRECT_ON_PREVIEW': True,
+    'ENFORCE_TRAILING_SLASH': False,
+}
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [
