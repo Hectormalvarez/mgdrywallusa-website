@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'taggit',
     'wagtail_headless_preview',
     'portfolio',
+    'home',
     'leads',
 ]
 
