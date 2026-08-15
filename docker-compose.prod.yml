@@ -50,6 +50,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - media_data:/app/media
     cap_drop:
       - ALL
     logging:
@@ -68,6 +70,7 @@ services:
     environment:
       NEXT_PUBLIC_LEAD_API_URL: ${NEXT_PUBLIC_LEAD_API_URL:-http://localhost:8000/api/v1/leads/}
       NEXT_PUBLIC_WAGTAIL_API_URL: ${NEXT_PUBLIC_WAGTAIL_API_URL:-http://localhost:8000/api/v1/pages/?type=portfolio.PortfolioItem&fields=*}
+      WAGTAIL_API_BASE_URL: ${WAGTAIL_API_BASE_URL:-http://backend:8000/api/v1}
     depends_on:
       - backend
     cap_drop:
@@ -80,3 +83,4 @@ services:
 
 volumes:
   pgdata:
+  media_data:
