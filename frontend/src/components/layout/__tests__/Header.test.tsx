@@ -1,0 +1,108 @@
+import { render, screen, fireEvent, within } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import Header from '@/components/layout/Header';
+import type { SiteSettingsData } from '@/types/settings';
+
+const mockSettings: SiteSettingsData = {
+  site_name: 'MG Drywall USA',
+  tagline: 'Professional drywall installation and repair.',
+  phone_number: '+1-555-DRYWALL',
+  contact_email: 'info@mgdrywallusa.com',
+  license_number: 'TX-987654',
+  logo_url: null,
+  favicon_url: null,
+  primary_color: '#0A3161',
+  accent_color: '#B31942',
+  banner_enabled: false,
+  banner_text: '',
+  banner_link: '#lead-form',
+  google_review_url: '',
+  yelp_url: '',
+  facebook_url: '',
+  instagram_url: '',
+  seo: {
+    address_locality: 'Austin',
+    address_region: 'TX',
+    postal_code: '78701',
+    country: 'US',
+    price_range: '$$',
+  },
+  nav: [
+    { label: 'Services', href: '#services' },
+    { label: 'Our Work', href: '#portfolio' },
+    { label: 'Contact', href: '#lead-form' },
+  ],
+};
+
+describe('Header component', () => {
+  it('renders skip-to-content accessibility link', () => {
+    render(<Header settings={mockSettings} />);
+    const skipLink = screen.getByRole('link', { name: /skip to content/i });
+    expect(skipLink).toBeInTheDocument();
+    expect(skipLink).toHaveAttribute('href', '#main-content');
+  });
+
+  it('renders text brand title when logo_url is null', () => {
+    render(<Header settings={mockSettings} />);
+    const brandLinks = screen.getAllByRole('link', { name: /mg drywall usa/i });
+    expect(brandLinks.length).toBeGreaterThan(0);
+  });
+
+  it('renders brand logo image when logo_url is provided', () => {
+    const settingsWithLogo: SiteSettingsData = {
+      ...mockSettings,
+      logo_url: '/media/original_images/logo.png',
+    };
+    render(<Header settings={settingsWithLogo} />);
+    const logos = screen.getAllByRole('img', { name: 'MG Drywall USA' });
+    expect(logos[0]).toHaveAttribute('src', '/media/original_images/logo.png');
+  });
+
+  it('renders all desktop navigation links with correct hrefs', () => {
+    render(<Header settings={mockSettings} />);
+    // There are two <nav aria-label="Main">: desktop (always in DOM) and mobile
+    // drawer.  The first one in the tree is the desktop nav inside <header>.
+    const mainNav = screen.getAllByRole('navigation', { name: 'Main' })[0];
+
+    mockSettings.nav.forEach((item) => {
+      const link = screen.getAllByRole('link', { name: item.label })[0];
+      expect(mainNav).toContainElement(link);
+      expect(link).toHaveAttribute('href', item.href);
+    });
+  });
+
+  it('toggles mobile drawer and updates aria-expanded state', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+
+    // Open drawer
+    fireEvent.click(hamburger);
+    expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+    const dialog = screen.getByRole('dialog', { name: /main navigation/i });
+    expect(dialog).toBeInTheDocument();
+
+    // Close via close button inside the drawer (the hamburger also relabels to
+    // "Close menu" when open, so scope the query to within the dialog).
+    const closeBtn = within(dialog).getByRole('button', { name: /close menu/i });
+    fireEvent.click(closeBtn);
+    expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('closes mobile drawer when Escape key is pressed', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+
+    fireEvent.click(hamburger);
+    expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+    expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('renders phone link in mobile drawer footer', () => {
+    render(<Header settings={mockSettings} />);
+    const phoneLink = screen.getByRole('link', { name: /555-drywall/i });
+    expect(phoneLink).toHaveAttribute('href', 'tel:+1-555-DRYWALL');
+  });
+});
