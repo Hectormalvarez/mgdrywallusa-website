@@ -19,5 +19,8 @@ urlpatterns = [
     path('api/v1/', include('home.urls')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve media files in all environments.
+# In production behind a reverse proxy, the proxy should handle this; but
+# for single-container Docker deployments with gunicorn we need Django to
+# serve them directly.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
