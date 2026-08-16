@@ -27,6 +27,12 @@ CSRF_TRUSTED_ORIGINS = [
     if o.strip()
 ]
 
+# --- Proxy trust (for Nginx reverse proxy) ---
+# When behind Nginx, trust the forwarded headers so Django knows the real
+# public hostname and protocol (HTTP vs HTTPS).
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # --- Django core apps ---
 INSTALLED_APPS = [
     'django.contrib.admin',
