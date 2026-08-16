@@ -158,7 +158,7 @@ export async function fetchHomePage(
   try {
     // --- Draft / preview path ---
     if (draft && token) {
-      const res = await fetch(`${WAGTAIL_API_BASE}/home/preview/${token}/`, {
+      const res = await fetch(`${WAGTAIL_API_BASE}/preview/${token}/`, {
         cache: "no-store",
       });
       if (!res.ok) return null;
