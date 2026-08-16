@@ -18,19 +18,19 @@ services:
 
   backend:
     build: ./backend
-    ports:
-      - "${BACKEND_HOST_PORT:-8000}:8000"
     environment:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
       DEBUG: ${DEBUG:-False}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:8101}
       DB_NAME: ${DB_NAME:-mgdrywall}
       DB_USER: ${DB_USER:-mgdrywall}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: ${DB_PORT:-5432}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8101}
       WAGTAIL_PREVIEW_URL: ${WAGTAIL_PREVIEW_URL:-}
+      WAGTAILADMIN_BASE_URL: ${WAGTAILADMIN_BASE_URL:-http://localhost:8101}
     depends_on:
       db:
         condition: service_healthy
@@ -40,11 +40,9 @@ services:
 
   frontend:
     build: ./frontend
-    ports:
-      - "${FRONTEND_HOST_PORT:-3000}:3000"
     environment:
-      NEXT_PUBLIC_LEAD_API_URL: ${NEXT_PUBLIC_LEAD_API_URL:-http://localhost:8000/api/v1/leads/}
-      NEXT_PUBLIC_WAGTAIL_API_URL: ${NEXT_PUBLIC_WAGTAIL_API_URL:-http://localhost:8000/api/v1/pages/?type=portfolio.PortfolioItem&fields=*}
+      NEXT_PUBLIC_LEAD_API_URL: ${NEXT_PUBLIC_LEAD_API_URL:-http://localhost:8101/api/v1/leads/}
+      NEXT_PUBLIC_WAGTAIL_API_URL: ${NEXT_PUBLIC_WAGTAIL_API_URL:-http://localhost:8101/api/v1/pages/?type=portfolio.PortfolioItem&fields=*}
       WAGTAIL_API_BASE_URL: ${WAGTAIL_API_BASE_URL:-http://backend:8000/api/v1}
     depends_on:
       - backend
@@ -52,6 +50,17 @@ services:
       - ./frontend:/app
       - /app/node_modules
 
+  nginx:
+    build: ./nginx
+    ports:
+      - "${NGINX_HOST_PORT:-8101}:80"
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
 volumes:
   pgdata:
   media_data:
+
