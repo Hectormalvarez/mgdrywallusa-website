@@ -74,7 +74,7 @@ def add_operations_panel(request, panels):
             from django.urls import reverse
 
             leads_url = reverse("wagtailsnippets_leads_lead:list")
-            new_count = Lead.objects.filter(status="new").count() if hasattr(Lead, "status") else Lead.objects.count()
+            new_count = Lead.objects.filter(status="new").count()
             return format_html(
                 """
                 <section class="w-panel" style="padding:1.5rem;background:#fff;

@@ -8,6 +8,13 @@ TIER_CHOICES = [
 ]
 
 
+STATUS_CHOICES = [
+    ("new", "New"),
+    ("contacted", "Contacted"),
+    ("closed", "Closed"),
+]
+
+
 class Lead(models.Model):
     """A customer lead submitted via the public intake form."""
 
@@ -17,6 +24,11 @@ class Lead(models.Model):
     project_tier = models.CharField(max_length=20, choices=TIER_CHOICES)
     details = models.TextField(blank=True, default="")
     submitted_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="new",
+    )
 
     class Meta:
         ordering = ["-submitted_at"]

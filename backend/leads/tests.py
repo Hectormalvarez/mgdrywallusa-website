@@ -106,6 +106,27 @@ class TestLeadModel:
             )
             lead.full_clean()
 
+    def test_default_status_is_new(self):
+        lead = Lead.objects.create(
+            name="Status Test",
+            phone="555-0004",
+            email="status@test.com",
+            project_tier="repair",
+        )
+        assert lead.status == "new"
+
+    def test_invalid_status_rejected(self):
+        lead = Lead(
+            name="Bad Status",
+            phone="555-0005",
+            email="badstatus@test.com",
+            project_tier="repair",
+            status="invalid",
+        )
+        with pytest.raises(ValidationError) as exc_info:
+            lead.full_clean()
+        assert "status" in exc_info.value.message_dict
+
 
 @pytest.mark.django_db
 class TestLeadAttachmentModel:
@@ -393,6 +414,34 @@ class TestLeadSerializer:
         })
         assert s.is_valid(), s.errors
         assert s.validated_data["details"] == ""
+
+    def test_valid_photo_mime_types(self):
+        from leads.serializers import LeadSerializer
+
+        for ct in ("image/jpeg", "image/png", "image/webp"):
+            photo = _make_photo(name="photo.jpg", content_type=ct)
+            s = LeadSerializer(data={
+                "name": "Jane",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+                "photos": [photo],
+            })
+            assert s.is_valid(), s.errors
+
+    def test_invalid_photo_mime_type_rejected(self):
+        from leads.serializers import LeadSerializer
+
+        photo = _make_photo(name="doc.pdf", content_type="application/pdf")
+        s = LeadSerializer(data={
+            "name": "Jane",
+            "phone": "555-1234",
+            "email": "jane@example.com",
+            "project_tier": "repair",
+            "photos": [photo],
+        })
+        assert not s.is_valid()
+        assert "photos" in s.errors
 
 
 @pytest.mark.django_db

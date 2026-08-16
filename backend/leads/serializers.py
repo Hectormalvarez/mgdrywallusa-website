@@ -16,6 +16,8 @@ MAX_FILES = 3
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 MAX_TOTAL_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB cumulative
 
+VALID_PHOTO_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
 # Honeypot field name — if present and non-empty, treat as spam
 HONEYPOT_FIELD = "company"
 
@@ -53,6 +55,11 @@ class LeadSerializer(serializers.Serializer):
             )
         total = 0
         for f in files:
+            if f.content_type not in VALID_PHOTO_MIME_TYPES:
+                raise serializers.ValidationError(
+                    f"'{f.name}' is not a supported image type. "
+                    f"Allowed types: JPEG, PNG, WebP."
+                )
             if f.size > MAX_FILE_SIZE_BYTES:
                 raise serializers.ValidationError(
                     f"'{f.name}' exceeds the 10 MB limit."
