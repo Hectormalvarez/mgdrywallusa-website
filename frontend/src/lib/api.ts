@@ -130,7 +130,7 @@ const SITE_SETTINGS_FALLBACK: SiteSettingsData = {
 export const fetchSiteSettings = cache(async (): Promise<SiteSettingsData> => {
   try {
     const res = await fetch(`${WAGTAIL_API_BASE}/settings/`, {
-      next: { revalidate: 3600, tags: ["wagtail-settings"] },
+      cache: "no-store",
     });
     if (!res.ok) throw new Error(`Status ${res.status}`);
     return (await res.json()) as SiteSettingsData;
@@ -158,7 +158,9 @@ export async function fetchHomePage(
   try {
     // --- Draft / preview path ---
     if (draft && token) {
-      const res = await fetch(`${WAGTAIL_API_BASE}/home/preview/${token}/`);
+      const res = await fetch(`${WAGTAIL_API_BASE}/home/preview/${token}/`, {
+        cache: "no-store",
+      });
       if (!res.ok) return null;
       return res.json() as Promise<HomePageData>;
     }
@@ -166,6 +168,7 @@ export async function fetchHomePage(
     // --- Published path ---
     const res = await fetch(
       `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=hero_kicker,hero_heading,hero_subheading,hero_image,cta_primary_label,cta_primary_url,cta_secondary_label,cta_secondary_url,services_heading,services_subheading,services,portfolio_heading,portfolio_empty_text,lead_section_heading,lead_section_description`,
+      { cache: "no-store" },
     );
     if (!res.ok) return null;
     const body = (await res.json()) as WagtailPagesResponse;

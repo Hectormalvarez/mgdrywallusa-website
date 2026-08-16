@@ -139,7 +139,7 @@ WAGTAILADMIN_BASE_URL = os.environ.get('WAGTAILADMIN_BASE_URL', 'http://localhos
 # --- Headless Preview ---
 WAGTAIL_HEADLESS_PREVIEW = {
     'CLIENT_URLS': {
-        'default': os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
+        'default': f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/api/preview",
     },
     'REDIRECT_ON_PREVIEW': True,
     'ENFORCE_TRAILING_SLASH': False,
