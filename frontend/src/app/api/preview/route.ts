@@ -11,7 +11,7 @@ import { draftMode } from "next/headers";
  * preview token in a cookie, then redirect to `/` where the page component
  * detects draft mode and fetches preview data from the backend.
  */
-const ALLOWED_CONTENT_TYPES = ["home.HomePage"] as const;
+const ALLOWED_CONTENT_TYPES = ["home.homepage"] as const;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;

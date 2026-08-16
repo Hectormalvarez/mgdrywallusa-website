@@ -137,18 +137,49 @@ WAGTAIL_ENABLE_UPDATE_CHECK = False
 WAGTAILADMIN_BASE_URL = os.environ.get('WAGTAILADMIN_BASE_URL', 'http://localhost:8000')
 
 # --- Headless Preview ---
+# The preview redirect URL must be browser-reachable (public origin), NOT an
+# internal Docker hostname like backend/frontend or a container ID. SSR/API
+# calls use WAGTAIL_API_BASE_URL (Docker DNS); this is exclusively for the
+# Wagtail admin → browser redirect chain.
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+WAGTAIL_PREVIEW_URL = os.environ.get(
+    'WAGTAIL_PREVIEW_URL',
+    f"{FRONTEND_URL.rstrip('/')}/api/preview",
+)
+
+
+def _validate_wagtail_preview_url(url: str, debug: bool) -> None:
+    """Validate that the headless preview URL is browser-reachable."""
+    if debug:
+        return
+    lower = url.lower()
+    if not lower.startswith('https://'):
+        raise ValueError(
+            f"WAGTAIL_PREVIEW_URL must use HTTPS in production. "
+            f"Got: {url}. "
+            f"Set it to the public frontend origin (e.g. https://example.com/api/preview)."
+        )
+    bad_hosts = ('0.0.0.0', '127.0.0.1', 'localhost', 'backend', 'frontend', '::1')
+    if any(h in lower for h in bad_hosts):
+        raise ValueError(
+            f"WAGTAIL_PREVIEW_URL contains a non-public hostname. "
+            f"Got: {url}. "
+            f"It must be a browser-resolvable URL, not a Docker network name."
+        )
+
+
+_validate_wagtail_preview_url(WAGTAIL_PREVIEW_URL, DEBUG)
+
 WAGTAIL_HEADLESS_PREVIEW = {
     'CLIENT_URLS': {
-        'default': f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/api/preview",
+        'default': WAGTAIL_PREVIEW_URL,
     },
     'REDIRECT_ON_PREVIEW': True,
     'ENFORCE_TRAILING_SLASH': False,
 }
 
 # --- CORS ---
-CORS_ALLOWED_ORIGINS = [
-    os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
-]
+CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
 
 # --- Media uploads ---
 MEDIA_URL = '/media/'
