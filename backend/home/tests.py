@@ -35,3 +35,28 @@ def test_media_serve_with_debug_false(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert b"".join(response.streaming_content) == b"hello media"
 
+
+@pytest.mark.django_db
+def test_preview_endpoint_token_flow():
+    """Preview endpoint should return 200 with valid token, 404 with invalid."""
+    from wagtail_headless_preview.models import PagePreview
+
+    from home.models import HomePage
+
+    content_type = ContentType.objects.get_for_model(HomePage)
+    PagePreview.objects.create(
+        token="preview-123",
+        content_type=content_type,
+        content_json='{"pk": 1, "content_type": "home.homepage", "title": "Draft"}',
+    )
+
+    client = Client()
+
+    # Valid token → 200 with JSON data
+    response = client.get("/api/v1/preview/preview-123/")
+    assert response.status_code == 200
+
+    # Invalid token → 404
+    response = client.get("/api/v1/preview/invalid-token/")
+    assert response.status_code == 404
+
