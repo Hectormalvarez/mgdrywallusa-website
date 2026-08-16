@@ -12,6 +12,9 @@ import os
 for _key in ('DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT', 'DJANGO_SECRET_KEY'):
     os.environ.setdefault(_key, 'test-secret-key-not-for-production')
 
+# Provide a test-safe preview URL so validation passes when DEBUG=False.
+os.environ.setdefault('WAGTAIL_PREVIEW_URL', 'https://example.com/api/preview')
+
 from core.settings import *  # noqa: F401, E402
 
 # Test-safe secret key

@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from wagtail.models import Site
-from .models import SiteSettings
+from .models import HomePage, SiteSettings
 
 
 class PagePreviewAPIView(View):
@@ -18,7 +18,29 @@ class PagePreviewAPIView(View):
         except PagePreview.DoesNotExist:
             return JsonResponse({"error": "Invalid or expired preview token"}, status=404)
 
-        return JsonResponse(preview.content_json, safe=False)
+        page = preview.as_page()
+
+        if not isinstance(page, HomePage):
+            return JsonResponse({"error": "Unsupported content type"}, status=400)
+
+        data = {
+            "id": page.id,
+            "title": page.title,
+        }
+
+        for api_field in HomePage.api_fields:
+            name = api_field.name
+            serializer = api_field.serializer
+            value = getattr(page, name, None)
+
+            if value is None:
+                data[name] = None
+            elif serializer is not None:
+                data[name] = serializer.to_representation(value)
+            else:
+                data[name] = value
+
+        return JsonResponse(data)
 
 
 class SiteSettingsAPIView(APIView):

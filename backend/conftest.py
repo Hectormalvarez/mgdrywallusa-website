@@ -17,8 +17,10 @@ def root_page(db):
 
 @pytest.fixture
 def home_page(db, root_page):
-    """Create and return a home page under the root."""
-    page = Page(title="Test Home", slug="test-home")
+    """Create and return a HomePage under the root."""
+    from home.models import HomePage
+
+    page = HomePage(title="Test Home", slug="test-home")
     root_page.add_child(instance=page)
     return page
 
