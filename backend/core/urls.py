@@ -1,7 +1,7 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.http import HttpResponse
 from django.urls import path, include
+from django.views.static import serve as static_serve
 from wagtail.admin import urls as wagtailadmin_urls
 from portfolio.api import api_router
 from leads.views import LeadCreateView
@@ -23,4 +23,10 @@ urlpatterns = [
 # In production behind a reverse proxy, the proxy should handle this; but
 # for single-container Docker deployments with gunicorn we need Django to
 # serve them directly.
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += [
+    path(
+        "media/<path:path>",
+        static_serve,
+        {"document_root": settings.MEDIA_ROOT},
+    ),
+]
