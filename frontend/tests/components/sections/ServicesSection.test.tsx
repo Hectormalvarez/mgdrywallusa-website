@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { axeCheck } from '@/lib/test-utils/axe-helper';
+import { axeCheck } from '@tests/utils/axe-helper';
 import ServicesSection from '@/components/sections/ServicesSection';
 import type { ServiceItem } from '@/types/home';
 

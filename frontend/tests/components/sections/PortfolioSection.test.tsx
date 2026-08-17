@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { http, HttpResponse } from 'msw';
-import { axeCheck } from '@/lib/test-utils/axe-helper';
-import { server } from '@/mocks/server';
+import { axeCheck } from '@tests/utils/axe-helper';
+import { server } from '@tests/mocks/server';
 import PortfolioSection from '@/components/sections/PortfolioSection';
 
 describe('PortfolioSection', () => {

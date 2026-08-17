@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { GET } from "../route";
+import { GET } from "../../../../src/app/api/preview/route";
 
 // Mock next/headers — draftMode().enable() must be callable.
 jest.mock("next/headers", () => ({

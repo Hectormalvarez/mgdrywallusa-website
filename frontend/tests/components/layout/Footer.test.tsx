@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { axeCheck } from '@/lib/test-utils/axe-helper';
+import { axeCheck } from '@tests/utils/axe-helper';
 import Footer from '@/components/layout/Footer';
 import type { SiteSettingsData } from '@/types/settings';
 

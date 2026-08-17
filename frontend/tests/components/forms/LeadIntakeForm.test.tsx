@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { http, HttpResponse } from 'msw';
-import { axeCheck } from '@/lib/test-utils/axe-helper';
-import { server } from '@/mocks/server';
-import LeadIntakeForm from '@/components/LeadIntakeForm';
-import { MAX_FILES, MAX_FILE_SIZE_BYTES, MAX_TOTAL_SIZE_BYTES } from '@/lib/leads';
+import { axeCheck } from '@tests/utils/axe-helper';
+import { server } from '@tests/mocks/server';
+import LeadIntakeForm from '@/components/forms/LeadIntakeForm';
+import { MAX_FILES, MAX_FILE_SIZE_BYTES, MAX_TOTAL_SIZE_BYTES } from '@/features/leads/constants';
 
 const VALID_URL = 'http://localhost/api/v1/leads/';
 

@@ -6,8 +6,8 @@ import {
   validateFiles,
   validateForm,
   formatPhone,
-} from '@/lib/validation';
-import { MAX_FILES, MAX_FILE_SIZE_BYTES, MAX_TOTAL_SIZE_BYTES } from '@/lib/leads';
+} from '@/features/leads/validation';
+import { MAX_FILES, MAX_FILE_SIZE_BYTES, MAX_TOTAL_SIZE_BYTES } from '@/features/leads/constants';
 
 function createFile(name: string, sizeBytes: number, type = 'image/png'): File {
   return new File([new ArrayBuffer(sizeBytes)], name, { type });

@@ -1,6 +1,6 @@
 import { fetchSiteSettings, fetchHomePage, submitLead, fetchPortfolioItems } from '@/lib/api';
 import { http, HttpResponse } from 'msw';
-import { server } from '@/mocks/server';
+import { server } from '@tests/mocks/server';
 
 describe('fetchSiteSettings', () => {
   it('returns fallback settings when the API errors', async () => {

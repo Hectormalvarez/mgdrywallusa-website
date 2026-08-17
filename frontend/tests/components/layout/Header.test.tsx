@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { axeCheck } from '@/lib/test-utils/axe-helper';
+import { axeCheck } from '@tests/utils/axe-helper';
 import Header from '@/components/layout/Header';
 import type { SiteSettingsData } from '@/types/settings';
 

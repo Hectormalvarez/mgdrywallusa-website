@@ -2,7 +2,7 @@
  * Reusable accessibility helper for jest-axe.
  *
  * Import and use in component tests:
- *   import { axeCheck } from '@/lib/__tests__/axe-helper';
+ *   import { axeCheck } from '@tests/utils/axe-helper';
  *   const { container } = render(<Component />);
  *   await axeCheck(container);
  */
