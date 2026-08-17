@@ -280,29 +280,6 @@ class TestLeadCreateEndpoint:
         assert resp.status_code == 201
         assert Lead.objects.count() == 0
 
-    # ---- Notification --------------------------------------------------------
-
-    def test_notification_called_on_valid_submission(self, monkeypatch):
-        called_with = []
-        monkeypatch.setattr("leads.views.notify_lead_created", lambda lead: called_with.append(lead.pk))
-
-        client = Client()
-        resp = client.post(LEAD_URL, _valid_payload())
-        assert resp.status_code == 201
-        assert len(called_with) == 1
-        assert Lead.objects.filter(pk=called_with[0]).exists()
-
-    def test_no_notification_on_honeypot(self, monkeypatch):
-        called_with = []
-        monkeypatch.setattr("leads.views.notify_lead_created", lambda lead: called_with.append(lead.pk))
-
-        client = Client()
-        data = _valid_payload()
-        data["company"] = "spammer"
-        resp = client.post(LEAD_URL, data)
-        assert resp.status_code == 201
-        assert len(called_with) == 0
-
     def test_get_returns_405(self):
         client = Client()
         resp = client.get(LEAD_URL)

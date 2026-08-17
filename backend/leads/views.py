@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from leads.models import Lead
 from leads.serializers import LeadSerializer
-from leads.services import StorageService, notify_lead_created
+from leads.services import StorageService
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +52,6 @@ class LeadCreateView(APIView):
         photos = data.get("photos", [])
         if photos:
             StorageService.store_photos(lead, photos)
-
-        # --- Fire async notification ---
-        notify_lead_created(lead)
 
         return Response(
             {"status": "created", "id": lead.pk},

@@ -197,12 +197,6 @@ EMAIL_BACKEND = os.environ.get(
     'EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend'
 )
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@example.com')
-LEAD_NOTIFICATION_EMAILS = [
-    email.strip()
-    for email in os.environ.get('LEAD_NOTIFICATION_EMAILS', '').split(',')
-    if email.strip()
-]
-
 # --- DRF ---
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
