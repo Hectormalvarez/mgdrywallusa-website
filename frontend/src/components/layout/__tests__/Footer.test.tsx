@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axeCheck } from '@/lib/test-utils/axe-helper';
 import Footer from '@/components/layout/Footer';
 import type { SiteSettingsData } from '@/types/settings';
 
@@ -35,6 +36,11 @@ const mockSettings: SiteSettingsData = {
 };
 
 describe('Footer component', () => {
+  it('has no accessibility violations', async () => {
+    const { container } = render(<Footer settings={mockSettings} />);
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
   it('renders brand identity, tagline, and current year copyright', () => {
     render(<Footer settings={mockSettings} />);
     const currentYear = new Date().getFullYear();

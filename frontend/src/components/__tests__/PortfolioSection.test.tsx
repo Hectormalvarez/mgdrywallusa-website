@@ -1,10 +1,21 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { http, HttpResponse } from 'msw';
+import { axeCheck } from '@/lib/test-utils/axe-helper';
 import { server } from '@/mocks/server';
 import PortfolioSection from '@/components/sections/PortfolioSection';
 
 describe('PortfolioSection', () => {
+  it('has no accessibility violations', async () => {
+    const { container } = render(
+      <PortfolioSection apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*" />
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
   it('renders portfolio items fetched from the API', async () => {
     render(<PortfolioSection apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*" />);
 

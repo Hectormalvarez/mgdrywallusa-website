@@ -1,9 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axeCheck } from '@/lib/test-utils/axe-helper';
 import ServicesSection from '@/components/sections/ServicesSection';
 import type { ServiceItem } from '@/types/home';
 
 describe('ServicesSection', () => {
+  it('has no accessibility violations', async () => {
+    const { container } = render(<ServicesSection />);
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
   it('renders the default heading and subheading when no props provided', () => {
     render(<ServicesSection />);
     expect(screen.getByRole('heading', { name: /our services/i })).toBeInTheDocument();

@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axeCheck } from '@/lib/test-utils/axe-helper';
 import { Button } from '@/components/ui/Button';
 
 describe('Button', () => {
+  it('has no accessibility violations', async () => {
+    const { container } = render(<Button>Label</Button>);
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
   it('renders as a <button> when no href is provided', () => {
     render(<Button>Click me</Button>);
     expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument();
