@@ -13,6 +13,14 @@ const config: Config = {
   transformIgnorePatterns: [],
   testPathIgnorePatterns: ["/node_modules/", "/e2e/"],
   modulePathIgnorePatterns: ["/e2e/"],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 90,
+      lines: 85,
+      statements: 85,
+    },
+  },
 };
 
 export default config;
