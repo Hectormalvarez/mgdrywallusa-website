@@ -1,4 +1,4 @@
-.PHONY: dev-up dev-down prod-deploy prod-seed prod-logs prod-status prod-verify env-check
+.PHONY: dev-up dev-down dev-reset dev-health prod-deploy prod-seed prod-logs prod-status prod-verify env-check
 
 # ─── Development ───────────────────────────────────────────────
 dev-up:
@@ -7,6 +7,20 @@ dev-up:
 
 dev-down:
 	docker compose down
+
+# ─── Reset dev environment (removes anonymous volumes so node_modules resync) ──
+dev-reset:
+	@echo "\033[0;36m▶ Stopping dev containers and clearing anonymous volumes...\033[0m"
+	docker compose down -v
+	@echo "\033[0;36m▶ Rebuilding frontend image and restarting stack...\033[0m"
+	docker compose --env-file .env up -d --build
+	@echo "\033[0;32m✓ Dev stack reset. Run 'make dev-health' to verify.\033[0m"
+
+# ─── Quick health check for dev stack ──
+dev-health:
+	@echo "\033[0;36m▶ Checking dev stack on localhost:8101...\033[0m"
+	@curl -sf "http://localhost:8101/" > /dev/null && echo "\033[0;32m✓ Frontend: OK\033[0m" || echo "\033[0;31m✗ Frontend: FAIL\033[0m"
+	@curl -sf "http://localhost:8101/api/v1/settings/" > /dev/null && echo "\033[0;32m✓ Backend API: OK\033[0m" || echo "\033[0;31m✗ Backend API: FAIL\033[0m"
 
 # ─── Production (zero-data-loss atomic replacement) ─────────────
 prod-deploy:
