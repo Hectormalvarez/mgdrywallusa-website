@@ -268,8 +268,51 @@ describe('LeadIntakeForm — honeypot', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Successful submission
+// Server error paths
 // ---------------------------------------------------------------------------
+
+describe('LeadIntakeForm — server error handling', () => {
+  it('displays field-level errors on 422 from backend', async () => {
+    server.use(
+      http.post('*/api/v1/leads/', () => {
+        return HttpResponse.json(
+          {
+            errors: {
+              phone: ['Enter a valid phone number.'],
+              email: ['Enter a valid email address.'],
+            },
+          },
+          { status: 422 },
+        );
+      }),
+    );
+
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/enter a valid phone number/i)).toBeInTheDocument();
+      expect(screen.getByText(/enter a valid email address/i)).toBeInTheDocument();
+    });
+  });
+
+  it('displays generic error when backend returns 500 without field errors', async () => {
+    server.use(
+      http.post('*/api/v1/leads/', () => {
+        return HttpResponse.json({ detail: 'Internal Server Error' }, { status: 500 });
+      }),
+    );
+
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/submission failed/i)).toBeInTheDocument();
+    });
+  });
+});
 
 describe('LeadIntakeForm — successful submission', () => {
   it('sends POST with FormData and shows success', async () => {
