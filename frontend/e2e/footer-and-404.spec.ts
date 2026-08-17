@@ -5,6 +5,7 @@ import { test, expect } from "@playwright/test";
 // ===========================================================================
 test.describe("Footer", () => {
   test("quick links navigate to correct sections", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/");
 
     const footer = page.locator("footer");
