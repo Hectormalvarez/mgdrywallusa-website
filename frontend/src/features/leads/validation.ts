@@ -11,7 +11,7 @@ import {
   MAX_TOTAL_SIZE_BYTES,
   ALLOWED_MIME_TYPES,
   VALID_TIER_VALUES,
-} from './leads';
+} from './constants';
 
 // ---------------------------------------------------------------------------
 // Phone regex — must match backend US_PHONE_RE exactly

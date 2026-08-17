@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useState, type RefObject } from "react";
-import { type ProjectTier } from "@/lib/leads";
+import { type ProjectTier } from "@/features/leads/constants";
 import { submitLead } from "@/lib/api";
-import type { LeadApiErrors } from "@/types/lead";
+import type { LeadApiErrors } from "@/features/leads/types";
 import {
   type FormErrors,
   type ErrorFieldKey,
@@ -14,7 +14,7 @@ import {
   validateFiles,
   validateForm,
   formatPhone,
-} from "@/lib/validation";
+} from "@/features/leads/validation";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 
