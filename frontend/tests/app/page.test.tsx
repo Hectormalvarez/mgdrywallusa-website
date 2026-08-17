@@ -33,7 +33,7 @@ jest.mock('@/lib/api', () => ({
   }),
 }));
 
-import Home from '../../src/app/page';
+import Home from '@/app/page';
 
 describe('Home page with CMS data', () => {
   it('renders CMS hero heading', async () => {
