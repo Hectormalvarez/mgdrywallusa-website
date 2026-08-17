@@ -5,7 +5,7 @@ node_modules
 README.md
 Dockerfile
 .dockerignore
-__tests__
+tests
 jest.config.ts
 jest.setup.ts
 jest-env-jsdom-extended.ts

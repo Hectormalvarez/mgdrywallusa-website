@@ -15,8 +15,8 @@
 /test-results/
 /playwright-report/
 # Playwright diff/received artifacts (baselines are committed)
-/e2e/__screenshots__/*-diff.png
-/e2e/__screenshots__/*-received.png
+/tests/e2e/__screenshots__/*-diff.png
+/tests/e2e/__screenshots__/*-received.png
 
 # next.js
 /.next/

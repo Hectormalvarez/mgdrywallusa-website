@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = Number(process.env.HOST_FRONTEND_PORT ?? 3000);
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./tests/e2e",
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
