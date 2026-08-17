@@ -135,7 +135,10 @@ export const fetchSiteSettings = cache(async (): Promise<SiteSettingsData> => {
     if (!res.ok) throw new Error(`Status ${res.status}`);
     return (await res.json()) as SiteSettingsData;
   } catch (error) {
-    console.error("[Settings Fetch Error]", error);
+    // Only log in development — in production / CI the fallback is expected.
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Settings Fetch Error]", error);
+    }
     return SITE_SETTINGS_FALLBACK;
   }
 });
