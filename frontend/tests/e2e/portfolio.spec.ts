@@ -5,6 +5,29 @@ import { test, expect } from "@playwright/test";
 // ===========================================================================
 test.describe("Portfolio Section", () => {
   test("renders portfolio grid with items", async ({ page }) => {
+    // Mock the portfolio API so cards render without a backend
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          meta: { total_count: 1 },
+          items: [
+            {
+              id: 1,
+              meta: { type: "portfolio.PortfolioItem", detail_url: "" },
+              title: "Sample Project",
+              description: "A sample drywall project.",
+              scope: "Full Build",
+              featured_image_url: "/_next/image?url=/hero.jpg&w=1280",
+              finish_tags: ["Drywall", "Paint"],
+              gallery_images: [],
+            },
+          ],
+        }),
+      });
+    });
+
     await page.goto("/");
 
     const section = page.locator("#portfolio");
