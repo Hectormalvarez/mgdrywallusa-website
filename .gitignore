@@ -21,3 +21,6 @@ media/
 
 # Test artifacts
 test-results/
+
+# Static files
+staticfiles/
