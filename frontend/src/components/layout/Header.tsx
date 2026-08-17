@@ -84,12 +84,12 @@ export default function Header({ settings }: HeaderProps) {
     <>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-0 focus:left-0 focus:z-[60] focus:bg-accent focus:text-white focus:px-4 focus:py-3 focus:font-semibold"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-0 focus:left-0 focus:z-60 focus:bg-accent focus:text-white focus:px-4 focus:py-3 focus:font-semibold"
       >
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 border-b border-border">
+      <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur supports-backdrop-filter:bg-surface/80 border-b border-border">
         <div className="mx-auto max-w-7xl flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
           <a
             href="#"
