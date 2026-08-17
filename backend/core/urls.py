@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.urls import path, include
 from django.views.static import serve as static_serve
 from wagtail.admin import urls as wagtailadmin_urls
-from portfolio.api import api_router
+from core.router import api_router
 from leads.views import LeadCreateView
 
 
