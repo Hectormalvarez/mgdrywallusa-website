@@ -126,6 +126,74 @@ test.describe("Lead Intake — Pre-Flight Validation", () => {
     await page.waitForTimeout(500);
     expect(requestSent).toBe(false);
   });
+
+  test("rejects oversized image files", async ({ page }) => {
+    await goToForm(page);
+    await fillRequiredFields(page);
+
+    // Create a 15 MB dummy file (exceeds 10 MB limit)
+    const oversized = path.join(FIXTURES, "oversized.png");
+    await require("fs").promises.writeFile(
+      oversized,
+      Buffer.alloc(15 * 1024 * 1024)
+    );
+
+    const photosInput = page.getByLabel("Photos (up to 3)");
+    await photosInput.setInputFiles([oversized]);
+    await expect(
+      page.getByText(/exceeds the 10 MB limit/i)
+    ).toBeVisible();
+
+    // Cleanup
+    await require("fs").promises.unlink(oversized);
+  });
+
+  test("rejects disallowed file types", async ({ page }) => {
+    await goToForm(page);
+    await fillRequiredFields(page);
+
+    const badFile = path.join(FIXTURES, "document.pdf");
+    await require("fs").promises.writeFile(badFile, "%PDF-1.4 dummy");
+
+    const photosInput = page.getByLabel("Photos (up to 3)");
+    await photosInput.setInputFiles([badFile]);
+    await expect(
+      page.getByText(/not an accepted file type/i)
+    ).toBeVisible();
+
+    // Cleanup
+    await require("fs").promises.unlink(badFile);
+  });
+});
+
+// ===========================================================================
+// Scenario 4 — Server Error
+// ===========================================================================
+test.describe("Lead Intake — Server Error", () => {
+  test("shows error message when server returns 500", async ({ page }) => {
+    await goToForm(page);
+
+    const testName = `test_500_${Date.now()}`;
+    await page.getByLabel("Name").fill(testName);
+    await page.getByLabel("Phone").fill("5551234567");
+    await page.getByLabel("Phone").blur();
+    await page.getByLabel("Email").fill("test@example.com");
+    await page.getByLabel("Project Tier").selectOption("repair");
+
+    await page.route("**/api/v1/leads/**", async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Internal Server Error" }),
+      });
+    });
+
+    await page.getByRole("button", { name: "Submit" }).click();
+
+    await expect(
+      page.getByText(/submission failed/i)
+    ).toBeVisible({ timeout: 5000 });
+  });
 });
 
 // ===========================================================================
