@@ -70,9 +70,10 @@ def add_operations_panel(request, panels):
         order = 10
 
         def render_html(self, parent_context):
-            from leads.models import Lead
+            from django.apps import apps
             from django.urls import reverse
 
+            Lead = apps.get_model("leads", "Lead")
             leads_url = reverse("wagtailsnippets_leads_lead:list")
             new_count = Lead.objects.filter(status="new").count()
             return format_html(
@@ -110,8 +111,9 @@ def prune_menu_items(request, menu_items):
 @hooks.register("register_admin_menu_item")
 def register_edit_homepage_menu_item():
     """Add a one-click 'Edit Homepage' link to the sidebar."""
-    from home.models import HomePage
+    from django.apps import apps
 
+    HomePage = apps.get_model("home", "HomePage")
     home = HomePage.objects.first()
     url = reverse("wagtailadmin_pages:edit", args=[home.id]) if home else "#"
     return MenuItem("Edit Homepage", url, icon_name="desktop", order=150)
