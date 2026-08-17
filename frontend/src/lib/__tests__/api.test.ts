@@ -1,4 +1,4 @@
-import { fetchSiteSettings, fetchHomePage } from '@/lib/api';
+import { fetchSiteSettings, fetchHomePage, submitLead, fetchPortfolioItems } from '@/lib/api';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 
@@ -74,5 +74,76 @@ describe('fetchHomePage', () => {
 
     const data = await fetchHomePage(true, 'invalid-token');
     expect(data).toBeNull();
+  });
+
+  it('returns null when published pages API returns 404', async () => {
+    server.use(
+      http.get('*/api/v1/pages/', () => {
+        return HttpResponse.json({ error: 'Not found' }, { status: 404 });
+      }),
+    );
+
+    const data = await fetchHomePage(false);
+    expect(data).toBeNull();
+  });
+
+  it('returns null on network failure', async () => {
+    server.use(
+      http.get('*/api/v1/pages/', () => {
+        return HttpResponse.error();
+      }),
+    );
+
+    const data = await fetchHomePage(false);
+    expect(data).toBeNull();
+  });
+});
+
+describe('fetchPortfolioItems', () => {
+  it('throws when the API returns a non-2xx status', async () => {
+    server.use(
+      http.get('*/api/v1/pages/', () => {
+        return HttpResponse.json({ error: 'Server error' }, { status: 500 });
+      }),
+    );
+
+    await expect(
+      fetchPortfolioItems('http://localhost/api/v1/pages/')
+    ).rejects.toThrow(/failed to load portfolio/i);
+  });
+
+  it('throws on network failure', async () => {
+    server.use(
+      http.get('*/api/v1/pages/', () => {
+        return HttpResponse.error();
+      }),
+    );
+
+    await expect(
+      fetchPortfolioItems('http://localhost/api/v1/pages/')
+    ).rejects.toThrow();
+  });
+});
+
+describe('submitLead', () => {
+  it('throws with status and data on non-2xx response', async () => {
+    server.use(
+      http.post('*/api/v1/leads/', () => {
+        return HttpResponse.json(
+          { phone: ['Enter a valid phone number.'] },
+          { status: 422 },
+        );
+      }),
+    );
+
+    const formData = new FormData();
+    formData.append('name', 'Jane');
+
+    await expect(
+      submitLead(formData, 'http://localhost/api/v1/leads/')
+    ).rejects.toMatchObject({
+      status: 422,
+      data: { phone: ['Enter a valid phone number.'] },
+    });
   });
 });
