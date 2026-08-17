@@ -27,6 +27,7 @@ const nodeGlobals = {
   Headers: globalThis.Headers,
   fetch: globalThis.fetch,
   BroadcastChannel: globalThis.BroadcastChannel,
+  MessagePort: globalThis.MessagePort,
 };
 
 class ExtendedJSDOMEnvironment extends JSDOMEnvironment {

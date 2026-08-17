@@ -1,4 +1,5 @@
 import Image from "next/image";
+import DOMPurify from "isomorphic-dompurify";
 import { Button } from "@/components/ui/Button";
 import type { HomePageData } from "@/types/home";
 
@@ -55,6 +56,11 @@ export default function HeroSection(props: HeroSectionProps) {
 
   const heroImageSrc = props.hero_image?.url ?? "/images/hero-drywall.png";
 
+  const sanitizedSubheading = DOMPurify.sanitize(subheading, {
+    ALLOWED_TAGS: ["br", "strong", "em", "a", "span"],
+    ALLOWED_ATTR: ["href", "target", "rel", "class"],
+  });
+
   return (
     <section aria-labelledby="hero-heading" className="relative isolate min-h-[480px] lg:min-h-[600px]">
       {/* Background image */}
@@ -91,7 +97,7 @@ export default function HeroSection(props: HeroSectionProps) {
 
         <p
           className="mt-5 text-lg sm:text-xl leading-relaxed text-white/85 max-w-prose"
-          dangerouslySetInnerHTML={{ __html: subheading }}
+          dangerouslySetInnerHTML={{ __html: sanitizedSubheading }}
         />
 
         <div className="mt-8 flex flex-col sm:flex-row gap-4">
