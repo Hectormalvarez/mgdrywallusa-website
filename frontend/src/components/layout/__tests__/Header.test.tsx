@@ -100,6 +100,69 @@ describe('Header component', () => {
     expect(hamburger).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('traps focus inside the drawer when tabbing forward', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    fireEvent.click(hamburger);
+
+    const dialog = screen.getByRole('dialog', { name: /main navigation/i });
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    expect(focusable.length).toBeGreaterThan(0);
+    const last = focusable[focusable.length - 1];
+    last.focus();
+
+    fireEvent.keyDown(document, { key: 'Tab', code: 'Tab' });
+    expect(document.activeElement).toBe(focusable[0]);
+  });
+
+  it('traps focus inside the drawer when tabbing backward', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    fireEvent.click(hamburger);
+
+    const dialog = screen.getByRole('dialog', { name: /main navigation/i });
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    expect(focusable.length).toBeGreaterThan(0);
+    const first = focusable[0];
+    first.focus();
+
+    fireEvent.keyDown(document, {
+      key: 'Tab',
+      code: 'Tab',
+      shiftKey: true,
+    });
+    expect(document.activeElement).toBe(
+      focusable[focusable.length - 1]
+    );
+  });
+
+  it('closes drawer when backdrop is clicked', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    fireEvent.click(hamburger);
+    expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+
+    const backdrop = document.querySelector('div.fixed.inset-0');
+    expect(backdrop).toBeInTheDocument();
+    fireEvent.click(backdrop!);
+    expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('locks body scroll when drawer is open and restores it on close', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+
+    fireEvent.click(hamburger);
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+    expect(document.documentElement.style.overflow).toBe('');
+  });
+
   it('renders phone link in mobile drawer footer', () => {
     render(<Header settings={mockSettings} />);
     const phoneLink = screen.getByRole('link', { name: /555-drywall/i });
