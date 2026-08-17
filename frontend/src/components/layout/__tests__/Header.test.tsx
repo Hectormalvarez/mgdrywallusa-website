@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axeCheck } from '@/lib/test-utils/axe-helper';
 import Header from '@/components/layout/Header';
 import type { SiteSettingsData } from '@/types/settings';
 
@@ -167,5 +168,50 @@ describe('Header component', () => {
     render(<Header settings={mockSettings} />);
     const phoneLink = screen.getByRole('link', { name: /555-drywall/i });
     expect(phoneLink).toHaveAttribute('href', 'tel:+1-555-DRYWALL');
+  });
+});
+
+describe('Header — accessibility', () => {
+  it('has no accessibility violations when drawer is closed', async () => {
+    const { container } = render(<Header settings={mockSettings} />);
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
+  it('has no accessibility violations when drawer is open', async () => {
+    const { container } = render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    fireEvent.click(hamburger);
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
+  it('hamburger has aria-controls and toggles aria-expanded', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    expect(hamburger).toHaveAttribute('aria-controls', 'mobile-menu');
+    expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(hamburger);
+    expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('returns focus to hamburger when drawer closes', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    fireEvent.click(hamburger);
+
+    const dialog = screen.getByRole('dialog', { name: /main navigation/i });
+    const closeBtn = within(dialog).getByRole('button', { name: /close menu/i });
+    fireEvent.click(closeBtn);
+
+    expect(hamburger).toHaveFocus();
+  });
+
+  it('drawer has aria-modal when open', () => {
+    render(<Header settings={mockSettings} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    fireEvent.click(hamburger);
+
+    const dialog = screen.getByRole('dialog', { name: /main navigation/i });
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
   });
 });

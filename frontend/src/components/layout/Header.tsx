@@ -201,7 +201,7 @@ export default function Header({ settings }: HeaderProps) {
           </div>
 
           {/* Nav links */}
-          <nav aria-label="Main" className="flex-1 overflow-y-auto px-4 py-6">
+          <nav aria-label="Main mobile" className="flex-1 overflow-y-auto px-4 py-6">
             <ul className="flex flex-col gap-1">
               {settings.nav.map((item, i) => (
                 <li key={item.href}>
