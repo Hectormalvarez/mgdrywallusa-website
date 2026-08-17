@@ -54,57 +54,12 @@ class SiteSettingsAPIView(APIView):
     """
 
     def get(self, request, *args, **kwargs):
+        from site_settings.serializers import SiteSettingsSerializer
+
         current_site = Site.find_for_request(request) or Site.objects.filter(is_default_site=True).first()
         if not current_site:
             return Response({"error": "Site not configured"}, status=status.HTTP_404_NOT_FOUND)
 
         settings = SiteSettings.for_site(current_site)
-
-        # Build navigation from InlinePanel records; fall back to sensible
-        # defaults when no items have been saved in Wagtail admin yet.
-        nav_items = list(settings.navigation_items.values("label", "url"))
-        if not nav_items:
-            nav_items = [
-                {"label": "Services", "url": "#services"},
-                {"label": "Our Work", "url": "#portfolio"},
-                {"label": "Contact", "url": "#lead-form"},
-            ]
-
-        # Remap "url" key to "href" for frontend contract consistency
-        formatted_nav = [{"label": item["label"], "href": item["url"]} for item in nav_items]
-
-        logo_url = resolve_image_url(settings.logo)
-        favicon_url = resolve_image_url(settings.favicon)
-
-        return Response(
-            {
-                "site_name": settings.site_name,
-                "tagline": settings.tagline,
-                "phone_number": settings.phone_number,
-                "contact_email": settings.contact_email,
-                "license_number": settings.license_number,
-                # Branding
-                "logo_url": logo_url,
-                "favicon_url": favicon_url,
-                "primary_color": settings.primary_color,
-                "accent_color": settings.accent_color,
-                # Banner
-                "banner_enabled": settings.banner_enabled,
-                "banner_text": settings.banner_text,
-                "banner_link": settings.banner_link,
-                # Social links
-                "google_review_url": settings.google_review_url,
-                "yelp_url": settings.yelp_url,
-                "facebook_url": settings.facebook_url,
-                "instagram_url": settings.instagram_url,
-                # SEO
-                "seo": {
-                    "address_locality": settings.address_locality,
-                    "address_region": settings.address_region,
-                    "postal_code": settings.postal_code,
-                    "country": settings.country,
-                    "price_range": settings.price_range,
-                },
-                "nav": formatted_nav,
-            }
-        )
+        serializer = SiteSettingsSerializer(settings)
+        return Response(serializer.data)
