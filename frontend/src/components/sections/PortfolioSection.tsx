@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { fetchPortfolioItems, type PortfolioItem } from '@/lib/api';
-import PortfolioSkeleton from '@/components/ui/PortfolioSkeleton';
+import PortfolioSkeleton from '@/components/sections/PortfolioSkeleton';
 
 interface PortfolioSectionProps {
   apiUrl: string;

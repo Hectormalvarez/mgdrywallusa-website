@@ -5,7 +5,7 @@ import ServicesSection from "@/components/sections/ServicesSection";
 // Prevent static prerender — this page fetches live CMS data on every request.
 export const dynamic = "force-dynamic";
 import PortfolioSection from "@/components/sections/PortfolioSection";
-import LeadIntakeForm from "@/components/LeadIntakeForm";
+import LeadIntakeForm from "@/components/forms/LeadIntakeForm";
 import { fetchHomePage } from "@/lib/api";
 
 const PORTFOLIO_API_URL =
