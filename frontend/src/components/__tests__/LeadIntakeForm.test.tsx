@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { http, HttpResponse } from 'msw';
+import { axeCheck } from '@/lib/test-utils/axe-helper';
 import { server } from '@/mocks/server';
 import LeadIntakeForm from '@/components/LeadIntakeForm';
 import { MAX_FILES, MAX_FILE_SIZE_BYTES, MAX_TOTAL_SIZE_BYTES } from '@/lib/leads';
@@ -232,6 +233,52 @@ describe('LeadIntakeForm — ARIA', () => {
     fireEvent.blur(screen.getByLabelText(/^name/i));
     const alert = await screen.findByRole('alert');
     expect(alert).toBeInTheDocument();
+  });
+});
+
+describe('LeadIntakeForm — accessibility', () => {
+  it('has no accessibility violations in default state', async () => {
+    const { container } = render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
+  it('has no accessibility violations when validation errors are visible', async () => {
+    const { container } = render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await screen.findByText(/name is required/i);
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
+  it('marks all required fields with aria-invalid after submit', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^name/i)).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByLabelText(/^phone/i)).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByLabelText(/^email/i)).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByLabelText(/^project tier/i)).toHaveAttribute('aria-invalid', 'true');
+    });
+  });
+
+  it('associates each invalid field with its error via aria-describedby', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^name/i)).toHaveAttribute('aria-describedby', 'lead-name-error');
+      expect(screen.getByLabelText(/^phone/i)).toHaveAttribute('aria-describedby', 'lead-phone-error');
+      expect(screen.getByLabelText(/^email/i)).toHaveAttribute('aria-describedby', 'lead-email-error');
+      expect(screen.getByLabelText(/^project tier/i)).toHaveAttribute('aria-describedby', 'lead-project-error');
+    });
+  });
+
+  it('exposes each field error with role="alert"', async () => {
+    render(<LeadIntakeForm apiUrl={VALID_URL} />);
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    const alerts = await screen.findAllByRole('alert');
+    expect(alerts.length).toBeGreaterThanOrEqual(4);
   });
 });
 
