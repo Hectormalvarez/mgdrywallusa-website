@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings_test"
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--reuse-db -v"
+filterwarnings = [
+    "ignore::django.utils.deprecation.RemovedInDjango60Warning",
+    "ignore::ResourceWarning",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
