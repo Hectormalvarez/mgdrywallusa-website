@@ -305,7 +305,7 @@ export default function LeadIntakeForm({ apiUrl = '/api/v1/leads/' }: LeadIntake
       </div>
 
       {/* Honeypot — hidden from real users, bots fill it */}
-      <div className="absolute -left-[9999px]" aria-hidden="true">
+      <div className="absolute left-[-9999px]" aria-hidden="true">
         <label htmlFor="lead-company">Company</label>
         <input
           id="lead-company"
