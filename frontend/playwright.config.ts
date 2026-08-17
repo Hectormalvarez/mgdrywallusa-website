@@ -14,8 +14,9 @@ export default defineConfig({
     baseURL: process.env.FRONTEND_URL ?? `http://localhost:${PORT}`,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    snapshotPathTemplate: "{testDir}/__screenshots__/{testFilePath}/{arg}/{projectName}{ext}",
   },
+
+  snapshotPathTemplate: "{testDir}/__screenshots__/{testFilePath}/{arg}/{projectName}{ext}",
 
   projects: [
     {
