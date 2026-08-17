@@ -62,7 +62,7 @@ def _get_site_settings():
     """Return SiteSettings for the default site, or None."""
     try:
         from wagtail.models import Site
-        from home.models import SiteSettings
+        from site_settings.models import SiteSettings
 
         default_site = Site.objects.filter(is_default_site=True).first()
         if default_site:

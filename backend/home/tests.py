@@ -137,7 +137,7 @@ def test_preview_serializes_api_fields(home_page, test_image):
 @pytest.mark.django_db
 def test_site_settings_endpoint_contract(site):
     """Settings endpoint should return correct keys and formatted navigation."""
-    from home.models import NavigationItem, SiteSettings
+    from site_settings.models import NavigationItem, SiteSettings
 
     # Configure settings for the site
     settings_obj = SiteSettings.for_site(site)

@@ -17,7 +17,7 @@ def global_admin_css():
     is unavailable.
     """
     from wagtail.models import Site
-    from home.models import SiteSettings
+    from site_settings.models import SiteSettings
 
     primary = "#0A3161"
     site = Site.objects.filter(is_default_site=True).first()
@@ -56,7 +56,7 @@ def add_operations_panel(request, panels):
     """Prepend an operations summary panel to the admin homepage."""
     from wagtail.admin.ui.components import Component
     from wagtail.models import Site
-    from home.models import SiteSettings
+    from site_settings.models import SiteSettings
 
     primary = "#0A3161"
     site_name = "MG Drywall USA"

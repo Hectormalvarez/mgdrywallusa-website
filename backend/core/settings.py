@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'wagtail_headless_preview',
     'modelcluster',
     'taggit',
+    'site_settings',
     'home',
     'portfolio',
     'leads',

@@ -1,11 +1,7 @@
 from django.core.management.base import BaseCommand
 from wagtail.models import Site
-from home.models import (
-    HomePage,
-    HomePageServiceItem,
-    NavigationItem,
-    SiteSettings,
-)
+from home.models import HomePage, HomePageServiceItem
+from site_settings.models import NavigationItem, SiteSettings
 
 
 class Command(BaseCommand):
