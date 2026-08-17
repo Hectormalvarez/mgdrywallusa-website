@@ -1,8 +1,8 @@
 from django.urls import path
 
-from .views import PagePreviewAPIView, SiteSettingsAPIView
+from site_settings.views import PagePreviewAPIView, SiteSettingsAPIView
 
-app_name = "home"
+app_name = "site_settings"
 
 urlpatterns = [
     path("preview/<str:token>/", PagePreviewAPIView.as_view(), name="page-preview"),

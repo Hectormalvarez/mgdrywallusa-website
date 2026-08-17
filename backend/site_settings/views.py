@@ -1,3 +1,5 @@
+"""Site settings and headless preview API views."""
+
 from django.http import JsonResponse
 from django.views import View
 from wagtail_headless_preview.models import PagePreview
@@ -6,7 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from wagtail.models import Site
-from .models import HomePage
+from core.utils import resolve_image_url
+from home.models import HomePage
 from site_settings.models import SiteSettings
 
 
@@ -70,20 +73,8 @@ class SiteSettingsAPIView(APIView):
         # Remap "url" key to "href" for frontend contract consistency
         formatted_nav = [{"label": item["label"], "href": item["url"]} for item in nav_items]
 
-        # Resolve logo URL from the Wagtail image if uploaded
-        logo_url = None
-        if settings.logo:
-            try:
-                logo_url = settings.logo.get_rendition("original").url
-            except Exception:
-                logo_url = None
-
-        favicon_url = None
-        if settings.favicon:
-            try:
-                favicon_url = settings.favicon.get_rendition("original").url
-            except Exception:
-                favicon_url = None
+        logo_url = resolve_image_url(settings.logo)
+        favicon_url = resolve_image_url(settings.favicon)
 
         return Response(
             {
