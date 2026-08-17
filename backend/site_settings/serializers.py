@@ -48,20 +48,14 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         ]
 
     def get_logo_url(self, obj):
-        if not obj.logo:
-            return None
-        try:
-            return obj.logo.get_rendition("original").url
-        except Exception:
-            return None
+        from core.utils import resolve_image_url
+
+        return resolve_image_url(obj.logo)
 
     def get_favicon_url(self, obj):
-        if not obj.favicon:
-            return None
-        try:
-            return obj.favicon.get_rendition("original").url
-        except Exception:
-            return None
+        from core.utils import resolve_image_url
+
+        return resolve_image_url(obj.favicon)
 
     def get_nav(self, obj):
         """Build navigation list; fall back to sensible defaults."""
