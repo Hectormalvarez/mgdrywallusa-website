@@ -204,5 +204,5 @@ LEAD_NOTIFICATION_EMAILS = [
 
 # --- DRF ---
 REST_FRAMEWORK = {
-    'EXCEPTION_HANDLER': 'leads.exceptions.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
