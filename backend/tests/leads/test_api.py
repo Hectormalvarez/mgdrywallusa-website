@@ -47,7 +47,9 @@ class TestLeadModel:
     """Unit tests for the Lead model."""
 
     def test_create_lead_with_valid_data(self):
-        lead = Lead.objects.create(
+        from tests.factories import LeadFactory
+
+        lead = LeadFactory(
             name="Jane Doe",
             phone="555-1234",
             email="jane@example.com",
@@ -59,7 +61,9 @@ class TestLeadModel:
         assert lead.submitted_at is not None
 
     def test_str_representation(self):
-        lead = Lead.objects.create(
+        from tests.factories import LeadFactory
+
+        lead = LeadFactory(
             name="Bob Builder",
             phone="555-0000",
             email="bob@example.com",
@@ -68,7 +72,9 @@ class TestLeadModel:
         assert str(lead) == "Bob Builder"
 
     def test_details_is_optional(self):
-        lead = Lead.objects.create(
+        from tests.factories import LeadFactory
+
+        lead = LeadFactory(
             name="No Details",
             phone="555-0001",
             email="nd@example.com",
@@ -107,12 +113,9 @@ class TestLeadModel:
             lead.full_clean()
 
     def test_default_status_is_new(self):
-        lead = Lead.objects.create(
-            name="Status Test",
-            phone="555-0004",
-            email="status@test.com",
-            project_tier="repair",
-        )
+        from tests.factories import LeadFactory
+
+        lead = LeadFactory()
         assert lead.status == "new"
 
     def test_invalid_status_rejected(self):
@@ -133,7 +136,9 @@ class TestLeadAttachmentModel:
     """Unit tests for the LeadAttachment model and its FK relationship."""
 
     def _create_lead(self):
-        return Lead.objects.create(
+        from tests.factories import LeadFactory
+
+        return LeadFactory(
             name="Att Tester",
             phone="555-1111",
             email="att@example.com",
@@ -449,9 +454,10 @@ class TestStorageService:
     """Unit tests for StorageService.store_photos."""
 
     def test_store_photos_creates_attachments(self):
+        from tests.factories import LeadFactory
         from leads.services import StorageService
 
-        lead = Lead.objects.create(
+        lead = LeadFactory(
             name="Photo Test",
             phone="555-0000",
             email="photo@test.com",
@@ -462,9 +468,10 @@ class TestStorageService:
         assert lead.attachments.count() == 2
 
     def test_store_photos_empty_list(self):
+        from tests.factories import LeadFactory
         from leads.services import StorageService
 
-        lead = Lead.objects.create(
+        lead = LeadFactory(
             name="No Photos",
             phone="555-0001",
             email="nophoto@test.com",
