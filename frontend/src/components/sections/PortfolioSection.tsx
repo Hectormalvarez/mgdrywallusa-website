@@ -90,6 +90,12 @@ export default function PortfolioSection({
                       {item.scope}
                     </span>
                   )}
+                  {item.description && (
+                    <div
+                      className="mt-2 text-sm text-muted leading-relaxed prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: item.description }}
+                    />
+                  )}
                   {item.finish_tags.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {item.finish_tags.map((tag) => (
@@ -107,18 +113,19 @@ export default function PortfolioSection({
                       {item.gallery_images.map((image, index) => (
                         <figure
                           key={`${item.id}-gallery-${index}`}
-                          className="relative aspect-square overflow-hidden rounded"
                         >
-                          <Image
-                            unoptimized
-                            fill
-                            sizes="(min-width: 1024px) 17vw, (min-width: 768px) 25vw, 50vw"
-                            src={image.url}
-                            alt={image.alt || item.title}
-                            className="object-cover"
-                          />
+                          <div className="relative aspect-square overflow-hidden rounded">
+                            <Image
+                              unoptimized
+                              fill
+                              sizes="(min-width: 1024px) 17vw, (min-width: 768px) 25vw, 50vw"
+                              src={image.url}
+                              alt={image.alt || item.title}
+                              className="object-cover"
+                            />
+                          </div>
                           {image.caption && (
-                            <figcaption className="sr-only">
+                            <figcaption className="mt-1 text-center text-xs text-muted">
                               {image.caption}
                             </figcaption>
                           )}
