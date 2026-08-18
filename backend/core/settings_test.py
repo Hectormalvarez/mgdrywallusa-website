@@ -37,6 +37,9 @@ WAGTAILIMAGES_FEATURE_DETECTION = False
 # Disable rate limiting in tests so they don't interfere with each other
 REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = []
 
+# Disable SSL redirect in tests (test client uses HTTP, not HTTPS)
+SECURE_SSL_REDIRECT = False
+
 # Use PostgreSQL in CI (DB_HOST + GITHUB_ACTIONS are set by the runner), SQLite otherwise
 if os.environ.get('DB_HOST') and os.environ.get('GITHUB_ACTIONS') == 'true':
     DATABASES = {
