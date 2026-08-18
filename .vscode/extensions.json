@@ -1,5 +1,10 @@
 {
   "recommendations": [
-    "bradlc.vscode-tailwindcss"
+    "bradlc.vscode-tailwindcss",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "dbaeumer.vscode-eslint",
+    "ms-azuretools.vscode-docker",
+    "editorconfig.editorconfig"
   ]
 }
