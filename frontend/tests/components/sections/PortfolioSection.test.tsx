@@ -36,6 +36,85 @@ describe('PortfolioSection', () => {
     });
   });
 
+  it('renders rich HTML descriptions below the title', async () => {
+    render(<PortfolioSection apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*" />);
+
+    await waitFor(() => {
+      // The description text should be rendered (stripped of HTML tags for text matching)
+      expect(screen.getByText(/Complete kitchen drywall installation/)).toBeInTheDocument();
+      // The <strong> tag inside the RichTextField should be preserved
+      expect(document.querySelector('strong')?.textContent).toBe('Level 5 finish');
+    });
+  });
+
+  it('renders visible figure captions below gallery images', async () => {
+    render(<PortfolioSection apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    // Captions should be visible (not sr-only)
+    const caption1 = screen.getByText('Smooth ceiling finish');
+    expect(caption1.tagName).toBe('FIGCAPTION');
+    expect(caption1).not.toHaveClass('sr-only');
+
+    const caption2 = screen.getByText('Partition wall taping');
+    expect(caption2.tagName).toBe('FIGCAPTION');
+    expect(caption2).not.toHaveClass('sr-only');
+  });
+
+  it('has no accessibility violations with visible captions', async () => {
+    const { container } = render(
+      <PortfolioSection apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*" />
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Smooth ceiling finish')).toBeInTheDocument();
+    });
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
+  it('does not render description or caption elements when fields are empty', async () => {
+    server.use(
+      http.get('*/api/v1/pages/', () => {
+        return HttpResponse.json({
+          meta: { total_count: 1 },
+          items: [
+            {
+              id: 99,
+              meta: { type: 'portfolio.PortfolioItem', detail_url: '' },
+              title: 'Empty Project',
+              description: '',
+              scope: 'residential',
+              finish_tags: [],
+              featured_image_url: null,
+              gallery_images: [
+                {
+                  url: 'http://localhost:8000/media/test.png',
+                  width: 800,
+                  height: 600,
+                  alt: '',
+                  caption: '',
+                },
+              ],
+            },
+          ],
+        });
+      })
+    );
+
+    render(<PortfolioSection apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Empty Project')).toBeInTheDocument();
+    });
+
+    // No description prose container should exist
+    expect(document.querySelector('.prose')).not.toBeInTheDocument();
+    // No figcaption elements should exist
+    expect(document.querySelectorAll('figcaption')).toHaveLength(0);
+  });
+
   it('displays an error message when the API request fails', async () => {
     server.use(
       http.get('*/api/v1/pages/', () => {
