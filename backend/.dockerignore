@@ -5,3 +5,7 @@ __pycache__
 .env
 venv
 .git
+.pytest_cache
+media
+staticfiles
+tests
