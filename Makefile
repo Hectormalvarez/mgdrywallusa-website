@@ -1,4 +1,4 @@
-.PHONY: dev-up dev-down dev-reset dev-health prod-deploy prod-seed prod-logs prod-status prod-verify env-check
+.PHONY: dev-up dev-down dev-reset dev-health dev-logs test lint format typecheck check prod-deploy prod-seed prod-logs prod-status prod-verify env-check
 
 # ─── Development ───────────────────────────────────────────────
 dev-up:
@@ -21,6 +21,39 @@ dev-health:
 	@echo "\033[0;36m▶ Checking dev stack on localhost:8101...\033[0m"
 	@curl -sf "http://localhost:8101/" > /dev/null && echo "\033[0;32m✓ Frontend: OK\033[0m" || echo "\033[0;31m✗ Frontend: FAIL\033[0m"
 	@curl -sf "http://localhost:8101/api/v1/settings/" > /dev/null && echo "\033[0;32m✓ Backend API: OK\033[0m" || echo "\033[0;31m✗ Backend API: FAIL\033[0m"
+
+dev-logs:
+	docker compose logs -f
+
+# ─── Dev quality gates (run on host, no Docker required) ──────────
+test:
+	@echo "\033[0;36m▶ Running backend tests...\033[0m"
+	cd backend && python -m pytest -v --tb=short
+	@echo "\033[0;36m▶ Running frontend tests...\033[0m"
+	cd frontend && npm test
+	@echo "\033[0;32m✓ All tests passed.\033[0m"
+
+lint:
+	@echo "\033[0;36m▶ Linting backend (ruff)...\033[0m"
+	cd backend && ruff check .
+	@echo "\033[0;36m▶ Linting frontend (eslint)...\033[0m"
+	cd frontend && npm run lint
+	@echo "\033[0;32m✓ Lint passed.\033[0m"
+
+format:
+	@echo "\033[0;36m▶ Formatting backend (ruff)...\033[0m"
+	cd backend && ruff format . && ruff check --fix .
+	@echo "\033[0;36m▶ Formatting frontend (eslint --fix)...\033[0m"
+	cd frontend && npm run lint:fix
+	@echo "\033[0;32m✓ Formatted.\033[0m"
+
+typecheck:
+	@echo "\033[0;36m▶ Type checking frontend (tsc)...\033[0m"
+	cd frontend && npx tsc --noEmit
+	@echo "\033[0;32m✓ Types OK.\033[0m"
+
+check: lint typecheck test
+	@echo "\033[0;32m✓ Full check passed (lint + types + tests).\033[0m"
 
 # ─── Production (zero-data-loss atomic replacement) ─────────────
 prod-deploy:
