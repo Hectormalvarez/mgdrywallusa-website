@@ -1,0 +1,24 @@
+# Local dev overrides — not tracked in git.
+# Copy this file and customize as needed:
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#
+# Common overrides:
+#   - Custom port mappings
+#   - Debug environment variables
+#   - Additional volume mounts
+#   - Resource limits
+
+name: mgdrywall-dev
+services:
+  db:
+    ports:
+      - "5433:5432"
+
+  backend:
+    environment:
+      DEBUG: "True"
+      DB_PORT: "5432"
+
+  nginx:
+    ports:
+      - "8101:80"

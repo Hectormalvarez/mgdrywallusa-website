@@ -15,12 +15,14 @@ venv/
 
 # Docker
 *.log
+docker-compose.override.yml
 
 # Media uploads (local dev)
 media/
 
 # Test artifacts
 test-results/
+playwright-report/
 
 # Static files
 staticfiles/
