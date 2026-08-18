@@ -4,6 +4,7 @@ import logging
 
 from rest_framework import parsers, status
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from leads.models import Lead
@@ -11,6 +12,11 @@ from leads.serializers import LeadSerializer
 from leads.services import StorageService
 
 logger = logging.getLogger(__name__)
+
+
+class LeadRateThrottle(AnonRateThrottle):
+    """Throttle for the lead intake endpoint."""
+    scope = 'lead'
 
 
 class LeadCreateView(APIView):
@@ -25,6 +31,7 @@ class LeadCreateView(APIView):
     """
 
     parser_classes = [parsers.MultiPartParser]
+    throttle_classes = [LeadRateThrottle]
 
     def post(self, request, *args, **kwargs):
         # --- Honeypot: silent 201 drop, no lead created ---

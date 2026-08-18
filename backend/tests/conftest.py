@@ -1,12 +1,20 @@
 """Shared pytest fixtures for the Wagtail/Django backend."""
 
 import io
+from unittest.mock import patch
 
 import pytest
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image as PILImage
 from wagtail.images.models import Image
 from wagtail.models import Page, Site
+
+
+@pytest.fixture(autouse=True)
+def _disable_throttling():
+    """Disable DRF throttling for all tests to avoid 429s."""
+    with patch("rest_framework.throttling.AnonRateThrottle.allow_request", return_value=True):
+        yield
 
 
 @pytest.fixture
