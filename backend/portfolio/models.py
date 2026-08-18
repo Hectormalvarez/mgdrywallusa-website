@@ -4,7 +4,7 @@ from modelcluster.fields import ParentalKey
 from taggit.models import TaggedItemBase
 from wagtail.models import Page, Orderable
 from wagtail.fields import RichTextField
-from wagtail.admin.panels import FieldPanel, InlinePanel
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.api import APIField
 
 from .serializers import FeaturedImageField, GalleryImageField, TagsField
@@ -64,11 +64,26 @@ class PortfolioItem(Page):
     )
 
     content_panels = Page.content_panels + [
-        FieldPanel("scope"),
-        FieldPanel("description"),
-        FieldPanel("featured_image"),
-        InlinePanel("gallery_images", label="Gallery Images"),
-        FieldPanel("finish_tags"),
+        MultiFieldPanel(
+            [
+                FieldPanel("scope"),
+                FieldPanel("description"),
+            ],
+            heading="Project Details",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("featured_image"),
+                InlinePanel("gallery_images", label="Gallery Images"),
+            ],
+            heading="Images",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("finish_tags"),
+            ],
+            heading="Tags",
+        ),
     ]
 
     api_fields = [
