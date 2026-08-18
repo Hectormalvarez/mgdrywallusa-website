@@ -4,6 +4,7 @@ wagtail>=7.0,<8.0
 wagtail-headless-preview>=0.8,<1.0
 psycopg2-binary>=2.9
 django-cors-headers>=4.0
+watchfiles>=1.0
 
 # Testing
 pytest>=8.0
@@ -11,3 +12,4 @@ pytest-django>=4.8
 factory-boy>=3.3
 gunicorn>=21.2
 whitenoise>=6.7
+ruff>=0.8
