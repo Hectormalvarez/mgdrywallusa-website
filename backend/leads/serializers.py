@@ -1,5 +1,6 @@
 """DRF serializers for the leads app."""
 
+import os
 import re
 
 from rest_framework import serializers
@@ -17,6 +18,7 @@ MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 MAX_TOTAL_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB cumulative
 
 VALID_PHOTO_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+VALID_PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 # Honeypot field name — if present and non-empty, treat as spam
 HONEYPOT_FIELD = "company"
@@ -59,6 +61,13 @@ class LeadSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     f"'{f.name}' is not a supported image type. "
                     f"Allowed types: JPEG, PNG, WebP."
+                )
+            # Check file extension as a basic safeguard against spoofed uploads
+            ext = os.path.splitext(f.name or "")[1].lower()
+            if ext not in VALID_PHOTO_EXTENSIONS:
+                raise serializers.ValidationError(
+                    f"'{f.name}' has an invalid file extension. "
+                    f"Allowed extensions: .jpg, .jpeg, .png, .webp."
                 )
             if f.size > MAX_FILE_SIZE_BYTES:
                 raise serializers.ValidationError(
