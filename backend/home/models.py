@@ -17,14 +17,17 @@ class HomePage(HeadlessPreviewMixin, Page):
         max_length=255,
         blank=True,
         default="Trusted drywall professionals",
+        help_text="Short label above the headline, e.g. 'Trusted drywall professionals'",
     )
     hero_heading = models.CharField(
         max_length=255,
         default="MG Drywall USA",
+        help_text="Main headline displayed prominently (keep under 50 characters)",
     )
     hero_subheading = models.TextField(
         blank=True,
         default="Professional drywall installation, repair, and finishing for residential and commercial projects.",
+        help_text="Supporting text below the headline (1-2 sentences)",
     )
     hero_image = models.ForeignKey(
         "wagtailimages.Image",
@@ -32,22 +35,27 @@ class HomePage(HeadlessPreviewMixin, Page):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="+",
+        help_text="Background image for hero section (1920x1080 or larger, will be cropped to fill)",
     )
     cta_primary_label = models.CharField(
         max_length=100,
         default="Get a Free Quote",
+        help_text="Text for the primary action button",
     )
     cta_primary_url = models.CharField(
         max_length=255,
         default="#lead-form",
+        help_text="Destination URL or anchor (e.g. '#lead-form' or '/contact')",
     )
     cta_secondary_label = models.CharField(
         max_length=100,
         default="View Our Work",
+        help_text="Text for the secondary action button",
     )
     cta_secondary_url = models.CharField(
         max_length=255,
         default="#portfolio",
+        help_text="Destination URL or anchor (e.g. '#portfolio' or '/portfolio')",
     )
 
     # Services section metadata
@@ -151,12 +159,17 @@ class HomePageServiceItem(Orderable):
         on_delete=models.CASCADE,
         related_name="services",
     )
-    title = models.CharField(max_length=150)
-    description = models.TextField()
+    title = models.CharField(
+        max_length=150,
+        help_text="Service name displayed on the card (e.g. 'Level 5 Finishing')",
+    )
+    description = models.TextField(
+        help_text="Brief service description (2-3 sentences, shown on the service card)",
+    )
     icon_name = models.CharField(
         max_length=50,
         default="shield",
-        help_text="Icon identifier (e.g. wall, patch, paint, building)",
+        help_text="Icon identifier. One of: wall, patch, paint, shield",
         blank=True,
     )
 

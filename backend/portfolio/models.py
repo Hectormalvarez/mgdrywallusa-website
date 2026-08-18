@@ -45,13 +45,17 @@ class PortfolioItem(Page):
         blank=True,
         help_text="Project scope or category",
     )
-    description = RichTextField(blank=True)
+    description = RichTextField(
+        blank=True,
+        help_text="Brief project summary shown on the portfolio card (supports formatted text)",
+    )
     featured_image = models.ForeignKey(
         "wagtailimages.Image",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="+",
+        help_text="Main project image (800x600 or larger, will be cropped to fill)",
     )
     finish_tags = ClusterTaggableManager(
         through=PortfolioItemTag,
@@ -92,8 +96,13 @@ class PortfolioItemImage(Orderable):
         "wagtailimages.Image",
         on_delete=models.CASCADE,
         related_name="+",
+        help_text="Gallery image (800x600 or larger, will be cropped to fill)",
     )
-    caption = models.CharField(max_length=255, blank=True)
+    caption = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Optional caption displayed below the gallery image",
+    )
 
     panels = [
         FieldPanel("image"),
