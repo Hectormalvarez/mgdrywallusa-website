@@ -69,14 +69,14 @@ export default function PortfolioSection({
                 key={item.id}
                 className="overflow-hidden rounded-lg border border-border"
               >
-                {item.featured_image_url && (
+                {item.featured_image && (
                   <div className="relative aspect-video">
                     <Image
                       unoptimized
                       fill
                       sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      src={item.featured_image_url}
-                      alt={item.title}
+                      src={item.featured_image.card}
+                      alt={item.featured_image.alt || item.title}
                       className="object-cover"
                     />
                   </div>
@@ -85,9 +85,9 @@ export default function PortfolioSection({
                   <h3 className="text-lg font-semibold text-ink">
                     {item.title}
                   </h3>
-                  {item.scope && (
+                  {item.scope_label && (
                     <span className="mt-1 inline-block rounded bg-brand-tint/20 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-brand">
-                      {item.scope}
+                      {item.scope_label}
                     </span>
                   )}
                   {item.description && (
@@ -110,7 +110,7 @@ export default function PortfolioSection({
                   )}
                   {item.gallery_images.length > 0 && (
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                      {item.gallery_images.map((image, index) => (
+                      {item.gallery_images.map((galleryItem, index) => (
                         <figure
                           key={`${item.id}-gallery-${index}`}
                         >
@@ -119,14 +119,14 @@ export default function PortfolioSection({
                               unoptimized
                               fill
                               sizes="(min-width: 1024px) 17vw, (min-width: 768px) 25vw, 50vw"
-                              src={image.url}
-                              alt={image.alt || item.title}
+                              src={galleryItem.image.card}
+                              alt={galleryItem.image.alt || item.title}
                               className="object-cover"
                             />
                           </div>
-                          {image.caption && (
+                          {galleryItem.caption && (
                             <figcaption className="mt-1 text-center text-xs text-muted">
-                              {image.caption}
+                              {galleryItem.caption}
                             </figcaption>
                           )}
                         </figure>

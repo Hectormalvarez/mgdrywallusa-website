@@ -5,34 +5,17 @@
 import { cache } from "react";
 import type { HomePageData, WagtailPagesResponse } from "@/types/home";
 import type { SiteSettingsData } from "@/types/settings";
+import type {
+  PortfolioItem,
+  PortfolioApiResponse,
+} from "@/types/portfolio";
+
+// Re-export for consumers that import from this module
+export type { PortfolioItem, PortfolioApiResponse };
 
 export interface WagtailPageMeta {
   type: string;
   detail_url: string;
-}
-
-export interface GalleryImage {
-  url: string;
-  width: number;
-  height: number;
-  alt: string;
-  caption: string;
-}
-
-export interface PortfolioItem {
-  id: number;
-  meta: WagtailPageMeta;
-  title: string;
-  description: string;
-  scope: string;
-  finish_tags: string[];
-  featured_image_url: string | null;
-  gallery_images: GalleryImage[];
-}
-
-export interface PortfolioApiResponse {
-  meta: { total_count: number };
-  items: PortfolioItem[];
 }
 
 /**

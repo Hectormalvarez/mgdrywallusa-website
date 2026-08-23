@@ -15,18 +15,27 @@ test.describe("Portfolio Section", () => {
           items: [
             {
               id: 1,
-              meta: { type: "portfolio.PortfolioItem", detail_url: "" },
+              slug: "sample-project",
               title: "Sample Project",
               description: "<p>A sample <strong>drywall</strong> project.</p>",
-              scope: "Full Build",
-              featured_image_url: "/_next/image?url=/hero.jpg&w=1280",
+              scope: "residential",
+              scope_label: "Residential",
               finish_tags: ["Drywall", "Paint"],
+              featured_image: {
+                thumbnail: "/media/fill-150x150/hero.webp",
+                card: "/media/fill-800x600/hero.webp",
+                full: "/media/max-1600x1200/hero.webp",
+                alt: "Sample Project",
+              },
               gallery_images: [
                 {
-                  url: "/_next/image?url=/gallery.jpg&w=800",
-                  width: 800,
-                  height: 600,
-                  alt: "Gallery photo",
+                  id: 1,
+                  image: {
+                    thumbnail: "/media/fill-150x150/gallery.webp",
+                    card: "/media/fill-800x600/gallery.webp",
+                    full: "/media/max-1600x1200/gallery.webp",
+                    alt: "Gallery photo",
+                  },
                   caption: "Finished living room wall",
                 },
               ],
@@ -62,18 +71,22 @@ test.describe("Portfolio Section", () => {
           items: [
             {
               id: 2,
-              meta: { type: "portfolio.PortfolioItem", detail_url: "" },
+              slug: "no-description-project",
               title: "No Description Project",
               description: "",
               scope: "residential",
-              featured_image_url: null,
+              scope_label: "Residential",
               finish_tags: [],
+              featured_image: null,
               gallery_images: [
                 {
-                  url: "/_next/image?url=/gallery.jpg&w=800",
-                  width: 800,
-                  height: 600,
-                  alt: "",
+                  id: 2,
+                  image: {
+                    thumbnail: "/media/fill-150x150/gallery.webp",
+                    card: "/media/fill-800x600/gallery.webp",
+                    full: "/media/max-1600x1200/gallery.webp",
+                    alt: "",
+                  },
                   caption: "",
                 },
               ],

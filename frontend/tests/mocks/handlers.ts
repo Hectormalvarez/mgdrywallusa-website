@@ -6,42 +6,54 @@ const defaultPortfolioResponse: PortfolioApiResponse = {
   items: [
     {
       id: 1,
-      meta: {
-        type: 'portfolio.PortfolioItem',
-        detail_url: 'http://localhost:8000/api/v1/pages/1/',
-      },
+      slug: 'kitchen-remodel',
       title: 'Kitchen Remodel',
       description: '<p>Complete kitchen drywall installation with <strong>Level 5 finish</strong>.</p>',
       scope: 'residential',
+      scope_label: 'Residential',
       finish_tags: ['smooth', 'level-5'],
-      featured_image_url: 'http://localhost:8000/media/fill-800x600/test1.png',
+      featured_image: {
+        thumbnail: 'http://localhost:8000/media/fill-150x150/test1.png',
+        card: 'http://localhost:8000/media/fill-800x600/test1.png',
+        full: 'http://localhost:8000/media/max-1600x1200/test1.png',
+        alt: 'Kitchen Remodel',
+      },
       gallery_images: [
         {
-          url: 'http://localhost:8000/media/fill-800x600/test1.png',
-          width: 800,
-          height: 600,
-          alt: '',
+          id: 1,
+          image: {
+            thumbnail: 'http://localhost:8000/media/fill-150x150/test1.png',
+            card: 'http://localhost:8000/media/fill-800x600/test1.png',
+            full: 'http://localhost:8000/media/max-1600x1200/test1.png',
+            alt: 'Kitchen Remodel',
+          },
           caption: 'Smooth ceiling finish',
         },
       ],
     },
     {
       id: 2,
-      meta: {
-        type: 'portfolio.PortfolioItem',
-        detail_url: 'http://localhost:8000/api/v1/pages/2/',
-      },
+      slug: 'office-build-out',
       title: 'Office Build-Out',
       description: '<p>Commercial office partition walls</p>',
       scope: 'commercial',
+      scope_label: 'Commercial',
       finish_tags: ['level-5'],
-      featured_image_url: 'http://localhost:8000/media/fill-800x600/test2.png',
+      featured_image: {
+        thumbnail: 'http://localhost:8000/media/fill-150x150/test2.png',
+        card: 'http://localhost:8000/media/fill-800x600/test2.png',
+        full: 'http://localhost:8000/media/max-1600x1200/test2.png',
+        alt: 'Office Build-Out',
+      },
       gallery_images: [
         {
-          url: 'http://localhost:8000/media/fill-800x600/test2.png',
-          width: 800,
-          height: 600,
-          alt: '',
+          id: 2,
+          image: {
+            thumbnail: 'http://localhost:8000/media/fill-150x150/test2.png',
+            card: 'http://localhost:8000/media/fill-800x600/test2.png',
+            full: 'http://localhost:8000/media/max-1600x1200/test2.png',
+            alt: 'Office Build-Out',
+          },
           caption: 'Partition wall taping',
         },
       ],
