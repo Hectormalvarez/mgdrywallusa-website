@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { fetchPortfolioItems, type PortfolioItem } from '@/lib/api';
+import type { PortfolioScope } from '@/types/portfolio';
 import PortfolioSkeleton from '@/components/sections/PortfolioSkeleton';
+import ScopeFilterTabs from '@/components/ui/ScopeFilterTabs';
 
 interface PortfolioSectionProps {
   apiUrl: string;
@@ -19,6 +21,12 @@ export default function PortfolioSection({
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeScope, setActiveScope] = useState<PortfolioScope | 'all'>('all');
+
+  const filteredItems = useMemo(() => {
+    if (activeScope === 'all') return items;
+    return items.filter((item) => item.scope === activeScope);
+  }, [items, activeScope]);
 
   useEffect(() => {
     fetchPortfolioItems(apiUrl)
@@ -46,6 +54,10 @@ export default function PortfolioSection({
           {heading}
         </h2>
 
+        {!loading && !error && items.length > 0 && (
+          <ScopeFilterTabs activeScope={activeScope} onScopeChange={setActiveScope} />
+        )}
+
         {loading && (
           <div className="mt-8">
             <PortfolioSkeleton />
@@ -63,8 +75,8 @@ export default function PortfolioSection({
         )}
 
         {!loading && !error && items.length > 0 && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300 ease-in-out">
+            {filteredItems.map((item) => (
               <article
                 key={item.id}
                 className="overflow-hidden rounded-lg border border-border"
@@ -136,6 +148,11 @@ export default function PortfolioSection({
                 </div>
               </article>
             ))}
+            {filteredItems.length === 0 && items.length > 0 && (
+              <p className="col-span-full text-center text-muted">
+                No projects match this filter.
+              </p>
+            )}
           </div>
         )}
       </div>
