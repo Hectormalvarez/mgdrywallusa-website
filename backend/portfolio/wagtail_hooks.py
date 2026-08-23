@@ -20,5 +20,5 @@ def register_portfolio_menu_item():
         "Portfolio",
         url,
         icon_name="image",
-        order=250,
+        order=500,
     )
