@@ -89,11 +89,7 @@ def add_operations_panel(request, panels):
             services_url = reverse("wagtailsnippets_home_service:list")
 
             portfolio_count = PortfolioItem.objects.live().count()
-            portfolio_page = PortfolioPage.objects.first()
-            if portfolio_page:
-                portfolio_url = reverse("wagtailadmin_explore", args=[portfolio_page.id])
-            else:
-                portfolio_url = reverse("wagtailadmin_explore_root")
+            portfolio_url = reverse("portfolio_items:index")
 
             return format_html(
                 """

@@ -48,26 +48,29 @@ def test_portfolio_item_has_tags_group():
 
 
 @pytest.mark.django_db
-def test_register_portfolio_menu_item(home_page, site):
-    """Portfolio menu hook should return a MenuItem linking to the page explorer."""
-    from portfolio.models import PortfolioPage
-    from portfolio.wagtail_hooks import register_portfolio_menu_item
+def test_register_portfolio_viewset():
+    """Portfolio viewset hook should return a PortfolioItemViewSet instance."""
+    from portfolio.admin import PortfolioItemViewSet
+    from portfolio.wagtail_hooks import register_portfolio_viewset
 
-    # Create a PortfolioPage so the hook can find it
-    portfolio_page = PortfolioPage(title="Portfolio", slug="portfolio")
-    home_page.add_child(instance=portfolio_page)
-
-    menu_item = register_portfolio_menu_item()
-    assert menu_item.label == "Portfolio"
-    assert menu_item.icon_name == "image"
-    assert str(portfolio_page.id) in menu_item.url
+    viewset = register_portfolio_viewset()
+    assert isinstance(viewset, PortfolioItemViewSet)
+    assert viewset.model.__name__ == "PortfolioItem"
+    assert viewset.icon == "image"
 
 
-@pytest.mark.django_db
-def test_register_portfolio_menu_item_fallback():
-    """Portfolio menu hook should fallback to explore_root when no PortfolioPage exists."""
-    from portfolio.wagtail_hooks import register_portfolio_menu_item
+def test_portfolio_viewset_has_thumbnail_column():
+    """PortfolioItemViewSet should include an ImageThumbnailColumn."""
+    from portfolio.admin import portfolio_item_viewset
+    from portfolio.tables import ImageThumbnailColumn
 
-    menu_item = register_portfolio_menu_item()
-    assert menu_item.label == "Portfolio"
-    assert menu_item.icon_name == "image"
+    col_types = [type(c) for c in portfolio_item_viewset.columns]
+    assert ImageThumbnailColumn in col_types
+
+
+def test_portfolio_viewset_filters():
+    """PortfolioItemViewSet should filter by scope and live status."""
+    from portfolio.admin import portfolio_item_viewset
+
+    assert "scope" in portfolio_item_viewset.list_filter
+    assert "live" in portfolio_item_viewset.list_filter
