@@ -8,8 +8,6 @@ from home.models import Service
 class ServiceViewSet(SnippetViewSet):
     model = Service
     icon = "list-ul"
-    menu_label = "Services"
-    menu_order = 400
     list_display = ["name", "icon", "is_active"]
     list_filter = ["is_active", "icon"]
     search_fields = ["name", "short_description"]
