@@ -37,3 +37,7 @@ def test_site_settings_endpoint_contract(site):
     assert "nav" in data
     assert len(data["nav"]) == 1
     assert data["nav"][0] == {"label": "Services", "href": "#services"}
+
+    assert "seo" in data
+    assert data["seo"]["address_locality"] == "Austin"
+    assert data["seo"]["address_region"] == "TX"
