@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 from modelcluster.fields import ParentalKey
 from wagtail.models import Page, Orderable
 from wagtail.fields import RichTextField
@@ -6,7 +7,53 @@ from wagtail.admin.panels import FieldPanel, MultiFieldPanel, InlinePanel
 from wagtail.api import APIField
 from wagtail.images.api.fields import ImageRenditionField
 from wagtail_headless_preview.models import HeadlessPreviewMixin
-from site_settings.models import ServicesField
+
+from home.serializers import FeaturedServicesField
+
+
+class Service(models.Model):
+    """Standalone service snippet managed independently of the homepage."""
+
+    name = models.CharField(
+        max_length=150,
+        help_text="Service name displayed on the card (e.g. 'Level 5 Finishing')",
+    )
+    slug = models.SlugField(
+        unique=True,
+        help_text="URL-safe identifier derived from the service name",
+    )
+    short_description = models.TextField(
+        help_text="Brief service description (2-3 sentences, shown on the service card)",
+    )
+    icon = models.CharField(
+        max_length=50,
+        default="shield",
+        blank=True,
+        help_text="Icon identifier. One of: wall, patch, paint, shield",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Uncheck to hide this service from the public site without deleting it",
+    )
+
+    panels = [
+        FieldPanel("name"),
+        FieldPanel("slug"),
+        FieldPanel("short_description"),
+        FieldPanel("icon"),
+        FieldPanel("is_active"),
+    ]
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
 
 class HomePage(HeadlessPreviewMixin, Page):
@@ -114,7 +161,7 @@ class HomePage(HeadlessPreviewMixin, Page):
             ],
             heading="Services Section Header",
         ),
-        InlinePanel("services", label="Service Items"),
+        InlinePanel("featured_services", label="Featured Services"),
         MultiFieldPanel(
             [
                 FieldPanel("portfolio_heading"),
@@ -145,7 +192,7 @@ class HomePage(HeadlessPreviewMixin, Page):
         APIField("cta_secondary_url"),
         APIField("services_heading"),
         APIField("services_subheading"),
-        APIField("services", serializer=ServicesField()),
+        APIField("featured_services", serializer=FeaturedServicesField()),
         APIField("portfolio_heading"),
         APIField("portfolio_empty_text"),
         APIField("lead_section_heading"),
@@ -153,31 +200,24 @@ class HomePage(HeadlessPreviewMixin, Page):
     ]
 
 
-class HomePageServiceItem(Orderable):
+class HomePageFeaturedService(Orderable):
+    """Through-model linking HomePage to Service snippets with display ordering."""
+
     page = ParentalKey(
         HomePage,
         on_delete=models.CASCADE,
-        related_name="services",
+        related_name="featured_services",
     )
-    title = models.CharField(
-        max_length=150,
-        help_text="Service name displayed on the card (e.g. 'Level 5 Finishing')",
-    )
-    description = models.TextField(
-        help_text="Brief service description (2-3 sentences, shown on the service card)",
-    )
-    icon_name = models.CharField(
-        max_length=50,
-        default="shield",
-        help_text="Icon identifier. One of: wall, patch, paint, shield",
-        blank=True,
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name="+",
+        help_text="Select a service to feature on the homepage",
     )
 
     panels = [
-        FieldPanel("title"),
-        FieldPanel("description"),
-        FieldPanel("icon_name"),
+        FieldPanel("service"),
     ]
 
     def __str__(self):
-        return self.title
+        return f"{self.page.title} — {self.service.name}"

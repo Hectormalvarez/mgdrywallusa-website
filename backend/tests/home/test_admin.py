@@ -6,7 +6,7 @@ so editors know what to enter without developer guidance.
 
 import pytest
 
-from home.models import HomePage, HomePageServiceItem
+from home.models import HomePage, Service
 from portfolio.models import PortfolioItem, PortfolioItemImage
 
 
@@ -23,10 +23,12 @@ from portfolio.models import PortfolioItem, PortfolioItemImage
         (HomePage, "cta_primary_url", "url"),
         (HomePage, "cta_secondary_label", "secondary action button"),
         (HomePage, "cta_secondary_url", "url"),
-        # ── HomePageServiceItem fields ───────────────────────────────────
-        (HomePageServiceItem, "title", "service name"),
-        (HomePageServiceItem, "description", "service description"),
-        (HomePageServiceItem, "icon_name", "shield"),
+        # ── Service snippet fields ───────────────────────────────────────
+        (Service, "name", "service name"),
+        (Service, "short_description", "service description"),
+        (Service, "icon", "shield"),
+        (Service, "is_active", "hide"),
+        (Service, "slug", "identifier"),
         # ── PortfolioItem fields ─────────────────────────────────────────
         (PortfolioItem, "description", "project summary"),
         (PortfolioItem, "featured_image", "800"),
@@ -46,14 +48,14 @@ def test_field_has_help_text(model_cls, field_name, expected_substring):
     )
 
 
-def test_icon_name_help_text_lists_valid_values():
-    """icon_name help_text must list exactly the values the frontend supports."""
-    field = HomePageServiceItem._meta.get_field("icon_name")
+def test_icon_help_text_lists_valid_values():
+    """icon help_text must list exactly the values the frontend supports."""
+    field = Service._meta.get_field("icon")
     for valid_icon in ("wall", "patch", "paint", "shield"):
         assert valid_icon in field.help_text, (
-            f"icon_name help_text must list '{valid_icon}' as a valid value"
+            f"icon help_text must list '{valid_icon}' as a valid value"
         )
     # "building" was previously listed but is NOT a supported frontend icon
     assert "building" not in field.help_text, (
-        "icon_name help_text must not list 'building' — it is not a valid icon"
+        "icon help_text must not list 'building' — it is not a valid icon"
     )

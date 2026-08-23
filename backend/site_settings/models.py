@@ -1,24 +1,11 @@
 from django.db import models
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-from rest_framework.fields import Field
 from wagtail.models import Orderable
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel, InlinePanel
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 
 
-class ServicesField(Field):
-    """Serializes HomePageServiceItem orderables into a clean JSON list."""
-
-    def to_representation(self, relation):
-        return [
-            {
-                "title": item.title,
-                "description": item.description,
-                "icon_name": item.icon_name,
-            }
-            for item in relation.all()
-        ]
 
 
 @register_setting(icon="cog-full")
