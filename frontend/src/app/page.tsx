@@ -41,7 +41,7 @@ export default async function Home() {
       <ServicesSection
         heading={homeData?.services_heading}
         subheading={homeData?.services_subheading}
-        services={homeData?.services}
+        services={homeData?.featured_services}
       />
       <PortfolioSection
         apiUrl={PORTFOLIO_API_URL}

@@ -8,22 +8,25 @@ interface ServicesSectionProps {
 
 const DEFAULT_SERVICES: ServiceItem[] = [
   {
-    title: "Level 5 Finishing",
-    description:
+    name: "Level 5 Finishing",
+    slug: "level-5-finishing",
+    short_description:
       "Flawless, glass-smooth surfaces for high-end residential interiors and architectural accent walls.",
-    icon_name: "paint",
+    icon: "paint",
   },
   {
-    title: "Drywall Repair & Patching",
-    description:
+    name: "Drywall Repair & Patching",
+    slug: "drywall-repair-patching",
+    short_description:
       "Seamless water damage repairs, stress crack fixes, and texture-matching for ceilings and walls.",
-    icon_name: "patch",
+    icon: "patch",
   },
   {
-    title: "ADU & Renovation Framing",
-    description:
+    name: "ADU & Renovation Framing",
+    slug: "adu-renovation-framing",
+    short_description:
       "Full-service drywall hanging and finishing for garage conversions, room additions, and basements.",
-    icon_name: "wall",
+    icon: "wall",
   },
 ];
 
@@ -88,17 +91,17 @@ export default function ServicesSection({
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {items.map((service, index) => (
             <div
-              key={`${service.title}-${index}`}
+              key={`${service.slug}-${index}`}
               className="flex flex-col rounded-lg border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                <ServiceIcon name={service.icon_name} />
+                <ServiceIcon name={service.icon} />
               </div>
               <h3 className="mt-4 text-xl font-semibold text-ink">
-                {service.title}
+                {service.name}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                {service.description}
+                {service.short_description}
               </p>
             </div>
           ))}
