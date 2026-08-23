@@ -72,14 +72,24 @@ def test_prune_menu_items_hides_default_cms_menus(site):
 
 
 @pytest.mark.django_db
+def test_register_admin_home_menu_item(site):
+    """register_admin_home_menu_item should return a MenuItem linking to the dashboard."""
+    from site_settings.wagtail_hooks import register_admin_home_menu_item
+
+    menu_item = register_admin_home_menu_item()
+    assert menu_item.label == "Admin Home"
+    assert menu_item.icon_name == "home"
+
+
+@pytest.mark.django_db
 def test_register_edit_homepage_menu_item(home_page, site):
     """register_edit_homepage_menu_item should return a MenuItem with edit URL."""
     from site_settings.wagtail_hooks import register_edit_homepage_menu_item
 
     menu_item = register_edit_homepage_menu_item()
-    assert menu_item.label == "Homepage"
+    assert menu_item.label == "Edit Home"
     assert str(home_page.id) in menu_item.url
-    assert menu_item.icon_name == "home"
+    assert menu_item.icon_name == "pencil"
 
 
 @pytest.mark.django_db

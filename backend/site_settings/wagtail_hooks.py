@@ -153,14 +153,20 @@ def prune_menu_items(request, menu_items):
 
 
 @hooks.register("register_admin_menu_item")
+def register_admin_home_menu_item():
+    """Add an 'Admin Home' link to the Operations Hub dashboard."""
+    return MenuItem("Admin Home", reverse("wagtailadmin_home"), icon_name="home", order=90)
+
+
+@hooks.register("register_admin_menu_item")
 def register_edit_homepage_menu_item():
-    """Add a one-click 'Homepage' link to the sidebar."""
+    """Add a one-click 'Edit Home' link to the sidebar."""
     from django.apps import apps
 
     HomePage = apps.get_model("home", "HomePage")
     home = HomePage.objects.first()
     url = reverse("wagtailadmin_pages:edit", args=[home.id]) if home else "#"
-    return MenuItem("Homepage", url, icon_name="home", order=100)
+    return MenuItem("Edit Home", url, icon_name="pencil", order=100)
 
 
 @hooks.register("register_admin_menu_item")
