@@ -63,6 +63,17 @@ class PortfolioItem(Page):
         verbose_name="Finish Tags",
     )
 
+    # ── Page tree constraints ────────────────────────────────────────────
+    parent_page_types = ["portfolio.PortfolioPage"]
+
+    # ── Display helpers ──────────────────────────────────────────────────
+
+    @property
+    def scope_label(self) -> str:
+        """Human-readable label for the project scope."""
+        labels = dict(self.SCOPE_CHOICES)
+        return labels.get(self.scope, "")
+
     content_panels = Page.content_panels + [
         MultiFieldPanel(
             [
@@ -88,6 +99,7 @@ class PortfolioItem(Page):
 
     api_fields = [
         APIField("scope"),
+        APIField("scope_label"),
         APIField("description"),
         APIField("finish_tags", serializer=TagsField()),
         APIField(
