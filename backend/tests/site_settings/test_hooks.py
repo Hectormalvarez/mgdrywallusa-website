@@ -30,25 +30,45 @@ def test_global_admin_css_falls_back_to_default(site):
 
 
 @pytest.mark.django_db
-def test_prune_menu_items_hides_documents(site):
-    """prune_menu_items should remove documents, reports, explorer items."""
+def test_prune_menu_items_hides_default_cms_menus(site):
+    """prune_menu_items should remove pages, images, snippets and other default menus."""
     from site_settings.wagtail_hooks import prune_menu_items
 
     mock_item_docs = MagicMock()
     mock_item_docs.name = "documents"
-    mock_item_docs_2 = MagicMock()
-    mock_item_docs_2.name = "reports"
     mock_item_pages = MagicMock()
     mock_item_pages.name = "pages"
-    menu_items = [mock_item_docs, mock_item_docs_2, mock_item_pages]
+    mock_item_images = MagicMock()
+    mock_item_images.name = "images"
+    mock_item_snippets = MagicMock()
+    mock_item_snippets.name = "snippets"
+    mock_item_explorer = MagicMock()
+    mock_item_explorer.name = "explorer"
+    mock_item_reports = MagicMock()
+    mock_item_reports.name = "reports"
+    mock_item_custom = MagicMock()
+    mock_item_custom.name = "services"
+    menu_items = [
+        mock_item_docs,
+        mock_item_pages,
+        mock_item_images,
+        mock_item_snippets,
+        mock_item_explorer,
+        mock_item_reports,
+        mock_item_custom,
+    ]
 
     request = MagicMock()
     prune_menu_items(request, menu_items)
 
     remaining_names = [item.name for item in menu_items]
     assert "documents" not in remaining_names
+    assert "pages" not in remaining_names
+    assert "images" not in remaining_names
+    assert "snippets" not in remaining_names
+    assert "explorer" not in remaining_names
     assert "reports" not in remaining_names
-    assert "pages" in remaining_names
+    assert "services" in remaining_names
 
 
 @pytest.mark.django_db
@@ -57,9 +77,9 @@ def test_register_edit_homepage_menu_item(home_page, site):
     from site_settings.wagtail_hooks import register_edit_homepage_menu_item
 
     menu_item = register_edit_homepage_menu_item()
-    assert menu_item.label == "Edit Homepage"
+    assert menu_item.label == "Homepage"
     assert str(home_page.id) in menu_item.url
-    assert menu_item.icon_name == "desktop"
+    assert menu_item.icon_name == "home"
 
 
 @pytest.mark.django_db

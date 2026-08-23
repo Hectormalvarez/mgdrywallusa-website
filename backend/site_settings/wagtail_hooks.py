@@ -147,20 +147,20 @@ def add_operations_panel(request, panels):
 
 @hooks.register("construct_main_menu")
 def prune_menu_items(request, menu_items):
-    """Hide developer-oriented menu items to keep the admin owner-friendly."""
-    hidden = {"documents", "reports", "explorer"}
+    """Hide default CMS menus to keep the admin as a focused business app."""
+    hidden = {"pages", "images", "snippets", "documents", "reports", "explorer"}
     menu_items[:] = [item for item in menu_items if item.name not in hidden]
 
 
 @hooks.register("register_admin_menu_item")
 def register_edit_homepage_menu_item():
-    """Add a one-click 'Edit Homepage' link to the sidebar."""
+    """Add a one-click 'Homepage' link to the sidebar."""
     from django.apps import apps
 
     HomePage = apps.get_model("home", "HomePage")
     home = HomePage.objects.first()
     url = reverse("wagtailadmin_pages:edit", args=[home.id]) if home else "#"
-    return MenuItem("Edit Homepage", url, icon_name="desktop", order=150)
+    return MenuItem("Homepage", url, icon_name="home", order=100)
 
 
 @hooks.register("register_admin_menu_item")
@@ -178,4 +178,4 @@ def register_site_settings_menu_item():
     else:
         url = "#"
 
-    return MenuItem("Site Settings", url, icon_name="cog", order=400)
+    return MenuItem("Site Settings", url, icon_name="cog", order=900)
