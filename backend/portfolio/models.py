@@ -7,7 +7,7 @@ from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.api import APIField
 
-from .serializers import FeaturedImageField, GalleryImageField, TagsField
+from .serializers import GalleryImageField, OptimizedPortfolioImageField, TagsField
 
 
 class PortfolioItemTag(TaggedItemBase):
@@ -103,12 +103,12 @@ class PortfolioItem(Page):
         APIField("description"),
         APIField("finish_tags", serializer=TagsField()),
         APIField(
-            "featured_image_url",
-            serializer=FeaturedImageField("fill-800x600", source="featured_image"),
+            "featured_image",
+            serializer=OptimizedPortfolioImageField(),
         ),
         APIField(
             "gallery_images",
-            serializer=GalleryImageField("fill-800x600"),
+            serializer=GalleryImageField(),
         ),
     ]
 
