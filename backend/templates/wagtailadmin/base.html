@@ -3,7 +3,7 @@
 
 {% block branding_logo %}
   {% get_settings use_default_site=True as site_settings %}
-  {% with s=site_settings.home.sitesettings %}
+  {% with s=site_settings.site_settings.sitesettings %}
     {% if s.logo %}
       {% image s.logo max-120x40 as sidebar_logo %}
       <img src="{{ sidebar_logo.url }}" alt="{{ s.site_name }}" style="height:28px;width:auto;" />
