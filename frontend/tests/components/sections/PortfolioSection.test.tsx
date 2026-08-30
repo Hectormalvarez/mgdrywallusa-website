@@ -147,5 +147,35 @@ describe('PortfolioSection', () => {
     const skeletonCards = document.querySelectorAll('article[aria-hidden="true"]');
     expect(skeletonCards.length).toBeGreaterThan(0);
   });
+
+  it('renders View All link when showViewAll is true', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+        showViewAll
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    const link = screen.getByRole('link', { name: /view all projects/i });
+    expect(link).toHaveAttribute('href', '/portfolio');
+  });
+
+  it('does not render View All link when showViewAll is false', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('link', { name: /view all projects/i })).not.toBeInTheDocument();
+  });
 });
 

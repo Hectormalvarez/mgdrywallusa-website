@@ -12,12 +12,14 @@ interface PortfolioSectionProps {
   apiUrl: string;
   heading?: string;
   emptyText?: string;
+  showViewAll?: boolean;
 }
 
 export default function PortfolioSection({
   apiUrl,
   heading = "Our Work",
   emptyText = "No projects to display yet.",
+  showViewAll = false,
 }: PortfolioSectionProps) {
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +102,17 @@ export default function PortfolioSection({
               <p className="mt-6 text-center text-muted">
                 No projects match this filter.
               </p>
+            )}
+            {showViewAll && (
+              <div className="mt-8 text-center">
+                <a
+                  href="/portfolio"
+                  className="inline-flex items-center text-sm font-semibold text-brand hover:text-brand-strong transition-colors"
+                >
+                  View All Projects
+                  <span className="ml-1" aria-hidden="true">→</span>
+                </a>
+              </div>
             )}
           </>
         )}
