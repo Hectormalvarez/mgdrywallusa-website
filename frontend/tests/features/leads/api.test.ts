@@ -123,6 +123,39 @@ describe('fetchPortfolioItems', () => {
       fetchPortfolioItems('http://localhost/api/v1/pages/')
     ).rejects.toThrow();
   });
+
+  it('appends limit and offset query params when provided', async () => {
+    let capturedUrl = '';
+    server.use(
+      http.get('*/api/v1/pages/', ({ request }) => {
+        capturedUrl = request.url;
+        return HttpResponse.json({ meta: { total_count: 0 }, items: [] });
+      }),
+    );
+
+    await fetchPortfolioItems(
+      'http://localhost/api/v1/pages/?type=portfolio.PortfolioItem',
+      { limit: 6, offset: 12 },
+    );
+
+    expect(capturedUrl).toContain('limit=6');
+    expect(capturedUrl).toContain('offset=12');
+  });
+
+  it('works without pagination params (backwards compatible)', async () => {
+    let capturedUrl = '';
+    server.use(
+      http.get('*/api/v1/pages/', ({ request }) => {
+        capturedUrl = request.url;
+        return HttpResponse.json({ meta: { total_count: 0 }, items: [] });
+      }),
+    );
+
+    await fetchPortfolioItems('http://localhost/api/v1/pages/');
+
+    expect(capturedUrl).not.toContain('limit=');
+    expect(capturedUrl).not.toContain('offset=');
+  });
 });
 
 describe('submitLead', () => {

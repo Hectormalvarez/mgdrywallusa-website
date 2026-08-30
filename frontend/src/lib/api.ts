@@ -49,9 +49,20 @@ export async function submitLead(
  * Fetch portfolio items from the Wagtail API.
  */
 export async function fetchPortfolioItems(
-  apiUrl: string
+  apiUrl: string,
+  options?: { limit?: number; offset?: number },
 ): Promise<PortfolioApiResponse> {
-  const response = await fetch(apiUrl);
+  let url = apiUrl;
+  if (options?.limit !== undefined) {
+    const separator = url.includes("?") ? "&" : "?";
+    url += `${separator}limit=${options.limit}`;
+  }
+  if (options?.offset !== undefined) {
+    const separator = url.includes("?") ? "&" : "?";
+    url += `${separator}offset=${options.offset}`;
+  }
+
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to load portfolio: ${response.status}`);
   }
