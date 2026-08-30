@@ -122,4 +122,112 @@ test.describe("Portfolio Section", () => {
       section.getByText(/failed to load portfolio/i)
     ).toBeVisible({ timeout: 5000 });
   });
+
+  test("renders View All link pointing to /portfolio", async ({ page }) => {
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          meta: { total_count: 1 },
+          items: [
+            {
+              id: 1,
+              slug: "sample-project",
+              title: "Sample Project",
+              description: "<p>A project.</p>",
+              scope: "residential",
+              scope_label: "Residential",
+              finish_tags: [],
+              featured_image: null,
+              gallery_images: [],
+            },
+          ],
+        }),
+      });
+    });
+
+    await page.goto("/");
+    const section = page.locator("#portfolio");
+    await expect(section.locator("article").first()).toBeVisible({ timeout: 5000 });
+
+    const viewAllLink = section.getByRole("link", { name: /view all projects/i });
+    await expect(viewAllLink).toBeVisible();
+    await expect(viewAllLink).toHaveAttribute("href", "/portfolio");
+  });
+});
+
+// ===========================================================================
+// Portfolio Listing Page (/portfolio)
+// ===========================================================================
+test.describe("Portfolio Listing Page", () => {
+  const mockItems = {
+    meta: { total_count: 2 },
+    items: [
+      {
+        id: 1,
+        slug: "residential-project",
+        title: "Residential Project",
+        description: "<p>A home remodel.</p>",
+        scope: "residential",
+        scope_label: "Residential",
+        finish_tags: ["Level 5"],
+        featured_image: {
+          thumbnail: "/media/thumb1.webp",
+          card: "/media/card1.webp",
+          full: "/media/full1.webp",
+          alt: "Residential Project",
+        },
+        gallery_images: [],
+      },
+      {
+        id: 2,
+        slug: "commercial-project",
+        title: "Commercial Project",
+        description: "<p>An office buildout.</p>",
+        scope: "commercial",
+        scope_label: "Commercial",
+        finish_tags: [],
+        featured_image: null,
+        gallery_images: [],
+      },
+    ],
+  };
+
+  test("renders listing page with portfolio items", async ({ page }) => {
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockItems),
+      });
+    });
+
+    await page.goto("/portfolio");
+
+    await expect(
+      page.getByRole("heading", { name: /our work/i })
+    ).toBeVisible();
+
+    const cards = page.locator("article");
+    await expect(cards.first()).toBeVisible({ timeout: 5000 });
+    await expect(cards).toHaveCount(2);
+  });
+
+  test("does not render View All link on listing page", async ({ page }) => {
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockItems),
+      });
+    });
+
+    await page.goto("/portfolio");
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 5000 });
+
+    await expect(
+      page.getByRole("link", { name: /view all projects/i })
+    ).not.toBeVisible();
+  });
 });
