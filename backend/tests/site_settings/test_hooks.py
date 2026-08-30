@@ -73,3 +73,22 @@ def test_add_operations_panel_inserts_panel(site, db):
 
     assert len(panels) == 1
     assert panels[0].order == 10
+
+
+@pytest.mark.django_db
+def test_operations_panel_renders_three_metrics(home_page, site, db):
+    """Operations panel HTML should contain Leads, Services, and Portfolio metrics."""
+    from django.test import Client
+    from site_settings.wagtail_hooks import add_operations_panel
+
+    request = MagicMock()
+    panels = []
+    add_operations_panel(request, panels)
+
+    html = str(panels[0].render_html({}))
+    assert "New Leads" in html
+    assert "Active Services" in html
+    assert "Portfolio Items" in html
+    assert "View Queue" in html
+    assert "Manage Services" in html
+    assert "Manage Portfolio" in html

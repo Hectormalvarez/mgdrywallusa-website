@@ -53,7 +53,11 @@ def global_admin_css():
 
 @hooks.register("construct_homepage_panels")
 def add_operations_panel(request, panels):
-    """Prepend an operations summary panel to the admin homepage."""
+    """Prepend an enhanced operations summary panel to the admin homepage.
+
+    Displays metric badges for Leads, active Services, and Portfolio items
+    with direct action buttons for each content type.
+    """
     from wagtail.admin.ui.components import Component
     from wagtail.models import Site
     from site_settings.models import SiteSettings
@@ -74,24 +78,64 @@ def add_operations_panel(request, panels):
             from django.urls import reverse
 
             Lead = apps.get_model("leads", "Lead")
+            Service = apps.get_model("home", "Service")
+            PortfolioItem = apps.get_model("portfolio", "PortfolioItem")
+            PortfolioPage = apps.get_model("portfolio", "PortfolioPage")
+
+            new_leads = Lead.objects.filter(status="new").count()
             leads_url = reverse("wagtailsnippets_leads_lead:list")
-            new_count = Lead.objects.filter(status="new").count()
+
+            active_services = Service.objects.filter(is_active=True).count()
+            services_url = reverse("wagtailsnippets_home_service:list")
+
+            portfolio_count = PortfolioItem.objects.live().count()
+            portfolio_page = PortfolioPage.objects.first()
+            if portfolio_page:
+                portfolio_url = reverse("wagtailadmin_explore", args=[portfolio_page.id])
+            else:
+                portfolio_url = reverse("wagtailadmin_explore_root")
+
             return format_html(
                 """
                 <section class="w-panel" style="padding:1.5rem;background:#fff;
                     border-left:4px solid {primary};margin-bottom:1.5rem;">
                     <h2 style="margin:0;font-size:1.25rem;font-weight:700;
                         color:{primary};">Operations Hub</h2>
-                    <p style="color:#64748B;margin:0.25rem 0 1rem 0;">
-                        You have <strong>{}</strong> customer lead{}.</p>
-                    <a href="{}" class="button button-primary"
-                       style="background-color:{primary};">View Lead Queue</a>
+                    <p style="color:#64748B;margin:0.25rem 0 1.5rem 0;">
+                        Welcome to {site_name} CMS.</p>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+                        <div style="padding:1rem;border:1px solid #e2e8f0;border-radius:0.5rem;">
+                            <div style="font-size:0.875rem;color:#64748B;">New Leads</div>
+                            <div style="font-size:2rem;font-weight:700;color:{primary};">{new_leads}</div>
+                            <a href="{leads_url}" class="button button-small"
+                               style="background-color:{primary};color:#fff;margin-top:0.5rem;">View Queue</a>
+                        </div>
+
+                        <div style="padding:1rem;border:1px solid #e2e8f0;border-radius:0.5rem;">
+                            <div style="font-size:0.875rem;color:#64748B;">Active Services</div>
+                            <div style="font-size:2rem;font-weight:700;color:{primary};">{active_services}</div>
+                            <a href="{services_url}" class="button button-small"
+                               style="background-color:{primary};color:#fff;margin-top:0.5rem;">Manage Services</a>
+                        </div>
+
+                        <div style="padding:1rem;border:1px solid #e2e8f0;border-radius:0.5rem;">
+                            <div style="font-size:0.875rem;color:#64748B;">Portfolio Items</div>
+                            <div style="font-size:2rem;font-weight:700;color:{primary};">{portfolio_count}</div>
+                            <a href="{portfolio_url}" class="button button-small"
+                               style="background-color:{primary};color:#fff;margin-top:0.5rem;">Manage Portfolio</a>
+                        </div>
+                    </div>
                 </section>
                 """,
-                new_count,
-                "" if new_count == 1 else "s",
-                leads_url,
+                new_leads=new_leads,
+                active_services=active_services,
+                portfolio_count=portfolio_count,
+                leads_url=leads_url,
+                services_url=services_url,
+                portfolio_url=portfolio_url,
                 primary=primary,
+                site_name=site_name,
             )
 
     panels.insert(0, OperationsPanel())
