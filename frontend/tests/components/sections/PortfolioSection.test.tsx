@@ -285,8 +285,9 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Project Three')).toBeInTheDocument();
     });
 
-    // All 3 items visible, button gone
+    // All 3 items visible, button gone, "all loaded" message shown
     expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/all projects loaded/i)).toBeInTheDocument();
   });
 });
 

@@ -150,6 +150,11 @@ export default function PortfolioSection({
                 <span className="text-sm text-muted" role="status">Loading…</span>
               </div>
             )}
+            {!hasMore && !loading && pageLimit && items.length > 0 && (
+              <p className="mt-8 text-center text-sm text-muted">
+                All projects loaded
+              </p>
+            )}
           </>
         )}
 
