@@ -177,5 +177,116 @@ describe('PortfolioSection', () => {
 
     expect(screen.queryByRole('link', { name: /view all projects/i })).not.toBeInTheDocument();
   });
+
+  it('shows Load More button when paginated and more items exist', async () => {
+    // Mock: API has 4 total items, first page returns 2
+    server.use(
+      http.get('*/api/v1/pages/', ({ request }) => {
+        const url = new URL(request.url);
+        const offset = Number(url.searchParams.get('offset') || '0');
+        const allItems = [
+          {
+            id: 1, slug: 'item-1', title: 'Project One', description: '<p>One</p>',
+            scope: 'residential', scope_label: 'Residential', finish_tags: [],
+            featured_image: null, gallery_images: [],
+          },
+          {
+            id: 2, slug: 'item-2', title: 'Project Two', description: '<p>Two</p>',
+            scope: 'commercial', scope_label: 'Commercial', finish_tags: [],
+            featured_image: null, gallery_images: [],
+          },
+          {
+            id: 3, slug: 'item-3', title: 'Project Three', description: '<p>Three</p>',
+            scope: 'residential', scope_label: 'Residential', finish_tags: [],
+            featured_image: null, gallery_images: [],
+          },
+          {
+            id: 4, slug: 'item-4', title: 'Project Four', description: '<p>Four</p>',
+            scope: 'commercial', scope_label: 'Commercial', finish_tags: [],
+            featured_image: null, gallery_images: [],
+          },
+        ];
+        const limit = 2;
+        const page = allItems.slice(offset, offset + limit);
+        return HttpResponse.json({
+          meta: { total_count: allItems.length },
+          items: page,
+        });
+      })
+    );
+
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+        pageLimit={2}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Project One')).toBeInTheDocument();
+    });
+
+    // Only 2 items rendered initially
+    expect(screen.getByText('Project Two')).toBeInTheDocument();
+    expect(screen.queryByText('Project Three')).not.toBeInTheDocument();
+
+    // Load More button should be visible
+    const loadMoreBtn = screen.getByRole('button', { name: /load more/i });
+    expect(loadMoreBtn).toBeInTheDocument();
+  });
+
+  it('appends items and hides button when all items loaded', async () => {
+    server.use(
+      http.get('*/api/v1/pages/', ({ request }) => {
+        const url = new URL(request.url);
+        const offset = Number(url.searchParams.get('offset') || '0');
+        const allItems = [
+          {
+            id: 1, slug: 'item-1', title: 'Project One', description: '',
+            scope: 'residential', scope_label: 'Residential', finish_tags: [],
+            featured_image: null, gallery_images: [],
+          },
+          {
+            id: 2, slug: 'item-2', title: 'Project Two', description: '',
+            scope: 'commercial', scope_label: 'Commercial', finish_tags: [],
+            featured_image: null, gallery_images: [],
+          },
+          {
+            id: 3, slug: 'item-3', title: 'Project Three', description: '',
+            scope: 'residential', scope_label: 'Residential', finish_tags: [],
+            featured_image: null, gallery_images: [],
+          },
+        ];
+        const limit = 2;
+        const page = allItems.slice(offset, offset + limit);
+        return HttpResponse.json({
+          meta: { total_count: allItems.length },
+          items: page,
+        });
+      })
+    );
+
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+        pageLimit={2}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Project One')).toBeInTheDocument();
+    });
+
+    // Click Load More
+    await screen.findByRole('button', { name: /load more/i });
+    await screen.findByRole('button', { name: /load more/i }).then(btn => btn.click());
+
+    await waitFor(() => {
+      expect(screen.getByText('Project Three')).toBeInTheDocument();
+    });
+
+    // All 3 items visible, button gone
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
+  });
 });
 
