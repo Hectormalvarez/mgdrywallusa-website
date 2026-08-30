@@ -24,8 +24,8 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
       expect(screen.getAllByText('Residential').length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText('Commercial').length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText('smooth')).toBeInTheDocument();
-      expect(screen.getAllByText('level-5')).toHaveLength(2);
+      expect(screen.getAllByText('smooth').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('level-5').length).toBeGreaterThanOrEqual(2);
 
       const images = screen.getAllByRole('img');
       expect(images).toHaveLength(4);
@@ -288,6 +288,70 @@ describe('PortfolioSection', () => {
     // All 3 items visible, button gone, "all loaded" message shown
     expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
     expect(screen.getByText(/all projects loaded/i)).toBeInTheDocument();
+  });
+
+  it('extracts and renders unique finish tags as filter chips', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    // Mock data has tags: 'smooth' and 'level-5'
+    const tagChips = screen.getAllByRole('checkbox');
+    const tagLabels = tagChips.map((el) => el.textContent?.trim());
+    expect(tagLabels).toContain('smooth');
+    expect(tagLabels).toContain('level-5');
+  });
+
+  it('filters items by selected finish tag', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    // Click the 'smooth' tag chip
+    const smoothChip = screen.getByRole('checkbox', { name: 'smooth' });
+    smoothChip.click();
+
+    await waitFor(() => {
+      // Kitchen Remodel has 'smooth', Office Build-Out does not
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+      expect(screen.queryByText('Office Build-Out')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows all items when tag filter is cleared', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    // Click 'smooth' to filter
+    screen.getByRole('checkbox', { name: 'smooth' }).click();
+    await waitFor(() => {
+      expect(screen.queryByText('Office Build-Out')).not.toBeInTheDocument();
+    });
+
+    // Click 'smooth' again to deselect
+    screen.getByRole('checkbox', { name: 'smooth' }).click();
+    await waitFor(() => {
+      expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
+    });
   });
 });
 

@@ -5,6 +5,7 @@ import { fetchPortfolioItems, type PortfolioItem } from '@/lib/api';
 import type { PortfolioScope } from '@/types/portfolio';
 import PortfolioSkeleton from '@/components/sections/PortfolioSkeleton';
 import ScopeFilterTabs from '@/components/ui/ScopeFilterTabs';
+import TagFilter from '@/components/ui/TagFilter';
 import LightboxModal from '@/components/portfolio/LightboxModal';
 import PortfolioGrid from '@/components/portfolio/PortfolioGrid';
 
@@ -28,6 +29,7 @@ export default function PortfolioSection({
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeScope, setActiveScope] = useState<PortfolioScope | 'all'>('all');
+  const [activeTags, setActiveTags] = useState<string[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
   // Lightbox state
@@ -48,10 +50,34 @@ export default function PortfolioSection({
     setLightboxOpen(true);
   }, []);
 
+  const uniqueTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    for (const item of items) {
+      for (const tag of item.finish_tags) {
+        tagSet.add(tag);
+      }
+    }
+    return Array.from(tagSet).sort();
+  }, [items]);
+
   const filteredItems = useMemo(() => {
-    if (activeScope === 'all') return items;
-    return items.filter((item) => item.scope === activeScope);
-  }, [items, activeScope]);
+    let result = items;
+    if (activeScope !== 'all') {
+      result = result.filter((item) => item.scope === activeScope);
+    }
+    if (activeTags.length > 0) {
+      result = result.filter((item) =>
+        activeTags.some((tag) => item.finish_tags.includes(tag))
+      );
+    }
+    return result;
+  }, [items, activeScope, activeTags]);
+
+  const toggleTag = useCallback((tag: string) => {
+    setActiveTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  }, []);
 
   useEffect(() => {
     fetchPortfolioItems(apiUrl, pageLimit ? { limit: pageLimit, offset: 0 } : undefined)
@@ -96,7 +122,10 @@ export default function PortfolioSection({
         </h2>
 
         {!loading && !error && items.length > 0 && (
-          <ScopeFilterTabs activeScope={activeScope} onScopeChange={setActiveScope} />
+          <>
+            <ScopeFilterTabs activeScope={activeScope} onScopeChange={setActiveScope} />
+            <TagFilter tags={uniqueTags} activeTags={activeTags} onTagToggle={toggleTag} />
+          </>
         )}
 
         {loading && (
