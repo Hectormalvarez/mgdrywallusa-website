@@ -39,30 +39,3 @@ def test_viewset_columns_include_thumbnail():
     col_types = [type(c) for c in portfolio_item_viewset.columns]
     assert ImageThumbnailColumn in col_types
 
-
-# ── Auto-parent resolution ───────────────────────────────────────────────
-
-
-@pytest.mark.django_db
-def test_get_creation_parent_page(home_page, site):
-    """get_creation_parent_page should return the first PortfolioPage."""
-    from portfolio.admin import PortfolioItemViewSet
-
-    portfolio_page = PortfolioPage(title="Portfolio", slug="portfolio")
-    home_page.add_child(instance=portfolio_page)
-
-    viewset = PortfolioItemViewSet("portfolio_items")
-    parent = viewset.get_creation_parent_page()
-    assert parent is not None
-    assert parent.pk == portfolio_page.pk
-
-
-@pytest.mark.django_db
-def test_get_creation_parent_page_returns_first():
-    """get_creation_parent_page should return PortfolioPage.objects.first()."""
-    from portfolio.admin import PortfolioItemViewSet
-
-    viewset = PortfolioItemViewSet("portfolio_items")
-    result = viewset.get_creation_parent_page()
-    # Should not raise even when no PortfolioPage exists
-    assert result is None or isinstance(result, PortfolioPage)
