@@ -56,7 +56,7 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn().mockReturnValue({ back: jest.fn() }),
 }));
 
-import PortfolioDetailPage from '@/app/portfolio/[slug]/page';
+import PortfolioDetailPage, { generateMetadata } from '@/app/portfolio/[slug]/page';
 
 describe('Portfolio detail page', () => {
   it('renders the project title and description', async () => {
@@ -121,5 +121,26 @@ describe('Portfolio detail page', () => {
     });
 
     expect(screen.getByText(/not found/i)).toBeInTheDocument();
+  });
+});
+
+describe('generateMetadata', () => {
+  it('returns title and description for a valid slug', async () => {
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: 'kitchen-remodel' }) });
+    expect(metadata.title).toBe('Kitchen Remodel');
+    expect(metadata.description).toContain('drywall installation');
+  });
+
+  it('returns not-found title for an unknown slug', async () => {
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: 'unknown' }) });
+    expect(metadata.title).toBe('Project Not Found');
+  });
+
+  it('includes openGraph with featured image', async () => {
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: 'kitchen-remodel' }) });
+    const og = metadata.openGraph as { images?: { url: string; alt: string }[] };
+    expect(og.images).toHaveLength(1);
+    expect(og.images![0].url).toBe('/media/full.webp');
+    expect(og.images![0].alt).toBe('Kitchen Remodel');
   });
 });
