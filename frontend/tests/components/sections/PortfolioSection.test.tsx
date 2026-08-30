@@ -290,6 +290,24 @@ describe('PortfolioSection', () => {
     expect(screen.getByText(/all projects loaded/i)).toBeInTheDocument();
   });
 
+  it('has no accessibility violations with tag filter', async () => {
+    const { container } = render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    // Verify tag chips are rendered
+    expect(screen.getByRole('checkbox', { name: 'smooth' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'level-5' })).toBeInTheDocument();
+
+    expect(await axeCheck(container)).toHaveNoViolations();
+  });
+
   it('extracts and renders unique finish tags as filter chips', async () => {
     render(
       <PortfolioSection

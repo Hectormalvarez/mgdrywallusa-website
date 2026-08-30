@@ -387,3 +387,58 @@ test.describe("Pagination", () => {
     await expect(page.getByText(/all projects loaded/i)).toBeVisible();
   });
 });
+
+// ===========================================================================
+// Tag Filtering
+// ===========================================================================
+test.describe("Tag Filtering", () => {
+  const mockItems = {
+    meta: { total_count: 3 },
+    items: [
+      {
+        id: 1, slug: "project-a", title: "Project A",
+        description: "", scope: "residential", scope_label: "Residential",
+        finish_tags: ["Level 5", "Smooth"], featured_image: null, gallery_images: [],
+      },
+      {
+        id: 2, slug: "project-b", title: "Project B",
+        description: "", scope: "commercial", scope_label: "Commercial",
+        finish_tags: ["Level 4"], featured_image: null, gallery_images: [],
+      },
+      {
+        id: 3, slug: "project-c", title: "Project C",
+        description: "", scope: "residential", scope_label: "Residential",
+        finish_tags: ["Smooth"], featured_image: null, gallery_images: [],
+      },
+    ],
+  };
+
+  test("renders tag filter chips and filters items", async ({ page }) => {
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockItems),
+      });
+    });
+
+    await page.goto("/");
+
+    const section = page.locator("#portfolio");
+    await expect(section.locator("article").first()).toBeVisible({ timeout: 5000 });
+
+    // Tag chips should be visible
+    const level5Chip = section.getByRole("checkbox", { name: "Level 5" });
+    await expect(level5Chip).toBeVisible();
+
+    // Click Level 5 chip — only Project A should remain
+    await level5Chip.click();
+    await expect(section.locator("article")).toHaveCount(1);
+    await expect(section.getByText("Project A")).toBeVisible();
+    await expect(section.getByText("Project B")).not.toBeVisible();
+
+    // Click again to deselect — all items return
+    await level5Chip.click();
+    await expect(section.locator("article")).toHaveCount(3);
+  });
+});
