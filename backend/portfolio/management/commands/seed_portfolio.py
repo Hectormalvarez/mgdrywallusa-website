@@ -79,7 +79,7 @@ class Command(BaseCommand):
         portfolio_page = self._ensure_portfolio_page()
         created = 0
 
-        for project in PROJECTS:
+        for idx, project in enumerate(PROJECTS):
             existing = PortfolioItem.objects.filter(slug=project["slug"]).first()
             if existing:
                 self.stdout.write(f'  Skipped (exists): "{project["title"]}"')
@@ -90,6 +90,7 @@ class Command(BaseCommand):
                 slug=project["slug"],
                 scope=project["scope"],
                 description=project["description"],
+                sort_order=idx,
             )
 
             img = self._create_placeholder_image(
