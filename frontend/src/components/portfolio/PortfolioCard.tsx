@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { PortfolioItem } from "@/types/portfolio";
 
 interface PortfolioCardProps {
@@ -32,7 +33,14 @@ export default function PortfolioCard({
         </button>
       )}
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
+        <h3 className="text-lg font-semibold text-ink">
+          <Link
+            href={`/portfolio/${item.slug}`}
+            className="hover:text-brand transition-colors"
+          >
+            {item.title}
+          </Link>
+        </h3>
         {item.scope_label && (
           <span className="mt-1 inline-block rounded bg-brand-tint/20 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-brand">
             {item.scope_label}
