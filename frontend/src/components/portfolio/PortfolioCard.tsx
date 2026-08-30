@@ -62,7 +62,7 @@ export default function PortfolioCard({
               <figure key={`${item.id}-gallery-${index}`}>
                 <button
                   type="button"
-                  onClick={() => onImageClick(index)}
+                  onClick={() => onImageClick(index + 1)}
                   className="relative aspect-square overflow-hidden rounded cursor-pointer block w-full"
                   aria-label={`View gallery image ${index + 1} for ${item.title}`}
                 >
