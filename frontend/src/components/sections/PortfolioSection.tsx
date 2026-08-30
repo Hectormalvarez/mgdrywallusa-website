@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchPortfolioItems, type PortfolioItem } from '@/lib/api';
+import type { PortfolioScope } from '@/types/portfolio';
 import PortfolioSkeleton from '@/components/sections/PortfolioSkeleton';
+import ScopeFilterTabs from '@/components/ui/ScopeFilterTabs';
+import LightboxModal from '@/components/portfolio/LightboxModal';
+import PortfolioCard from '@/components/portfolio/PortfolioCard';
 
 interface PortfolioSectionProps {
   apiUrl: string;
@@ -19,6 +22,30 @@ export default function PortfolioSection({
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeScope, setActiveScope] = useState<PortfolioScope | 'all'>('all');
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxImages, setLightboxImages] = useState<PortfolioItem['gallery_images']>([]);
+
+  const openLightbox = useCallback((item: PortfolioItem, startIndex: number) => {
+    // Build gallery: featured image + gallery items
+    const allImages = [
+      ...(item.featured_image
+        ? [{ id: -1, image: item.featured_image, caption: "" }]
+        : []),
+      ...item.gallery_images,
+    ];
+    setLightboxImages(allImages);
+    setLightboxIndex(startIndex);
+    setLightboxOpen(true);
+  }, []);
+
+  const filteredItems = useMemo(() => {
+    if (activeScope === 'all') return items;
+    return items.filter((item) => item.scope === activeScope);
+  }, [items, activeScope]);
 
   useEffect(() => {
     fetchPortfolioItems(apiUrl)
@@ -46,6 +73,10 @@ export default function PortfolioSection({
           {heading}
         </h2>
 
+        {!loading && !error && items.length > 0 && (
+          <ScopeFilterTabs activeScope={activeScope} onScopeChange={setActiveScope} />
+        )}
+
         {loading && (
           <div className="mt-8">
             <PortfolioSkeleton />
@@ -63,74 +94,28 @@ export default function PortfolioSection({
         )}
 
         {!loading && !error && items.length > 0 && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
-              <article
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300 ease-in-out">
+            {filteredItems.map((item) => (
+              <PortfolioCard
                 key={item.id}
-                className="overflow-hidden rounded-lg border border-border"
-              >
-                {item.featured_image_url && (
-                  <div className="relative aspect-video">
-                    <Image
-                      unoptimized
-                      fill
-                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      src={item.featured_image_url}
-                      alt={item.title}
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-ink">
-                    {item.title}
-                  </h3>
-                  {item.scope && (
-                    <span className="mt-1 inline-block rounded bg-brand-tint/20 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-brand">
-                      {item.scope}
-                    </span>
-                  )}
-                  {item.finish_tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {item.finish_tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded bg-accent-tint/50 px-2 py-0.5 text-xs text-accent"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {item.gallery_images.length > 0 && (
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      {item.gallery_images.map((image, index) => (
-                        <figure
-                          key={`${item.id}-gallery-${index}`}
-                          className="relative aspect-square overflow-hidden rounded"
-                        >
-                          <Image
-                            unoptimized
-                            fill
-                            sizes="(min-width: 1024px) 17vw, (min-width: 768px) 25vw, 50vw"
-                            src={image.url}
-                            alt={image.alt || item.title}
-                            className="object-cover"
-                          />
-                          {image.caption && (
-                            <figcaption className="sr-only">
-                              {image.caption}
-                            </figcaption>
-                          )}
-                        </figure>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </article>
+                item={item}
+                onImageClick={(galleryIndex) => openLightbox(item, galleryIndex)}
+              />
             ))}
+            {filteredItems.length === 0 && items.length > 0 && (
+              <p className="col-span-full text-center text-muted">
+                No projects match this filter.
+              </p>
+            )}
           </div>
         )}
+
+        <LightboxModal
+          images={lightboxImages}
+          initialIndex={lightboxIndex}
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
       </div>
     </section>
   );

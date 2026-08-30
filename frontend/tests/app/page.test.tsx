@@ -19,8 +19,8 @@ jest.mock('@/lib/api', () => ({
     cta_secondary_url: '/cms-secondary',
     services_heading: 'CMS Services',
     services_subheading: 'CMS services description.',
-    services: [
-      { title: 'CMS Service', description: 'A custom service.', icon_name: 'shield' },
+    featured_services: [
+      { name: 'CMS Service', slug: 'cms-service', short_description: 'A custom service.', icon: 'shield' },
     ],
     portfolio_heading: 'CMS Portfolio',
     portfolio_empty_text: 'No projects yet.',

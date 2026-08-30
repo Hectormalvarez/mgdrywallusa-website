@@ -4,10 +4,10 @@ from modelcluster.fields import ParentalKey
 from taggit.models import TaggedItemBase
 from wagtail.models import Page, Orderable
 from wagtail.fields import RichTextField
-from wagtail.admin.panels import FieldPanel, InlinePanel
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.api import APIField
 
-from .serializers import FeaturedImageField, GalleryImageField, TagsField
+from .serializers import GalleryImageField, OptimizedPortfolioImageField, TagsField
 
 
 class PortfolioItemTag(TaggedItemBase):
@@ -45,13 +45,17 @@ class PortfolioItem(Page):
         blank=True,
         help_text="Project scope or category",
     )
-    description = RichTextField(blank=True)
+    description = RichTextField(
+        blank=True,
+        help_text="Brief project summary shown on the portfolio card (supports formatted text)",
+    )
     featured_image = models.ForeignKey(
         "wagtailimages.Image",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="+",
+        help_text="Main project image (800x600 or larger, will be cropped to fill)",
     )
     finish_tags = ClusterTaggableManager(
         through=PortfolioItemTag,
@@ -59,25 +63,52 @@ class PortfolioItem(Page):
         verbose_name="Finish Tags",
     )
 
+    # ── Page tree constraints ────────────────────────────────────────────
+    parent_page_types = ["portfolio.PortfolioPage"]
+
+    # ── Display helpers ──────────────────────────────────────────────────
+
+    @property
+    def scope_label(self) -> str:
+        """Human-readable label for the project scope."""
+        labels = dict(self.SCOPE_CHOICES)
+        return labels.get(self.scope, "")
+
     content_panels = Page.content_panels + [
-        FieldPanel("scope"),
-        FieldPanel("description"),
-        FieldPanel("featured_image"),
-        InlinePanel("gallery_images", label="Gallery Images"),
-        FieldPanel("finish_tags"),
+        MultiFieldPanel(
+            [
+                FieldPanel("scope"),
+                FieldPanel("description"),
+            ],
+            heading="Project Details",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("featured_image"),
+                InlinePanel("gallery_images", label="Gallery Images"),
+            ],
+            heading="Images",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("finish_tags"),
+            ],
+            heading="Tags",
+        ),
     ]
 
     api_fields = [
         APIField("scope"),
+        APIField("scope_label"),
         APIField("description"),
         APIField("finish_tags", serializer=TagsField()),
         APIField(
-            "featured_image_url",
-            serializer=FeaturedImageField("fill-800x600", source="featured_image"),
+            "featured_image",
+            serializer=OptimizedPortfolioImageField(),
         ),
         APIField(
             "gallery_images",
-            serializer=GalleryImageField("fill-800x600"),
+            serializer=GalleryImageField(),
         ),
     ]
 
@@ -92,8 +123,13 @@ class PortfolioItemImage(Orderable):
         "wagtailimages.Image",
         on_delete=models.CASCADE,
         related_name="+",
+        help_text="Gallery image (800x600 or larger, will be cropped to fill)",
     )
-    caption = models.CharField(max_length=255, blank=True)
+    caption = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Optional caption displayed below the gallery image",
+    )
 
     panels = [
         FieldPanel("image"),

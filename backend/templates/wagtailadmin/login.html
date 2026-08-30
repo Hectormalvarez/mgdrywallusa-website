@@ -3,7 +3,7 @@
 
 {% block branding_login %}
   {% get_settings use_default_site=True as site_settings %}
-  Sign in to {{ site_settings.home.sitesettings.site_name }} Portal
+  Sign in to {{ site_settings.site_settings.sitesettings.site_name }} Portal
 {% endblock %}
 
 {% block above_login %}
@@ -15,7 +15,7 @@
 
 {% block branding_logo %}
   {% get_settings use_default_site=True as site_settings %}
-  {% with s=site_settings.home.sitesettings %}
+  {% with s=site_settings.site_settings.sitesettings %}
     <div class="login-logo">
       {% if s.logo %}
         {% image s.logo max-200x60 as login_logo %}

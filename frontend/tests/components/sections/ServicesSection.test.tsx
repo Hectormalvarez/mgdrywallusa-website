@@ -39,9 +39,10 @@ describe('ServicesSection', () => {
   it('renders CMS-provided services instead of defaults', () => {
     const cmsServices: ServiceItem[] = [
       {
-        title: 'Custom Service',
-        description: 'A bespoke service.',
-        icon_name: 'wall',
+        name: 'Custom Service',
+        slug: 'custom-service',
+        short_description: 'A bespoke service.',
+        icon: 'wall',
       },
     ];
     render(<ServicesSection services={cmsServices} />);
@@ -50,13 +51,13 @@ describe('ServicesSection', () => {
     expect(screen.queryByText('Level 5 Finishing')).not.toBeInTheDocument();
   });
 
-  it('renders an SVG icon for each known icon_name', () => {
+  it('renders an SVG icon for each known icon', () => {
     const services: ServiceItem[] = [
-      { title: 'Paint', description: 'desc', icon_name: 'paint' },
-      { title: 'Patch', description: 'desc', icon_name: 'patch' },
-      { title: 'Wall', description: 'desc', icon_name: 'wall' },
-      { title: 'Shield', description: 'desc', icon_name: 'shield' },
-      { title: 'Unknown', description: 'desc', icon_name: 'unknown' },
+      { name: 'Paint', slug: 'paint', short_description: 'desc', icon: 'paint' },
+      { name: 'Patch', slug: 'patch', short_description: 'desc', icon: 'patch' },
+      { name: 'Wall', slug: 'wall', short_description: 'desc', icon: 'wall' },
+      { name: 'Shield', slug: 'shield', short_description: 'desc', icon: 'shield' },
+      { name: 'Unknown', slug: 'unknown', short_description: 'desc', icon: 'unknown' },
     ];
     const { container } = render(<ServicesSection services={services} />);
     const svgs = container.querySelectorAll('svg');

@@ -5,34 +5,17 @@
 import { cache } from "react";
 import type { HomePageData, WagtailPagesResponse } from "@/types/home";
 import type { SiteSettingsData } from "@/types/settings";
+import type {
+  PortfolioItem,
+  PortfolioApiResponse,
+} from "@/types/portfolio";
+
+// Re-export for consumers that import from this module
+export type { PortfolioItem, PortfolioApiResponse };
 
 export interface WagtailPageMeta {
   type: string;
   detail_url: string;
-}
-
-export interface GalleryImage {
-  url: string;
-  width: number;
-  height: number;
-  alt: string;
-  caption: string;
-}
-
-export interface PortfolioItem {
-  id: number;
-  meta: WagtailPageMeta;
-  title: string;
-  description: string;
-  scope: string;
-  finish_tags: string[];
-  featured_image_url: string | null;
-  gallery_images: GalleryImage[];
-}
-
-export interface PortfolioApiResponse {
-  meta: { total_count: number };
-  items: PortfolioItem[];
 }
 
 /**
@@ -170,7 +153,7 @@ export async function fetchHomePage(
 
     // --- Published path ---
     const res = await fetch(
-      `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=hero_kicker,hero_heading,hero_subheading,hero_image,cta_primary_label,cta_primary_url,cta_secondary_label,cta_secondary_url,services_heading,services_subheading,services,portfolio_heading,portfolio_empty_text,lead_section_heading,lead_section_description`,
+      `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=hero_kicker,hero_heading,hero_subheading,hero_image,cta_primary_label,cta_primary_url,cta_secondary_label,cta_secondary_url,services_heading,services_subheading,featured_services,portfolio_heading,portfolio_empty_text,lead_section_heading,lead_section_description`,
       { cache: "no-store" },
     );
     if (!res.ok) return null;

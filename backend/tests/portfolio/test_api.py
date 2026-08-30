@@ -6,7 +6,7 @@ from django.test import Client
 
 @pytest.mark.django_db
 def test_portfolio_api_returns_items(portfolio_item):
-    """Test that the portfolio API endpoint returns portfolio items."""
+    """Test that the portfolio API endpoint returns portfolio items with renditions."""
     client = Client()
     response = client.get("/api/v1/pages/?type=portfolio.PortfolioItem&fields=*")
 
@@ -18,13 +18,22 @@ def test_portfolio_api_returns_items(portfolio_item):
     assert item["title"] == "Test Portfolio Item"
     assert item["description"] == "This is a test portfolio item."
     assert item["scope"] == "residential"
+    assert item["scope_label"] == "Residential"
     assert sorted(item["finish_tags"]) == ["level-5", "smooth"]
-    assert "featured_image_url" in item
 
-    assert item["featured_image_url"] is not None
-    assert "gallery_images" in item
-    assert isinstance(item["gallery_images"], list)
-    assert len(item["gallery_images"]) == 1
-    assert item["gallery_images"][0]["url"] is not None
-    assert item["gallery_images"][0]["caption"] == ""
+    # featured_image is now a rendition dict
+    featured = item["featured_image"]
+    assert featured is not None
+    assert "thumbnail" in featured
+    assert "card" in featured
+    assert "full" in featured
+    assert "alt" in featured
+
+    # gallery_images is now a list of {id, image, caption}
+    gallery = item["gallery_images"]
+    assert isinstance(gallery, list)
+    assert len(gallery) == 1
+    assert "image" in gallery[0]
+    assert "caption" in gallery[0]
+    assert gallery[0]["image"]["alt"] is not None
 

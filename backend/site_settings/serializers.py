@@ -9,12 +9,15 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
     """Serializes the full SiteSettings model for the public API.
 
     Includes computed ``logo_url`` and ``favicon_url`` fields that resolve
-    Wagtail image rendition URLs at serialization time.
+    Wagtail image rendition URLs at serialization time.  SEO fields are
+    nested under a ``seo`` object to match the frontend ``SiteSeoSettings``
+    type.
     """
 
     logo_url = serializers.SerializerMethodField()
     favicon_url = serializers.SerializerMethodField()
     nav = serializers.SerializerMethodField()
+    seo = serializers.SerializerMethodField()
 
     class Meta:
         model = SiteSettings
@@ -38,12 +41,8 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
             "yelp_url",
             "facebook_url",
             "instagram_url",
-            # SEO
-            "address_locality",
-            "address_region",
-            "postal_code",
-            "country",
-            "price_range",
+            # Nested SEO
+            "seo",
             "nav",
         ]
 
@@ -68,3 +67,13 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
             ]
         # Remap "url" key to "href" for frontend contract consistency
         return [{"label": item["label"], "href": item["url"]} for item in nav_items]
+
+    def get_seo(self, obj):
+        """Nest SEO fields under a ``seo`` key for the frontend."""
+        return {
+            "address_locality": obj.address_locality,
+            "address_region": obj.address_region,
+            "postal_code": obj.postal_code,
+            "country": obj.country,
+            "price_range": obj.price_range,
+        }

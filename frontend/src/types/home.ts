@@ -12,9 +12,10 @@ export interface ImageRendition {
  * Shape of a single service item from the CMS.
  */
 export interface ServiceItem {
-  title: string;
-  description: string;
-  icon_name: string;
+  name: string;
+  slug: string;
+  short_description: string;
+  icon: string;
 }
 
 /**
@@ -34,7 +35,7 @@ export interface HomePageData {
   // Services
   services_heading?: string;
   services_subheading?: string;
-  services?: ServiceItem[];
+  featured_services?: ServiceItem[];
   // Portfolio & Lead
   portfolio_heading?: string;
   portfolio_empty_text?: string;

@@ -57,17 +57,23 @@ def test_preview_rejects_non_homepage_token():
 @pytest.mark.django_db
 def test_preview_serializes_api_fields(home_page, test_image):
     """Preview response must match the published API contract for HomePage."""
-    from home.models import HomePageServiceItem
+    from home.models import Service, HomePageFeaturedService
 
     home_page.hero_heading = "API Contract Test"
     home_page.hero_image = test_image
     home_page.save()
 
-    HomePageServiceItem.objects.create(
+    service = Service.objects.create(
+        name="Taping",
+        slug="taping",
+        short_description="Professional taping service.",
+        icon="wall",
+        is_active=True,
+    )
+    HomePageFeaturedService.objects.create(
         page=home_page,
-        title="Taping",
-        description="Professional taping service.",
-        icon_name="wall",
+        service=service,
+        sort_order=0,
     )
 
     preview = home_page.create_page_preview()
@@ -85,11 +91,12 @@ def test_preview_serializes_api_fields(home_page, test_image):
     assert "height" in data["hero_image"]
     assert "alt" in data["hero_image"]
 
-    # Service items list shape
-    assert isinstance(data["services"], list)
-    assert len(data["services"]) == 1
-    assert data["services"][0] == {
-        "title": "Taping",
-        "description": "Professional taping service.",
-        "icon_name": "wall",
+    # Featured services list shape
+    assert isinstance(data["featured_services"], list)
+    assert len(data["featured_services"]) == 1
+    assert data["featured_services"][0] == {
+        "name": "Taping",
+        "slug": "taping",
+        "short_description": "Professional taping service.",
+        "icon": "wall",
     }
