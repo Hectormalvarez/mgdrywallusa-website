@@ -45,3 +45,29 @@ def test_portfolio_item_has_tags_group():
     assert any("tag" in h.lower() for h in headings), (
         f"Missing 'Tags' group. Found: {headings}"
     )
+
+
+@pytest.mark.django_db
+def test_register_portfolio_menu_item(home_page, site):
+    """Portfolio menu hook should return a MenuItem linking to the page explorer."""
+    from portfolio.models import PortfolioPage
+    from portfolio.wagtail_hooks import register_portfolio_menu_item
+
+    # Create a PortfolioPage so the hook can find it
+    portfolio_page = PortfolioPage(title="Portfolio", slug="portfolio")
+    home_page.add_child(instance=portfolio_page)
+
+    menu_item = register_portfolio_menu_item()
+    assert menu_item.label == "Portfolio"
+    assert menu_item.icon_name == "image"
+    assert str(portfolio_page.id) in menu_item.url
+
+
+@pytest.mark.django_db
+def test_register_portfolio_menu_item_fallback():
+    """Portfolio menu hook should fallback to explore_root when no PortfolioPage exists."""
+    from portfolio.wagtail_hooks import register_portfolio_menu_item
+
+    menu_item = register_portfolio_menu_item()
+    assert menu_item.label == "Portfolio"
+    assert menu_item.icon_name == "image"
