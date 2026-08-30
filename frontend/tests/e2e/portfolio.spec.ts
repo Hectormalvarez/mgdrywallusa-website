@@ -335,3 +335,55 @@ test.describe("Portfolio Detail Page", () => {
     await expect(page.getByText(/not found/i)).toBeVisible();
   });
 });
+
+// ===========================================================================
+// Pagination — Load More
+// ===========================================================================
+test.describe("Pagination", () => {
+  const allItems = [
+    {
+      id: 1, slug: "project-a", title: "Project A",
+      description: "", scope: "residential", scope_label: "Residential",
+      finish_tags: [], featured_image: null, gallery_images: [],
+    },
+    {
+      id: 2, slug: "project-b", title: "Project B",
+      description: "", scope: "commercial", scope_label: "Commercial",
+      finish_tags: [], featured_image: null, gallery_images: [],
+    },
+    {
+      id: 3, slug: "project-c", title: "Project C",
+      description: "", scope: "residential", scope_label: "Residential",
+      finish_tags: [], featured_image: null, gallery_images: [],
+    },
+  ];
+
+  test("Load More fetches and appends additional items", async ({ page }) => {
+    await page.route("**/api/v1/pages/**", async (route) => {
+      const url = new URL(route.request().url());
+      const offset = Number(url.searchParams.get("offset") || "0");
+      const limit = 2;
+      const pageItems = allItems.slice(offset, offset + limit);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ meta: { total_count: allItems.length }, items: pageItems }),
+      });
+    });
+
+    await page.goto("/portfolio");
+
+    // Initial render: 2 items
+    const cards = page.locator("article");
+    await expect(cards.first()).toBeVisible({ timeout: 5000 });
+    await expect(cards).toHaveCount(2);
+
+    // Click Load More
+    await page.getByRole("button", { name: /load more/i }).click();
+
+    // Now 3 items, button gone
+    await expect(cards).toHaveCount(3, { timeout: 5000 });
+    await expect(page.getByRole("button", { name: /load more/i })).not.toBeVisible();
+    await expect(page.getByText(/all projects loaded/i)).toBeVisible();
+  });
+});
