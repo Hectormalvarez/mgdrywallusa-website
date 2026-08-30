@@ -80,17 +80,17 @@ class Command(BaseCommand):
         created = 0
 
         for project in PROJECTS:
-            item, is_new = PortfolioItem.objects.get_or_create(
-                slug=project["slug"],
-                defaults={
-                    "title": project["title"],
-                    "scope": project["scope"],
-                    "description": project["description"],
-                },
-            )
-            if not is_new:
+            existing = PortfolioItem.objects.filter(slug=project["slug"]).first()
+            if existing:
                 self.stdout.write(f'  Skipped (exists): "{project["title"]}"')
                 continue
+
+            item = PortfolioItem(
+                title=project["title"],
+                slug=project["slug"],
+                scope=project["scope"],
+                description=project["description"],
+            )
 
             img = self._create_placeholder_image(
                 title=f"{project['title']} - Featured",
@@ -130,9 +130,12 @@ class Command(BaseCommand):
             return page
         from wagtail.models import Page
 
-        root = Page.get_first_root_node()
+        # Prefer attaching under the default site's root page for a proper tree
+        from wagtail.models import Site
+        site = Site.objects.filter(is_default_site=True).first()
+        parent = site.root_page if site else Page.get_first_root_node()
         page = PortfolioPage(title="Portfolio", slug="portfolio")
-        root.add_child(instance=page)
+        parent.add_child(instance=page)
         self.stdout.write(self.style.SUCCESS("Created root PortfolioPage."))
         return page
 
