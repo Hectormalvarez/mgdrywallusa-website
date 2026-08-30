@@ -22,8 +22,8 @@ describe('PortfolioSection', () => {
     await waitFor(() => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
       expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
-      expect(screen.getByText('residential')).toBeInTheDocument();
-      expect(screen.getByText('commercial')).toBeInTheDocument();
+      expect(screen.getAllByText('Residential').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Commercial').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('smooth')).toBeInTheDocument();
       expect(screen.getAllByText('level-5')).toHaveLength(2);
 
@@ -84,16 +84,21 @@ describe('PortfolioSection', () => {
               id: 99,
               meta: { type: 'portfolio.PortfolioItem', detail_url: '' },
               title: 'Empty Project',
+              slug: 'empty-project',
               description: '',
               scope: 'residential',
+              scope_label: 'Residential',
               finish_tags: [],
-              featured_image_url: null,
+              featured_image: null,
               gallery_images: [
                 {
-                  url: 'http://localhost:8000/media/test.png',
-                  width: 800,
-                  height: 600,
-                  alt: '',
+                  id: 1,
+                  image: {
+                    thumbnail: 'http://localhost:8000/media/fill-150x150/test.png',
+                    card: 'http://localhost:8000/media/fill-800x600/test.png',
+                    full: 'http://localhost:8000/media/max-1600x1200/test.png',
+                    alt: '',
+                  },
                   caption: '',
                 },
               ],
