@@ -231,3 +231,107 @@ test.describe("Portfolio Listing Page", () => {
     ).not.toBeVisible();
   });
 });
+
+// ===========================================================================
+// Portfolio Detail Page (/portfolio/[slug])
+// ===========================================================================
+test.describe("Portfolio Detail Page", () => {
+  const mockItem = {
+    id: 1,
+    slug: "sample-project",
+    title: "Sample Project",
+    description: "<p>A <strong>complete</strong> drywall project.</p>",
+    scope: "residential",
+    scope_label: "Residential",
+    finish_tags: ["Level 5", "Smooth"],
+    featured_image: {
+      thumbnail: "/media/thumb.webp",
+      card: "/media/card.webp",
+      full: "/media/full.webp",
+      alt: "Sample Project",
+    },
+    gallery_images: [
+      {
+        id: 1,
+        image: {
+          thumbnail: "/media/g-thumb.webp",
+          card: "/media/g-card.webp",
+          full: "/media/g-full.webp",
+          alt: "Gallery photo",
+        },
+        caption: "Finished wall",
+      },
+    ],
+  };
+
+  test("renders detail page with full content", async ({ page }) => {
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ meta: { total_count: 1 }, items: [mockItem] }),
+      });
+    });
+
+    await page.goto("/portfolio/sample-project");
+
+    await expect(page.getByRole("heading", { name: "Sample Project" })).toBeVisible();
+    await expect(page.getByText("Residential")).toBeVisible();
+    await expect(page.getByText("Level 5")).toBeVisible();
+    await expect(page.getByText("Smooth")).toBeVisible();
+    await expect(page.getByText("Finished wall")).toBeVisible();
+    await expect(page.getByText("complete")).toBeVisible();
+  });
+
+  test("renders back link to /portfolio", async ({ page }) => {
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ meta: { total_count: 1 }, items: [mockItem] }),
+      });
+    });
+
+    await page.goto("/portfolio/sample-project");
+
+    const backLink = page.getByRole("link", { name: /back to portfolio/i });
+    await expect(backLink).toBeVisible();
+    await expect(backLink).toHaveAttribute("href", "/portfolio");
+  });
+
+  test("navigates from listing page to detail page via card title", async ({ page }) => {
+    const mockItems = {
+      meta: { total_count: 1 },
+      items: [mockItem],
+    };
+
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockItems),
+      });
+    });
+
+    await page.goto("/portfolio");
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 5000 });
+
+    // Click the card title link
+    await page.getByRole("link", { name: "Sample Project" }).click();
+    await expect(page).toHaveURL(/\/portfolio\/sample-project/);
+    await expect(page.getByRole("heading", { name: "Sample Project" })).toBeVisible();
+  });
+
+  test("shows not-found for unknown slug", async ({ page }) => {
+    await page.route("**/api/v1/pages/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ meta: { total_count: 0 }, items: [] }),
+      });
+    });
+
+    await page.goto("/portfolio/nonexistent-project");
+    await expect(page.getByText(/not found/i)).toBeVisible();
+  });
+});
