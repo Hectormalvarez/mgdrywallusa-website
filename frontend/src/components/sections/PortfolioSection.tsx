@@ -6,7 +6,7 @@ import type { PortfolioScope } from '@/types/portfolio';
 import PortfolioSkeleton from '@/components/sections/PortfolioSkeleton';
 import ScopeFilterTabs from '@/components/ui/ScopeFilterTabs';
 import LightboxModal from '@/components/portfolio/LightboxModal';
-import PortfolioCard from '@/components/portfolio/PortfolioCard';
+import PortfolioGrid from '@/components/portfolio/PortfolioGrid';
 
 interface PortfolioSectionProps {
   apiUrl: string;
@@ -94,20 +94,14 @@ export default function PortfolioSection({
         )}
 
         {!loading && !error && items.length > 0 && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300 ease-in-out">
-            {filteredItems.map((item) => (
-              <PortfolioCard
-                key={item.id}
-                item={item}
-                onImageClick={(galleryIndex) => openLightbox(item, galleryIndex)}
-              />
-            ))}
+          <>
+            <PortfolioGrid items={filteredItems} onImageClick={openLightbox} />
             {filteredItems.length === 0 && items.length > 0 && (
-              <p className="col-span-full text-center text-muted">
+              <p className="mt-6 text-center text-muted">
                 No projects match this filter.
               </p>
             )}
-          </div>
+          </>
         )}
 
         <LightboxModal
