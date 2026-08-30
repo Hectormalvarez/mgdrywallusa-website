@@ -161,3 +161,21 @@ def register_edit_homepage_menu_item():
     home = HomePage.objects.first()
     url = reverse("wagtailadmin_pages:edit", args=[home.id]) if home else "#"
     return MenuItem("Edit Homepage", url, icon_name="desktop", order=150)
+
+
+@hooks.register("register_admin_menu_item")
+def register_site_settings_menu_item():
+    """Add a top-level Site Settings shortcut linking to the edit view."""
+    from wagtail.models import Site
+    from site_settings.models import SiteSettings
+
+    site = Site.objects.filter(is_default_site=True).first()
+    if site:
+        url = reverse(
+            "wagtailsettings:edit",
+            args=["site_settings", "sitesettings", site.pk],
+        )
+    else:
+        url = "#"
+
+    return MenuItem("Site Settings", url, icon_name="cog", order=400)

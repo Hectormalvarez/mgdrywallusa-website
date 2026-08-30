@@ -63,6 +63,17 @@ def test_register_edit_homepage_menu_item(home_page, site):
 
 
 @pytest.mark.django_db
+def test_register_site_settings_menu_item(site):
+    """register_site_settings_menu_item should link to the settings edit view."""
+    from site_settings.wagtail_hooks import register_site_settings_menu_item
+
+    menu_item = register_site_settings_menu_item()
+    assert menu_item.label == "Site Settings"
+    assert menu_item.icon_name == "cog"
+    assert "settings" in menu_item.url
+
+
+@pytest.mark.django_db
 def test_add_operations_panel_inserts_panel(site, db):
     """add_operations_panel should prepend an OperationsPanel to the panels list."""
     from site_settings.wagtail_hooks import add_operations_panel
