@@ -47,6 +47,7 @@ export default async function Home() {
         apiUrl={PORTFOLIO_API_URL}
         heading={homeData?.portfolio_heading}
         emptyText={homeData?.portfolio_empty_text}
+        showViewAll
       />
       <section
         id="lead-form"
