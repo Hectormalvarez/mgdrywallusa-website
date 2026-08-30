@@ -37,3 +37,31 @@ def test_portfolio_api_returns_items(portfolio_item):
     assert "caption" in gallery[0]
     assert gallery[0]["image"]["alt"] is not None
 
+
+@pytest.mark.django_db
+def test_sort_order_in_api_response(portfolio_item):
+    """Test that the API exposes sort_order for each portfolio item."""
+    client = Client()
+    response = client.get("/api/v1/pages/?type=portfolio.PortfolioItem&fields=*")
+
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    assert "sort_order" in item
+    assert item["sort_order"] == 0
+
+
+@pytest.mark.django_db
+def test_portfolio_detail_by_slug(portfolio_item):
+    """Test fetching a single portfolio item by slug."""
+    client = Client()
+    response = client.get(
+        "/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+        "&slug=test-portfolio-item"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["meta"]["total_count"] == 1
+    assert data["items"][0]["title"] == "Test Portfolio Item"
+    assert data["items"][0]["meta"]["slug"] == "test-portfolio-item"
+

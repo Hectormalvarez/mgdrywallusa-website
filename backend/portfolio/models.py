@@ -57,6 +57,10 @@ class PortfolioItem(Page):
         related_name="+",
         help_text="Main project image (800x600 or larger, will be cropped to fill)",
     )
+    sort_order = models.IntegerField(
+        default=0,
+        help_text="Controls the display order on the portfolio listing (lower first)",
+    )
     finish_tags = ClusterTaggableManager(
         through=PortfolioItemTag,
         blank=True,
@@ -77,6 +81,7 @@ class PortfolioItem(Page):
     content_panels = Page.content_panels + [
         MultiFieldPanel(
             [
+                FieldPanel("sort_order"),
                 FieldPanel("scope"),
                 FieldPanel("description"),
             ],
@@ -98,6 +103,7 @@ class PortfolioItem(Page):
     ]
 
     api_fields = [
+        APIField("sort_order"),
         APIField("scope"),
         APIField("scope_label"),
         APIField("description"),
