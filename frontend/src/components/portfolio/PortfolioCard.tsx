@@ -14,12 +14,12 @@ export default function PortfolioCard({
   onImageClick,
 }: PortfolioCardProps) {
   return (
-    <article className="overflow-hidden rounded-lg border border-border">
+    <article className="overflow-hidden rounded-lg border border-border shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300">
       {item.featured_image && (
         <button
           type="button"
           onClick={() => onImageClick(0)}
-          className="block w-full relative aspect-video cursor-pointer"
+          className="block w-full relative aspect-video cursor-pointer overflow-hidden group"
           aria-label={`Open lightbox for ${item.title}`}
         >
           <Image
@@ -28,7 +28,7 @@ export default function PortfolioCard({
             sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             src={item.featured_image.card}
             alt={item.featured_image.alt || item.title}
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </button>
       )}
