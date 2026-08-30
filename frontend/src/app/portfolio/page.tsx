@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function PortfolioPage() {
   return (
     <main id="main-content">
-      <PortfolioSection apiUrl={PORTFOLIO_API_URL} heading="Our Work" />
+      <PortfolioSection apiUrl={PORTFOLIO_API_URL} heading="Our Work" pageLimit={6} />
     </main>
   );
 }
