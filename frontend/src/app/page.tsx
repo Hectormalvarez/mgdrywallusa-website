@@ -6,15 +6,11 @@ import ServicesSection from "@/components/sections/ServicesSection";
 export const dynamic = "force-dynamic";
 import PortfolioSection from "@/components/sections/PortfolioSection";
 import LeadIntakeForm from "@/components/forms/LeadIntakeForm";
-import { fetchHomePage } from "@/lib/api";
-
-const PORTFOLIO_API_URL =
-  process.env.NEXT_PUBLIC_WAGTAIL_API_URL ??
-  "http://localhost:8000/api/v1/pages/?type=portfolio.PortfolioItem&fields=*";
+import { fetchHomePage, fetchPortfolioItemsServer } from "@/lib/api";
 
 const LEAD_API_URL =
   process.env.NEXT_PUBLIC_LEAD_API_URL ??
-  "http://localhost:8000/api/v1/leads/";
+  "/api/v1/leads/";
 
 export default async function Home() {
   const { isEnabled: isDraft } = await draftMode();
@@ -25,6 +21,9 @@ export default async function Home() {
   // fetchHomePage returns null on any error; HeroSection renders static
   // fallbacks when all props are undefined.
   const homeData = await fetchHomePage(isDraft, previewToken).catch(() => null);
+
+  // Pre-fetch portfolio items server-side so they render without client JS.
+  const portfolioData = await fetchPortfolioItemsServer().catch(() => null);
 
   return (
     <main id="main-content">
@@ -44,7 +43,8 @@ export default async function Home() {
         services={homeData?.featured_services}
       />
       <PortfolioSection
-        apiUrl={PORTFOLIO_API_URL}
+        initialItems={portfolioData?.items}
+        initialTotalCount={portfolioData?.meta.total_count}
         heading={homeData?.portfolio_heading}
         emptyText={homeData?.portfolio_empty_text}
         showViewAll

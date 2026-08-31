@@ -87,11 +87,11 @@ export default async function RootLayout({
   const brandStyles = `
     :root {
       --color-brand: ${settings.primary_color};
-      --color-brand-strong: ${settings.primary_color}dd;
-      --color-brand-tint: ${settings.primary_color}33;
+      --color-brand-strong: color-mix(in srgb, ${settings.primary_color} 87%, black);
+      --color-brand-tint: color-mix(in srgb, ${settings.primary_color} 20%, white);
       --color-accent: ${settings.accent_color};
-      --color-accent-strong: ${settings.accent_color}cc;
-      --color-accent-tint: ${settings.accent_color}1a;
+      --color-accent-strong: color-mix(in srgb, ${settings.accent_color} 80%, black);
+      --color-accent-tint: color-mix(in srgb, ${settings.accent_color} 12%, white);
     }
   `;
 

@@ -6,9 +6,10 @@ import type { PortfolioItem } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-const PORTFOLIO_API_URL =
-  process.env.NEXT_PUBLIC_WAGTAIL_API_URL ??
-  "http://localhost:8000/api/v1/pages/?type=portfolio.PortfolioItem&fields=*";
+const WAGTAIL_API_BASE =
+  process.env.WAGTAIL_API_BASE_URL ?? "http://backend:8000/api/v1";
+
+const PORTFOLIO_API_URL = `${WAGTAIL_API_BASE}/pages/?type=portfolio.PortfolioItem&fields=*`;
 
 async function getItem(slug: string): Promise<PortfolioItem | null> {
   try {

@@ -10,11 +10,13 @@ import LightboxModal from '@/components/portfolio/LightboxModal';
 import PortfolioGrid from '@/components/portfolio/PortfolioGrid';
 
 interface PortfolioSectionProps {
-  apiUrl: string;
+  apiUrl?: string;
   heading?: string;
   emptyText?: string;
   showViewAll?: boolean;
   pageLimit?: number;
+  initialItems?: PortfolioItem[];
+  initialTotalCount?: number;
 }
 
 export default function PortfolioSection({
@@ -23,14 +25,16 @@ export default function PortfolioSection({
   emptyText = "No projects to display yet.",
   showViewAll = false,
   pageLimit,
+  initialItems,
+  initialTotalCount,
 }: PortfolioSectionProps) {
-  const [items, setItems] = useState<PortfolioItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<PortfolioItem[]>(initialItems ?? []);
+  const [loading, setLoading] = useState(!initialItems);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeScope, setActiveScope] = useState<PortfolioScope | 'all'>('all');
   const [activeTags, setActiveTags] = useState<string[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(initialTotalCount ?? 0);
 
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -80,6 +84,13 @@ export default function PortfolioSection({
   }, []);
 
   useEffect(() => {
+    // Skip client-side fetch when server-provided data is available
+    if (initialItems) return;
+    if (!apiUrl) {
+      setLoading(false);
+      return;
+    }
+
     fetchPortfolioItems(apiUrl, pageLimit ? { limit: pageLimit, offset: 0 } : undefined)
       .then((data) => {
         setItems(data.items);
@@ -90,7 +101,7 @@ export default function PortfolioSection({
         setError(err.message ?? 'Failed to load portfolio');
         setLoading(false);
       });
-  }, [apiUrl, pageLimit]);
+  }, [apiUrl, pageLimit, initialItems]);
 
   const hasMore = pageLimit ? items.length < totalCount : false;
 

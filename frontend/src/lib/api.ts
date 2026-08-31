@@ -66,7 +66,33 @@ export async function fetchPortfolioItems(
   if (!response.ok) {
     throw new Error(`Failed to load portfolio: ${response.status}`);
   }
-  return response.json();
+  const data = await response.json();
+  // Wagtail puts `slug` inside `meta`; normalize it to a top-level field.
+  if (data.items) {
+    data.items = data.items.map((item: PortfolioItem & { meta?: { slug?: string } }) => ({
+      ...item,
+      slug: item.slug ?? item.meta?.slug ?? "",
+    }));
+  }
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// Portfolio Items — server-side helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch portfolio items server-side using the internal Docker-network URL.
+ *
+ * Used by server components (page.tsx) to pre-render portfolio data without
+ * relying on client-side fetch, which can be blocked by Cloudflare's
+ * challenge scripts injected into the HTML.
+ */
+export async function fetchPortfolioItemsServer(
+  options?: { limit?: number; offset?: number },
+): Promise<PortfolioApiResponse> {
+  const url = `${WAGTAIL_API_BASE}/pages/?type=portfolio.PortfolioItem&fields=*`;
+  return fetchPortfolioItems(url, options);
 }
 
 // ---------------------------------------------------------------------------

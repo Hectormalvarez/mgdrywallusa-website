@@ -48,8 +48,8 @@ services:
   frontend:
     build: ./frontend
     environment:
-      NEXT_PUBLIC_LEAD_API_URL: ${NEXT_PUBLIC_LEAD_API_URL:-http://localhost:8101/api/v1/leads/}
-      NEXT_PUBLIC_WAGTAIL_API_URL: ${NEXT_PUBLIC_WAGTAIL_API_URL:-http://localhost:8101/api/v1/pages/?type=portfolio.PortfolioItem&fields=*}
+      NEXT_PUBLIC_LEAD_API_URL: ${NEXT_PUBLIC_LEAD_API_URL:-/api/v1/leads/}
+      NEXT_PUBLIC_WAGTAIL_API_URL: ${NEXT_PUBLIC_WAGTAIL_API_URL:-/api/v1/pages/?type=portfolio.PortfolioItem&fields=*}
       WAGTAIL_API_BASE_URL: ${WAGTAIL_API_BASE_URL:-http://backend:8000/api/v1}
     depends_on:
       backend:

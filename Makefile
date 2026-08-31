@@ -18,9 +18,10 @@ dev-reset:
 
 # ─── Quick health check for dev stack ──
 dev-health:
-	@echo "\033[0;36m▶ Checking dev stack on localhost:8101...\033[0m"
-	@curl -sf "http://localhost:8101/" > /dev/null && echo "\033[0;32m✓ Frontend: OK\033[0m" || echo "\033[0;31m✗ Frontend: FAIL\033[0m"
-	@curl -sf "http://localhost:8101/api/v1/settings/" > /dev/null && echo "\033[0;32m✓ Backend API: OK\033[0m" || echo "\033[0;31m✗ Backend API: FAIL\033[0m"
+	@DEV_URL="$${DEV_URL:-https://mgdrywallusa-dev.taylormadetech.net}"; \
+	echo "\033[0;36m▶ Checking dev stack on $$DEV_URL...\033[0m"; \
+	curl -sf "$$DEV_URL/" > /dev/null && echo "\033[0;32m✓ Frontend: OK\033[0m" || echo "\033[0;31m✗ Frontend: FAIL\033[0m"; \
+	curl -sf "$$DEV_URL/api/v1/settings/" > /dev/null && echo "\033[0;32m✓ Backend API: OK\033[0m" || echo "\033[0;31m✗ Backend API: FAIL\033[0m"
 
 dev-logs:
 	docker compose logs -f

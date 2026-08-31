@@ -39,7 +39,7 @@ Mobile-first, single-page residential landing page for drywall & finishing contr
 ```bash
 # 1. Clone and configure
 git clone <repo-url> && cd mgdrywallusa-website
-cp .env.example .env
+cp .env.sample .env
 # Edit .env — set DJANGO_SECRET_KEY and DB_PASSWORD
 
 # 2. Start the dev stack
@@ -49,9 +49,39 @@ make dev-up
 docker compose exec backend python manage.py seed_defaults
 
 # 4. Open
-#    Frontend: http://localhost:8101
-#    Admin:    http://localhost:8101/admin/
+#    Frontend: https://mgdrywallusa-dev.taylormadetech.net
+#    Admin:    https://mgdrywallusa-dev.taylormadetech.net/admin/
 ```
+
+## Access
+
+The dev site is exposed via **Cloudflare Tunnel** at:
+
+```
+https://mgdrywallusa-dev.taylormadetech.net
+```
+
+This works from any machine — no port forwarding, VPN, or host-file editing needed.
+The tunnel terminates TLS at the Cloudflare edge and forwards HTTP to Nginx on port 8101.
+
+| URL | Purpose |
+| --- | --- |
+| `https://mgdrywallusa-dev.taylormadetech.net` | Site |
+| `https://mgdrywallusa-dev.taylormadetech.net/admin/` | Wagtail admin |
+| `https://mgdrywallusa-dev.taylormadetech.net/api/v1/...` | REST API |
+
+**Local-only shortcut:** `http://localhost:8101` also works when running on the server itself.
+
+### Cloudflare Tunnel
+
+The tunnel named `dev-server` runs on the host and is already configured.
+If you need to restart it:
+
+```bash
+cloudflared tunnel restart dev-server
+```
+
+To add a new hostname to the tunnel, edit `~/.cloudflared/config.yml` and restart.
 
 ## Common Commands
 
@@ -124,7 +154,7 @@ Hooks run automatically on `git commit` and check for:
 
 ## Environment Variables
 
-See `.env.example` for the full list. Key variables:
+See `.env.sample` for the full list. Key variables:
 
 | Variable | Required | Description |
 | --- | --- | --- |
