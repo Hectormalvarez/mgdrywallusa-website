@@ -7,7 +7,7 @@ const mockItem = {
   slug: 'kitchen-remodel',
   title: 'Kitchen Remodel',
   description: '',
-  scope: 'residential',
+  scope: 'residential' as const,
   scope_label: 'Residential',
   finish_tags: [],
   featured_image: null,

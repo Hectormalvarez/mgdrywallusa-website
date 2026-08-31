@@ -106,7 +106,7 @@ export default function PortfolioSection({
   const hasMore = pageLimit ? items.length < totalCount : false;
 
   const loadMore = useCallback(() => {
-    if (!pageLimit || loadingMore) return;
+    if (!pageLimit || !apiUrl || loadingMore) return;
     setLoadingMore(true);
     fetchPortfolioItems(apiUrl, { limit: pageLimit, offset: items.length })
       .then((data) => {
