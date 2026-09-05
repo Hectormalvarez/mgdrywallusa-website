@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { fetchPortfolioItems } from "@/lib/api";
+import { fetchPortfolioItems, INTERNAL_FETCH_HEADERS } from "@/lib/api";
 import type { PortfolioItem } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ const PORTFOLIO_API_URL = `${WAGTAIL_API_BASE}/pages/?type=portfolio.PortfolioIt
 async function getItem(slug: string): Promise<PortfolioItem | null> {
   try {
     const url = `${PORTFOLIO_API_URL}&slug=${encodeURIComponent(slug)}`;
-    const data = await fetchPortfolioItems(url);
+    const data = await fetchPortfolioItems(url, undefined, { headers: INTERNAL_FETCH_HEADERS });
     return data.items?.[0] ?? null;
   } catch {
     return null;

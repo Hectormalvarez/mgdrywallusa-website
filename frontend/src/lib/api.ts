@@ -13,6 +13,17 @@ import type {
 // Re-export for consumers that import from this module
 export type { PortfolioItem, PortfolioApiResponse };
 
+/**
+ * Server-to-server request headers for the Wagtail backend.
+ *
+ * Django production settings enable SECURE_SSL_REDIRECT, which would 301 the
+ * plain-HTTP Docker-network hop (http://backend:8000). Forwarding the original
+ * HTTPS scheme lets Django treat the request as secure and skip the redirect.
+ */
+export const INTERNAL_FETCH_HEADERS: Record<string, string> = {
+  "X-Forwarded-Proto": "https",
+};
+
 export interface WagtailPageMeta {
   type: string;
   detail_url: string;
@@ -51,6 +62,7 @@ export async function submitLead(
 export async function fetchPortfolioItems(
   apiUrl: string,
   options?: { limit?: number; offset?: number },
+  init?: RequestInit,
 ): Promise<PortfolioApiResponse> {
   let url = apiUrl;
   if (options?.limit !== undefined) {
@@ -62,7 +74,7 @@ export async function fetchPortfolioItems(
     url += `${separator}offset=${options.offset}`;
   }
 
-  const response = await fetch(url);
+  const response = await fetch(url, init);
   if (!response.ok) {
     throw new Error(`Failed to load portfolio: ${response.status}`);
   }
@@ -92,7 +104,7 @@ export async function fetchPortfolioItemsServer(
   options?: { limit?: number; offset?: number },
 ): Promise<PortfolioApiResponse> {
   const url = `${WAGTAIL_API_BASE}/pages/?type=portfolio.PortfolioItem&fields=*`;
-  return fetchPortfolioItems(url, options);
+  return fetchPortfolioItems(url, options, { headers: INTERNAL_FETCH_HEADERS });
 }
 
 // ---------------------------------------------------------------------------
@@ -151,6 +163,7 @@ export const fetchSiteSettings = cache(async (): Promise<SiteSettingsData> => {
   try {
     const res = await fetch(`${WAGTAIL_API_BASE}/settings/`, {
       cache: "no-store",
+      headers: INTERNAL_FETCH_HEADERS,
     });
     if (!res.ok) throw new Error(`Status ${res.status}`);
     return (await res.json()) as SiteSettingsData;
@@ -183,6 +196,7 @@ export async function fetchHomePage(
     if (draft && token) {
       const res = await fetch(`${WAGTAIL_API_BASE}/preview/${token}/`, {
         cache: "no-store",
+        headers: INTERNAL_FETCH_HEADERS,
       });
       if (!res.ok) return null;
       return res.json() as Promise<HomePageData>;
@@ -191,7 +205,7 @@ export async function fetchHomePage(
     // --- Published path ---
     const res = await fetch(
       `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=hero_kicker,hero_heading,hero_subheading,hero_image,cta_primary_label,cta_primary_url,cta_secondary_label,cta_secondary_url,services_heading,services_subheading,featured_services,portfolio_heading,portfolio_empty_text,lead_section_heading,lead_section_description`,
-      { cache: "no-store" },
+      { cache: "no-store", headers: INTERNAL_FETCH_HEADERS },
     );
     if (!res.ok) return null;
     const body = (await res.json()) as WagtailPagesResponse;
