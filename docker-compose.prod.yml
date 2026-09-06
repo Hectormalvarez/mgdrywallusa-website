@@ -26,6 +26,7 @@ services:
         max-file: "3"
 
   backend:
+    image: ghcr.io/${REGISTRY_OWNER:-mgdrywall}/mgdrywall-backend:${IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
@@ -45,6 +46,7 @@ services:
         max-file: "3"
 
   frontend:
+    image: ghcr.io/${REGISTRY_OWNER:-mgdrywall}/mgdrywall-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
@@ -61,6 +63,7 @@ services:
         max-file: "3"
 
   nginx:
+    image: ghcr.io/${REGISTRY_OWNER:-mgdrywall}/mgdrywall-nginx:${IMAGE_TAG:-latest}
     build: ./nginx
     restart: unless-stopped
     # Host ports removed — Cloudflare Tunnel forwards directly to http://nginx:80
