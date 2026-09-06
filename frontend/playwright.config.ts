@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.HOST_FRONTEND_PORT ?? 3000);
+const MOCK_PORT = Number(process.env.MOCK_PORT ?? 8000);
+const MOCK_API_BASE = `http://localhost:${MOCK_PORT}/api/v1`;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -32,10 +34,25 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: `npm run build && npx next start -p ${PORT} -H 0.0.0.0`,
-    port: PORT,
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-  },
+  webServer: [
+    {
+      command: `MOCK_PORT=${MOCK_PORT} node tests/e2e/mock-backend.mjs`,
+      port: MOCK_PORT,
+      reuseExistingServer: !process.env.CI,
+      timeout: 30_000,
+    },
+    {
+      // `next start` is incompatible with `output: "standalone"`, so run the
+      // standalone server directly (mirrors Dockerfile.prod).
+      command: `npm run build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && PORT=${PORT} HOSTNAME=0.0.0.0 node .next/standalone/server.js`,
+      port: PORT,
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+      env: {
+        WAGTAIL_API_BASE_URL: MOCK_API_BASE,
+        NEXT_PUBLIC_WAGTAIL_API_URL: `${MOCK_API_BASE}/pages/?type=portfolio.PortfolioItem&fields=*`,
+      },
+    },
+  ],
 });
+
