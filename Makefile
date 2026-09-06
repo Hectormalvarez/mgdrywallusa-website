@@ -1,4 +1,10 @@
-.PHONY: dev-up dev-down dev-reset dev-health dev-logs test lint format typecheck check prod-deploy prod-seed prod-logs prod-status prod-verify env-check
+-include .env
+
+DEPLOY_HOST ?=
+DEPLOY_USER ?= $(USER)
+DEPLOY_DIR ?= /opt/mgdrywallusa-website
+
+.PHONY: dev-up dev-down dev-reset dev-health dev-logs test lint format typecheck check prod-deploy prod-seed prod-logs prod-status prod-verify env-check deploy-remote backup-remote
 
 # ─── Development ───────────────────────────────────────────────
 dev-up:
@@ -92,3 +98,13 @@ env-check:
 	@grep -q 'DEBUG=False' .env.prod && echo "\033[0;32m\u2713 DEBUG=False\033[0m" || echo "\033[0;31m\u2717 DEBUG is not False!\033[0m"
 	@grep -q 'replace-with-strong-password' .env.prod && echo "\033[0;31m\u2717 Default password still present!\033[0m" || echo "\033[0;32m\u2713 Production passwords set\033[0m"
 	@echo "\033[0;32m\u2713 Environment check complete.\033[0m"
+# ─── Remote LAN deployment ───────────────────────────────────────
+deploy-remote:
+	@test -n "$(DEPLOY_HOST)" || { echo "[0;31mError: DEPLOY_HOST is not set. Run with DEPLOY_HOST=your-host make deploy-remote[0m"; exit 1; }
+	@echo "[0;36m▶ Deploying on $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_DIR)...[0m"
+	ssh -t $(DEPLOY_USER)@$(DEPLOY_HOST) "cd $(DEPLOY_DIR) && ./scripts/deploy.sh"
+
+backup-remote:
+	@test -n "$(DEPLOY_HOST)" || { echo "[0;31mError: DEPLOY_HOST is not set. Run with DEPLOY_HOST=your-host make backup-remote[0m"; exit 1; }
+	@echo "[0;36m▶ Running backup on $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_DIR)...[0m"
+	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "cd $(DEPLOY_DIR) && ./scripts/backup.sh"
