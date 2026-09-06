@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { getSiteUrl } from "@/lib/site-url";
 import { fetchSiteSettings } from "@/lib/api";
 
 const inter = Inter({
@@ -11,7 +12,7 @@ const inter = Inter({
   display: "swap",
 });
 
-const siteUrl = "https://mgdrywallusa.taylormadetech.net";
+const siteUrl = getSiteUrl();
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await fetchSiteSettings();
