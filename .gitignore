@@ -26,3 +26,6 @@ playwright-report/
 
 # Static files
 staticfiles/
+
+# Backup archives
+backups/
