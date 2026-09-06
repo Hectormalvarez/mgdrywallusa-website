@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import type { SiteSettingsData } from "@/types/settings";
 
@@ -22,9 +23,12 @@ export default function Footer({ settings }: FooterProps) {
           <div>
             <h2 className="text-lg font-extrabold tracking-tight">
               {settings.logo_url ? (
-                <img
+                <Image
+                  unoptimized
                   src={settings.logo_url}
                   alt={settings.site_name}
+                  width={160}
+                  height={40}
                   className="h-8 w-auto"
                 />
               ) : (
