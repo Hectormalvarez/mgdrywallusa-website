@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from "next/link";
 import { fetchPortfolioItems, type PortfolioItem } from '@/lib/api';
 import type { PortfolioScope } from '@/types/portfolio';
 import PortfolioSkeleton from '@/components/sections/PortfolioSkeleton';
@@ -161,13 +162,13 @@ export default function PortfolioSection({
             )}
             {showViewAll && (
               <div className="mt-8 text-center">
-                <a
+                <Link
                   href="/portfolio"
                   className="inline-flex items-center text-sm font-semibold text-brand hover:text-brand-strong transition-colors"
                 >
                   View All Projects
                   <span className="ml-1" aria-hidden="true">→</span>
-                </a>
+                </Link>
               </div>
             )}
             {hasMore && !loadingMore && (
