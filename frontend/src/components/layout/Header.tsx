@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 import type { SiteSettingsData } from "@/types/settings";
 
@@ -96,9 +97,12 @@ export default function Header({ settings }: HeaderProps) {
             className="flex items-center gap-2 font-extrabold text-lg text-brand tracking-tight"
           >
             {settings.logo_url ? (
-              <img
+              <Image
+                unoptimized
                 src={settings.logo_url}
                 alt={settings.site_name}
+                width={160}
+                height={40}
                 className="h-10 w-auto"
               />
             ) : (
@@ -179,9 +183,12 @@ export default function Header({ settings }: HeaderProps) {
           <div className="flex items-center justify-between h-16 px-4 border-b border-border shrink-0">
             <span className="font-extrabold text-lg text-brand tracking-tight">
               {settings.logo_url ? (
-                <img
+                <Image
+                  unoptimized
                   src={settings.logo_url}
                   alt={settings.site_name}
+                  width={160}
+                  height={40}
                   className="h-8 w-auto"
                 />
               ) : (
