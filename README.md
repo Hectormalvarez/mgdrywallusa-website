@@ -7,21 +7,22 @@ Mobile-first, single-page residential landing page for drywall & finishing contr
 ## Architecture
 
 ```text
-┌─────────┐     ┌──────────┐     ┌─────────┐
-│  Nginx  │────▶│ Frontend │     │  Django │
-│  :8101  │     │ Next.js  │     │  :8000  │
-│         │     │  :3000   │     │         │
-│         │────▶│──────────│────▶│ Wagtail │
-│         │     │  /api/*  │     │  CMS    │
-└─────────┘     └──────────┘     └─────────┘
-                                       │
-                                       ▼
-                                 ┌───────────┐
-                                 │ PostgreSQL │
-                                 │    16      │
-                                 └───────────┘
+┌──────────┐     ┌──────────┐     ┌─────────┐
+│ Cloudfl. │────▶│  Nginx   │────▶│ Frontend│     ┌────────┐
+│ Tunnel   │     │  (proxy) │     │ Next.js │     │ Django │
+│          │     │          │     │  :3000  │     │ :8000  │
+│          │     │          │────▶│─────────│────▶│ Wagtail│
+│          │     │          │     │  /api/* │     │  CMS   │
+└──────────┘     └──────────┘     └─────────┘     └────────┘
+                                                        │
+                                                        ▼
+                                                  ┌───────────┐
+                                                  │ PostgreSQL │
+                                                  │    16      │
+                                                  └───────────┘
 ```
 
+- **Cloudflare Tunnel** — Containerized edge, forwards external traffic to Nginx (no exposed host ports in prod)
 - **Nginx** — Reverse proxy, single origin for all routes
 - **Frontend** — Next.js 16 (App Router, React 19, Tailwind 4)
 - **Backend** — Django 5.x + Wagtail CMS, REST API via DRF
@@ -36,11 +37,13 @@ Mobile-first, single-page residential landing page for drywall & finishing contr
 
 ## Quick Start
 
+### Source Build (development)
+
 ```bash
 # 1. Clone and configure
 git clone <repo-url> && cd mgdrywallusa-website
 cp .env.sample .env
-# Edit .env — set DJANGO_SECRET_KEY and DB_PASSWORD
+# Edit .env — set DJANGO_SECRET_KEY, DB_PASSWORD, and your public domain
 
 # 2. Start the dev stack
 make dev-up
@@ -48,40 +51,35 @@ make dev-up
 # 3. Seed the CMS with default content
 docker compose exec backend python manage.py seed_defaults
 
-# 4. Open
-#    Frontend: https://mgdrywallusa-dev.taylormadetech.net
-#    Admin:    https://mgdrywallusa-dev.taylormadetech.net/admin/
+# 4. Access via Cloudflare Tunnel or local port
+#    Frontend: https://your-dev-domain.com
+#    Admin:    https://your-dev-domain.com/admin/
+#    Local:    http://localhost:8101
+```
+
+### Pre-built Image Pull (production)
+
+```bash
+# 1. Clone and configure
+git clone <repo-url> && cd mgdrywallusa-website
+cp .env.sample .env.prod
+# Edit .env.prod — set all required variables including REGISTRY_OWNER, IMAGE_TAG
+
+# 2. Deploy
+docker compose -p mgdrywall-prod -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
 ## Access
 
-The dev site is exposed via **Cloudflare Tunnel** at:
-
-```
-https://mgdrywallusa-dev.taylormadetech.net
-```
-
-This works from any machine — no port forwarding, VPN, or host-file editing needed.
-The tunnel terminates TLS at the Cloudflare edge and forwards HTTP to Nginx on port 8101.
+All traffic is served through **Cloudflare Tunnel** — no ports are exposed on the host in production.
 
 | URL | Purpose |
 | --- | --- |
-| `https://mgdrywallusa-dev.taylormadetech.net` | Site |
-| `https://mgdrywallusa-dev.taylormadetech.net/admin/` | Wagtail admin |
-| `https://mgdrywallusa-dev.taylormadetech.net/api/v1/...` | REST API |
+| `https://your-domain.com` | Site |
+| `https://your-domain.com/admin/` | Wagtail admin |
+| `https://your-domain.com/api/v1/...` | REST API |
 
-**Local-only shortcut:** `http://localhost:8101` also works when running on the server itself.
-
-### Cloudflare Tunnel
-
-The tunnel named `dev-server` runs on the host and is already configured.
-If you need to restart it:
-
-```bash
-cloudflared tunnel restart dev-server
-```
-
-To add a new hostname to the tunnel, edit `~/.cloudflared/config.yml` and restart.
+**Dev access:** When running on the local network, `http://localhost:8101` also works.
 
 ## Common Commands
 
@@ -110,25 +108,52 @@ To add a new hostname to the tunnel, edit `~/.cloudflared/config.yml` and restar
 | Command | Description |
 | --- | --- |
 | `make prod-deploy` | Build and deploy production stack |
-| `make prod-seed` | Seed default content on production |
-| `make prod-logs` | Tail production logs |
-| `make prod-status` | Check production container status |
-| `make prod-verify` | Health check all production endpoints |
+| `make prod-verify` | Health check production endpoints (inside compose network) |
 | `make env-check` | Validate .env.prod before deploying |
 
-### Git Hooks
+### Remote LAN Deployment
+
+| Command | Description |
+| --- | --- |
+| `make deploy-remote` | Run deploy.sh on a remote host over SSH |
+| `make backup-remote` | Run backup.sh on a remote host over SSH |
+
+Configure via environment:
 
 ```bash
-# Install pre-commit hooks (one-time setup)
-pip install pre-commit
-pre-commit install
+export DEPLOY_HOST=your-host
+export DEPLOY_USER=$(whoami)
+make deploy-remote
 ```
 
-Hooks run automatically on `git commit` and check for:
+## Environment Variables
 
-- Trailing whitespace and missing final newlines
-- Valid YAML/TOML syntax
-- Ruff linting and formatting (backend)
+See `.env.sample` for the full list. Key variables:
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `DJANGO_SECRET_KEY` | ✅ | Django secret (64-char random string) |
+| `DB_PASSWORD` | ✅ | PostgreSQL password |
+| `NEXT_PUBLIC_SITE_URL` | ✅ | Public canonical URL for metadata/SEO |
+| `DEBUG` | ❌ | `True` for dev, `False` for prod (default: `False`) |
+| `NGINX_HOST_PORT` | ❌ | Port for dev Nginx (default: `8101`) |
+| `POSTGRES_HOST_PORT` | ❌ | Port for dev PostgreSQL (default: `5432`) |
+| `CLOUDFLARE_TUNNEL_TOKEN` | Production | Token for containerized Cloudflare Tunnel |
+| `REGISTRY_OWNER` | Production | GHCR image namespace (default: `mgdrywall`) |
+| `IMAGE_TAG` | Production | Docker image tag (default: `latest`) |
+
+## Testing
+
+```bash
+# Backend only
+cd backend && python -m pytest -v
+
+# Frontend only
+cd frontend && npm test
+
+# E2E tests (requires running dev stack)
+cd frontend && npx playwright test
+```
 
 ## Project Structure
 
@@ -143,36 +168,12 @@ Hooks run automatically on `git commit` and check for:
 │   └── tests/          # Backend test suite (pytest)
 ├── frontend/           # Next.js application
 │   ├── src/app/        # App Router pages and API routes
-│   ├── src/components/ # UI components (sections, layout, ui, forms)
-│   ├── src/features/   # Feature modules (leads)
+│   ├── src/components/ # UI components
+│   ├── src/features/   # Feature modules
 │   ├── src/lib/        # Shared utilities
-│   ├── src/types/      # TypeScript types
 │   └── tests/          # Unit + e2e tests (Jest, Playwright)
 ├── nginx/              # Nginx reverse proxy config
-└── docker-compose.yml  # Dev stack orchestration
-```
-
-## Environment Variables
-
-See `.env.sample` for the full list. Key variables:
-
-| Variable | Required | Description |
-| --- | --- | --- |
-| `DJANGO_SECRET_KEY` | ✅ | Django secret (64-char random string) |
-| `DB_PASSWORD` | ✅ | PostgreSQL password |
-| `DEBUG` | ❌ | `True` for dev, `False` for prod (default: `False`) |
-| `NGINX_HOST_PORT` | ❌ | Port for Nginx (default: `8101`) |
-| `POSTGRES_HOST_PORT` | ❌ | Port for PostgreSQL (default: `5432`) |
-
-## Testing
-
-```bash
-# Backend only
-cd backend && python -m pytest -v
-
-# Frontend only
-cd frontend && npm test
-
-# E2E tests (requires running dev stack)
-cd frontend && npx playwright test
+├── scripts/            # Bootstrap, backup, restore, deploy
+├── docker-compose.yml  # Dev stack orchestration
+└── docker-compose.prod.yml  # Production stack (dual-mode)
 ```
