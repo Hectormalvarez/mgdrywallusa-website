@@ -3,10 +3,10 @@ from django.utils.html import format_html
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
 
-
 # ---------------------------------------------------------------------------
 # 1. Global CSS & Theme Colors
 # ---------------------------------------------------------------------------
+
 
 @hooks.register("insert_global_admin_css")
 def global_admin_css():
@@ -17,6 +17,7 @@ def global_admin_css():
     is unavailable.
     """
     from wagtail.models import Site
+
     from site_settings.models import SiteSettings
 
     primary = "#0A3161"
@@ -51,6 +52,7 @@ def global_admin_css():
 # 2. Custom Dashboard Panel — Operations Hub
 # ---------------------------------------------------------------------------
 
+
 @hooks.register("construct_homepage_panels")
 def add_operations_panel(request, panels):
     """Prepend an enhanced operations summary panel to the admin homepage.
@@ -60,6 +62,7 @@ def add_operations_panel(request, panels):
     """
     from wagtail.admin.ui.components import Component
     from wagtail.models import Site
+
     from site_settings.models import SiteSettings
 
     primary = "#0A3161"
@@ -80,7 +83,7 @@ def add_operations_panel(request, panels):
             Lead = apps.get_model("leads", "Lead")
             Service = apps.get_model("home", "Service")
             PortfolioItem = apps.get_model("portfolio", "PortfolioItem")
-            PortfolioPage = apps.get_model("portfolio", "PortfolioPage")
+            PortfolioPage = apps.get_model("portfolio", "PortfolioPage")  # noqa: F841
 
             new_leads = Lead.objects.filter(status="new").count()
             leads_url = reverse("wagtailsnippets_leads_lead:list")
@@ -141,6 +144,7 @@ def add_operations_panel(request, panels):
 # 3. Sidebar Menu — Prune & Add Quick Links
 # ---------------------------------------------------------------------------
 
+
 @hooks.register("construct_main_menu")
 def prune_menu_items(request, menu_items):
     """Hide default CMS menus to keep the admin as a focused business app."""
@@ -169,7 +173,6 @@ def register_edit_homepage_menu_item():
 def register_site_settings_menu_item():
     """Add a top-level Site Settings shortcut linking to the edit view."""
     from wagtail.models import Site
-    from site_settings.models import SiteSettings
 
     site = Site.objects.filter(is_default_site=True).first()
     if site:

@@ -299,9 +299,7 @@ class TestLeadAdminRegistration:
         from wagtail.snippets.models import SNIPPET_MODELS
 
         registered = [m for m in SNIPPET_MODELS if m.__name__ == "Lead"]
-        assert len(registered) == 1, (
-            f"Lead not found in Wagtail SNIPPET_MODELS; got {registered}"
-        )
+        assert len(registered) == 1, f"Lead not found in Wagtail SNIPPET_MODELS; got {registered}"
 
 
 # ===================================================================
@@ -316,84 +314,98 @@ class TestLeadSerializer:
     def test_valid_data_passes(self):
         from leads.serializers import LeadSerializer
 
-        s = LeadSerializer(data={
-            "name": "Jane Doe",
-            "phone": "555-123-4567",
-            "email": "jane@example.com",
-            "project_tier": "repair",
-        })
+        s = LeadSerializer(
+            data={
+                "name": "Jane Doe",
+                "phone": "555-123-4567",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+            }
+        )
         assert s.is_valid(), s.errors
 
     def test_blank_name_fails(self):
         from leads.serializers import LeadSerializer
 
-        s = LeadSerializer(data={
-            "name": "",
-            "phone": "555-1234",
-            "email": "jane@example.com",
-            "project_tier": "repair",
-        })
+        s = LeadSerializer(
+            data={
+                "name": "",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+            }
+        )
         assert not s.is_valid()
         assert "name" in s.errors
 
     def test_invalid_phone_fails(self):
         from leads.serializers import LeadSerializer
 
-        s = LeadSerializer(data={
-            "name": "Jane",
-            "phone": "abc",
-            "email": "jane@example.com",
-            "project_tier": "repair",
-        })
+        s = LeadSerializer(
+            data={
+                "name": "Jane",
+                "phone": "abc",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+            }
+        )
         assert not s.is_valid()
         assert "phone" in s.errors
 
     def test_invalid_tier_fails(self):
         from leads.serializers import LeadSerializer
 
-        s = LeadSerializer(data={
-            "name": "Jane",
-            "phone": "555-1234",
-            "email": "jane@example.com",
-            "project_tier": "kitchen",
-        })
+        s = LeadSerializer(
+            data={
+                "name": "Jane",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "kitchen",
+            }
+        )
         assert not s.is_valid()
         assert "project_tier" in s.errors
 
     def test_honeypot_field_rejects(self):
         from leads.serializers import LeadSerializer
 
-        s = LeadSerializer(data={
-            "name": "Jane",
-            "phone": "555-1234",
-            "email": "jane@example.com",
-            "project_tier": "repair",
-            "company": "bot",
-        })
+        s = LeadSerializer(
+            data={
+                "name": "Jane",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+                "company": "bot",
+            }
+        )
         assert not s.is_valid()
         assert "non_field_errors" in s.errors or "company" in s.errors
 
     def test_empty_honeypot_passes(self):
         from leads.serializers import LeadSerializer
 
-        s = LeadSerializer(data={
-            "name": "Jane",
-            "phone": "555-1234",
-            "email": "jane@example.com",
-            "project_tier": "repair",
-            "company": "",
-        })
+        s = LeadSerializer(
+            data={
+                "name": "Jane",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+                "company": "",
+            }
+        )
         assert s.is_valid(), s.errors
 
     def test_optional_details_defaults_empty(self):
         from leads.serializers import LeadSerializer
 
-        s = LeadSerializer(data={
-            "name": "Jane",
-            "phone": "555-1234",
-            "email": "jane@example.com",
-            "project_tier": "repair",
-        })
+        s = LeadSerializer(
+            data={
+                "name": "Jane",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+            }
+        )
         assert s.is_valid(), s.errors
         assert s.validated_data["details"] == ""
 
@@ -402,26 +414,30 @@ class TestLeadSerializer:
 
         for ct in ("image/jpeg", "image/png", "image/webp"):
             photo = _make_photo(name="photo.jpg", content_type=ct)
-            s = LeadSerializer(data={
-                "name": "Jane",
-                "phone": "555-1234",
-                "email": "jane@example.com",
-                "project_tier": "repair",
-                "photos": [photo],
-            })
+            s = LeadSerializer(
+                data={
+                    "name": "Jane",
+                    "phone": "555-1234",
+                    "email": "jane@example.com",
+                    "project_tier": "repair",
+                    "photos": [photo],
+                }
+            )
             assert s.is_valid(), s.errors
 
     def test_invalid_photo_mime_type_rejected(self):
         from leads.serializers import LeadSerializer
 
         photo = _make_photo(name="doc.pdf", content_type="application/pdf")
-        s = LeadSerializer(data={
-            "name": "Jane",
-            "phone": "555-1234",
-            "email": "jane@example.com",
-            "project_tier": "repair",
-            "photos": [photo],
-        })
+        s = LeadSerializer(
+            data={
+                "name": "Jane",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+                "photos": [photo],
+            }
+        )
         assert not s.is_valid()
         assert "photos" in s.errors
 
@@ -431,8 +447,8 @@ class TestStorageService:
     """Unit tests for StorageService.store_photos."""
 
     def test_store_photos_creates_attachments(self):
-        from tests.factories import LeadFactory
         from leads.services import StorageService
+        from tests.factories import LeadFactory
 
         lead = LeadFactory(
             name="Photo Test",
@@ -445,8 +461,8 @@ class TestStorageService:
         assert lead.attachments.count() == 2
 
     def test_store_photos_empty_list(self):
-        from tests.factories import LeadFactory
         from leads.services import StorageService
+        from tests.factories import LeadFactory
 
         lead = LeadFactory(
             name="No Photos",

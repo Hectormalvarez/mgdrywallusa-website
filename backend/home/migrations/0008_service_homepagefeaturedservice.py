@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("home", "0007_alter_homepage_cta_primary_label_and_more"),
     ]
@@ -40,9 +39,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "short_description",
-                    models.TextField(
-                        help_text="Brief service description (2-3 sentences, shown on the service card)"
-                    ),
+                    models.TextField(help_text="Brief service description (2-3 sentences, shown on the service card)"),
                 ),
                 (
                     "icon",

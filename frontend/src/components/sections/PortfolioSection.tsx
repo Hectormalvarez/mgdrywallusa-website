@@ -29,7 +29,7 @@ export default function PortfolioSection({
   initialTotalCount,
 }: PortfolioSectionProps) {
   const [items, setItems] = useState<PortfolioItem[]>(initialItems ?? []);
-  const [loading, setLoading] = useState(!initialItems);
+  const [loading, setLoading] = useState(!initialItems && !!apiUrl);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeScope, setActiveScope] = useState<PortfolioScope | 'all'>('all');
@@ -85,11 +85,7 @@ export default function PortfolioSection({
 
   useEffect(() => {
     // Skip client-side fetch when server-provided data is available
-    if (initialItems) return;
-    if (!apiUrl) {
-      setLoading(false);
-      return;
-    }
+    if (initialItems || !apiUrl) return;
 
     fetchPortfolioItems(apiUrl, pageLimit ? { limit: pageLimit, offset: 0 } : undefined)
       .then((data) => {
@@ -199,6 +195,7 @@ export default function PortfolioSection({
         )}
 
         <LightboxModal
+          key={lightboxIndex}
           images={lightboxImages}
           initialIndex={lightboxIndex}
           isOpen={lightboxOpen}

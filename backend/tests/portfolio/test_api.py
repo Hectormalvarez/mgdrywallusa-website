@@ -54,14 +54,10 @@ def test_sort_order_in_api_response(portfolio_item):
 def test_portfolio_detail_by_slug(portfolio_item):
     """Test fetching a single portfolio item by slug."""
     client = Client()
-    response = client.get(
-        "/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
-        "&slug=test-portfolio-item"
-    )
+    response = client.get("/api/v1/pages/?type=portfolio.PortfolioItem&fields=*&slug=test-portfolio-item")
 
     assert response.status_code == 200
     data = response.json()
     assert data["meta"]["total_count"] == 1
     assert data["items"][0]["title"] == "Test Portfolio Item"
     assert data["items"][0]["meta"]["slug"] == "test-portfolio-item"
-

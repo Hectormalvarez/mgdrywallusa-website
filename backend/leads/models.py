@@ -1,6 +1,5 @@
 from django.db import models
 
-
 TIER_CHOICES = [
     ("repair", "Repair"),
     ("single_room", "Single Room"),

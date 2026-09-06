@@ -39,7 +39,7 @@ def migrate_services_forward(apps, schema_editor):
 
 def migrate_services_backward(apps, schema_editor):
     """Reverse migration: recreate HomePageServiceItem records from snippets."""
-    Service = apps.get_model("home", "Service")
+    Service = apps.get_model("home", "Service")  # noqa: F841 — kept for forward migration symmetry
     HomePageServiceItem = apps.get_model("home", "HomePageServiceItem")
     HomePageFeaturedService = apps.get_model("home", "HomePageFeaturedService")
 
@@ -54,7 +54,6 @@ def migrate_services_backward(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("home", "0008_service_homepagefeaturedservice"),
     ]

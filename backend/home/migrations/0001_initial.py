@@ -6,31 +6,83 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('wagtailcore', '0097_baselogentry_uuid_action_timestamp_indexes'),
-        ('wagtailimages', '0027_image_description'),
+        ("wagtailcore", "0097_baselogentry_uuid_action_timestamp_indexes"),
+        ("wagtailimages", "0027_image_description"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='HomePage',
+            name="HomePage",
             fields=[
-                ('page_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='wagtailcore.page')),
-                ('hero_kicker', models.CharField(blank=True, help_text="Small label above the heading (e.g. 'Trusted drywall professionals')", max_length=120)),
-                ('hero_heading', models.CharField(blank=True, help_text='Main hero headline', max_length=200)),
-                ('hero_subheading', wagtail.fields.RichTextField(blank=True, help_text='Supporting text beneath the headline')),
-                ('cta_primary_label', models.CharField(blank=True, help_text="Primary CTA button text (e.g. 'Get a Free Quote')", max_length=60)),
-                ('cta_primary_url', models.CharField(blank=True, help_text="Primary CTA destination URL or anchor (e.g. '#lead-form')", max_length=255)),
-                ('cta_secondary_label', models.CharField(blank=True, help_text="Secondary CTA button text (e.g. 'View Our Work')", max_length=60)),
-                ('cta_secondary_url', models.CharField(blank=True, help_text="Secondary CTA destination URL or anchor (e.g. '#portfolio')", max_length=255)),
-                ('hero_image', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='wagtailimages.image')),
+                (
+                    "page_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        serialize=False,
+                        to="wagtailcore.page",
+                    ),
+                ),
+                (
+                    "hero_kicker",
+                    models.CharField(
+                        blank=True,
+                        help_text="Small label above the heading (e.g. 'Trusted drywall professionals')",
+                        max_length=120,
+                    ),
+                ),
+                ("hero_heading", models.CharField(blank=True, help_text="Main hero headline", max_length=200)),
+                (
+                    "hero_subheading",
+                    wagtail.fields.RichTextField(blank=True, help_text="Supporting text beneath the headline"),
+                ),
+                (
+                    "cta_primary_label",
+                    models.CharField(
+                        blank=True, help_text="Primary CTA button text (e.g. 'Get a Free Quote')", max_length=60
+                    ),
+                ),
+                (
+                    "cta_primary_url",
+                    models.CharField(
+                        blank=True,
+                        help_text="Primary CTA destination URL or anchor (e.g. '#lead-form')",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "cta_secondary_label",
+                    models.CharField(
+                        blank=True, help_text="Secondary CTA button text (e.g. 'View Our Work')", max_length=60
+                    ),
+                ),
+                (
+                    "cta_secondary_url",
+                    models.CharField(
+                        blank=True,
+                        help_text="Secondary CTA destination URL or anchor (e.g. '#portfolio')",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "hero_image",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to="wagtailimages.image",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
-            bases=('wagtailcore.page',),
+            bases=("wagtailcore.page",),
         ),
     ]

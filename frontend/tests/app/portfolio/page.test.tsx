@@ -38,6 +38,38 @@ jest.mock('@/lib/api', () => ({
       },
     ],
   }),
+  fetchPortfolioItemsServer: jest.fn().mockResolvedValue({
+    meta: { total_count: 2 },
+    items: [
+      {
+        id: 1,
+        slug: 'kitchen-remodel',
+        title: 'Test Kitchen',
+        description: '<p>A kitchen project.</p>',
+        scope: 'residential',
+        scope_label: 'Residential',
+        finish_tags: ['smooth'],
+        featured_image: {
+          thumbnail: '/media/thumb.png',
+          card: '/media/card.png',
+          full: '/media/full.png',
+          alt: 'Kitchen',
+        },
+        gallery_images: [],
+      },
+      {
+        id: 2,
+        slug: 'office-build',
+        title: 'Test Office',
+        description: '<p>An office project.</p>',
+        scope: 'commercial',
+        scope_label: 'Commercial',
+        finish_tags: [],
+        featured_image: null,
+        gallery_images: [],
+      },
+    ],
+  }),
 }));
 
 import PortfolioPage from '@/app/portfolio/page';

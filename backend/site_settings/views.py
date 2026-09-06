@@ -2,13 +2,12 @@
 
 from django.http import JsonResponse
 from django.views import View
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from wagtail.models import Site
 from wagtail_headless_preview.models import PagePreview
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from wagtail.models import Site
-from core.utils import resolve_image_url
 from home.models import HomePage
 from site_settings.models import SiteSettings
 

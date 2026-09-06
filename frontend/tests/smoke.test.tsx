@@ -27,6 +27,21 @@ jest.mock('@/lib/api', () => ({
       },
     ],
   }),
+  fetchPortfolioItemsServer: jest.fn().mockResolvedValue({
+    meta: { total_count: 1 },
+    items: [
+      {
+        id: 1,
+        title: 'Kitchen Remodel',
+        description: '',
+        scope: 'residential',
+        featured_image_url: null,
+        gallery_images: [],
+        finish_tags: [],
+        meta: { type: 'portfolio.PortfolioItem', detail_url: '' },
+      },
+    ],
+  }),
 }));
 
 import Home from '@/app/page';

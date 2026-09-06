@@ -7,8 +7,9 @@ class HomeConfig(AppConfig):
     verbose_name = "Home Pages"
 
     def ready(self):
+        from wagtail.snippets.models import register_snippet
+
         from home.admin import ServiceViewSet
         from home.models import Service
-        from wagtail.snippets.models import register_snippet
 
         register_snippet(Service, viewset=ServiceViewSet)

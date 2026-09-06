@@ -1,6 +1,7 @@
 """Admin configuration for Lead model."""
 
 from wagtail.snippets.views.snippets import SnippetViewSet
+
 from leads.models import Lead
 
 

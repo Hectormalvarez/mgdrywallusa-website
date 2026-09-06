@@ -1,15 +1,15 @@
 """Tests for site_settings wagtail admin hooks."""
 
+from unittest.mock import MagicMock
+
 import pytest
-from django.test import RequestFactory
-from unittest.mock import patch, MagicMock
 
 
 @pytest.mark.django_db
 def test_global_admin_css_returns_html(site):
     """The global_admin_css hook should return style HTML with the primary color."""
-    from site_settings.wagtail_hooks import global_admin_css
     from site_settings.models import SiteSettings
+    from site_settings.wagtail_hooks import global_admin_css
 
     settings_obj = SiteSettings.for_site(site)
     settings_obj.primary_color = "#FF0000"
@@ -119,7 +119,6 @@ def test_add_operations_panel_inserts_panel(site, db):
 @pytest.mark.django_db
 def test_operations_panel_renders_three_metrics(home_page, site, db):
     """Operations panel HTML should contain Leads, Services, and Portfolio metrics."""
-    from django.test import Client
     from site_settings.wagtail_hooks import add_operations_panel
 
     request = MagicMock()

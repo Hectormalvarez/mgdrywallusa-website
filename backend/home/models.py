@@ -1,11 +1,10 @@
 from django.db import models
 from django.utils.text import slugify
 from modelcluster.fields import ParentalKey
-from wagtail.models import Page, Orderable
-from wagtail.fields import RichTextField
-from wagtail.admin.panels import FieldPanel, MultiFieldPanel, InlinePanel
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.api import APIField
 from wagtail.images.api.fields import ImageRenditionField
+from wagtail.models import Orderable, Page
 from wagtail_headless_preview.models import HeadlessPreviewMixin
 
 from home.serializers import FeaturedServicesField

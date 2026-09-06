@@ -1,8 +1,9 @@
 from django.conf import settings
 from django.http import HttpResponse
-from django.urls import path, include
+from django.urls import include, path
 from django.views.static import serve as static_serve
 from wagtail.admin import urls as wagtailadmin_urls
+
 from core.router import api_router
 from leads.views import LeadCreateView
 
@@ -12,11 +13,11 @@ def root_view(request):
 
 
 urlpatterns = [
-    path('', root_view),
-    path('admin/', include(wagtailadmin_urls)),
-    path('api/v1/leads/', LeadCreateView.as_view(), name='lead-create'),
-    path('api/v1/', api_router.urls),
-    path('api/v1/', include('site_settings.urls')),
+    path("", root_view),
+    path("admin/", include(wagtailadmin_urls)),
+    path("api/v1/leads/", LeadCreateView.as_view(), name="lead-create"),
+    path("api/v1/", api_router.urls),
+    path("api/v1/", include("site_settings.urls")),
 ]
 
 # Serve media files in all environments.

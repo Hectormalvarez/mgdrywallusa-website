@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 class LeadRateThrottle(AnonRateThrottle):
     """Throttle for the lead intake endpoint."""
-    scope = 'lead'
+
+    scope = "lead"
 
 
 class LeadCreateView(APIView):

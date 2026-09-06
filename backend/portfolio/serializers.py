@@ -1,5 +1,4 @@
 from rest_framework.fields import Field
-from wagtail.images.api.fields import ImageRenditionField
 
 
 class TagsField(Field):

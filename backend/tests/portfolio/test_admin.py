@@ -18,33 +18,25 @@ def _get_panel_headings(panels):
 def test_portfolio_item_panels_are_grouped():
     """PortfolioItem content_panels must use MultiFieldPanel groups, not flat fields."""
     headings = _get_panel_headings(PortfolioItem.content_panels)
-    assert len(headings) >= 3, (
-        f"Expected at least 3 panel groups, got {len(headings)}: {headings}"
-    )
+    assert len(headings) >= 3, f"Expected at least 3 panel groups, got {len(headings)}: {headings}"
 
 
 def test_portfolio_item_has_project_details_group():
     """There must be a 'Project Details' panel group containing scope and description."""
     headings = _get_panel_headings(PortfolioItem.content_panels)
-    assert any("project" in h.lower() for h in headings), (
-        f"Missing 'Project Details' group. Found: {headings}"
-    )
+    assert any("project" in h.lower() for h in headings), f"Missing 'Project Details' group. Found: {headings}"
 
 
 def test_portfolio_item_has_images_group():
     """There must be an 'Images' panel group containing featured image and gallery."""
     headings = _get_panel_headings(PortfolioItem.content_panels)
-    assert any("image" in h.lower() for h in headings), (
-        f"Missing 'Images' group. Found: {headings}"
-    )
+    assert any("image" in h.lower() for h in headings), f"Missing 'Images' group. Found: {headings}"
 
 
 def test_portfolio_item_has_tags_group():
     """There must be a 'Tags' panel group containing finish tags."""
     headings = _get_panel_headings(PortfolioItem.content_panels)
-    assert any("tag" in h.lower() for h in headings), (
-        f"Missing 'Tags' group. Found: {headings}"
-    )
+    assert any("tag" in h.lower() for h in headings), f"Missing 'Tags' group. Found: {headings}"
 
 
 @pytest.mark.django_db

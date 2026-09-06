@@ -5,85 +5,129 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('home', '0001_initial'),
-        ('wagtailcore', '0097_baselogentry_uuid_action_timestamp_indexes'),
+        ("home", "0001_initial"),
+        ("wagtailcore", "0097_baselogentry_uuid_action_timestamp_indexes"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='homepage',
-            name='lead_section_description',
-            field=models.TextField(default="Tell us about your project and we'll get back to you promptly.", help_text='Subtitle instruction text below the intake header'),
+            model_name="homepage",
+            name="lead_section_description",
+            field=models.TextField(
+                default="Tell us about your project and we'll get back to you promptly.",
+                help_text="Subtitle instruction text below the intake header",
+            ),
         ),
         migrations.AddField(
-            model_name='homepage',
-            name='lead_section_heading',
-            field=models.CharField(default='Request a Quote', help_text='Header text above the contact intake form', max_length=255),
+            model_name="homepage",
+            name="lead_section_heading",
+            field=models.CharField(
+                default="Request a Quote", help_text="Header text above the contact intake form", max_length=255
+            ),
         ),
         migrations.AddField(
-            model_name='homepage',
-            name='portfolio_empty_text',
-            field=models.CharField(default='No projects to display yet.', help_text='Fallback text when no portfolio items are published', max_length=255),
+            model_name="homepage",
+            name="portfolio_empty_text",
+            field=models.CharField(
+                default="No projects to display yet.",
+                help_text="Fallback text when no portfolio items are published",
+                max_length=255,
+            ),
         ),
         migrations.AddField(
-            model_name='homepage',
-            name='portfolio_heading',
-            field=models.CharField(default='Our Work', help_text='Header text above the portfolio gallery grid', max_length=255),
+            model_name="homepage",
+            name="portfolio_heading",
+            field=models.CharField(
+                default="Our Work", help_text="Header text above the portfolio gallery grid", max_length=255
+            ),
         ),
         migrations.AlterField(
-            model_name='homepage',
-            name='cta_primary_label',
-            field=models.CharField(default='Get a Free Quote', max_length=100),
+            model_name="homepage",
+            name="cta_primary_label",
+            field=models.CharField(default="Get a Free Quote", max_length=100),
         ),
         migrations.AlterField(
-            model_name='homepage',
-            name='cta_primary_url',
-            field=models.CharField(default='#lead-form', max_length=255),
+            model_name="homepage",
+            name="cta_primary_url",
+            field=models.CharField(default="#lead-form", max_length=255),
         ),
         migrations.AlterField(
-            model_name='homepage',
-            name='cta_secondary_label',
-            field=models.CharField(default='View Our Work', max_length=100),
+            model_name="homepage",
+            name="cta_secondary_label",
+            field=models.CharField(default="View Our Work", max_length=100),
         ),
         migrations.AlterField(
-            model_name='homepage',
-            name='cta_secondary_url',
-            field=models.CharField(default='#portfolio', max_length=255),
+            model_name="homepage",
+            name="cta_secondary_url",
+            field=models.CharField(default="#portfolio", max_length=255),
         ),
         migrations.AlterField(
-            model_name='homepage',
-            name='hero_heading',
-            field=models.CharField(default='MG Drywall USA', max_length=255),
+            model_name="homepage",
+            name="hero_heading",
+            field=models.CharField(default="MG Drywall USA", max_length=255),
         ),
         migrations.AlterField(
-            model_name='homepage',
-            name='hero_kicker',
-            field=models.CharField(blank=True, default='Trusted drywall professionals', max_length=255),
+            model_name="homepage",
+            name="hero_kicker",
+            field=models.CharField(blank=True, default="Trusted drywall professionals", max_length=255),
         ),
         migrations.AlterField(
-            model_name='homepage',
-            name='hero_subheading',
-            field=models.TextField(blank=True, default='Professional drywall installation, repair, and finishing for residential and commercial projects.'),
+            model_name="homepage",
+            name="hero_subheading",
+            field=models.TextField(
+                blank=True,
+                default="Professional drywall installation, repair, and finishing for residential and commercial projects.",
+            ),
         ),
         migrations.CreateModel(
-            name='SiteSettings',
+            name="SiteSettings",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('site_name', models.CharField(default='MG Drywall USA', help_text='Business name used across headers, footers, and SEO metadata', max_length=255)),
-                ('tagline', models.TextField(blank=True, default='Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.', help_text='Primary business tagline displayed in the footer')),
-                ('phone_number', models.CharField(default='+1-555-DRYWALL', help_text='Primary public contact phone number', max_length=50)),
-                ('contact_email', models.EmailField(default='info@mgdrywallusa.com', help_text='Primary public contact email address', max_length=254)),
-                ('address_locality', models.CharField(blank=True, default='Austin', max_length=100)),
-                ('address_region', models.CharField(blank=True, default='TX', max_length=100)),
-                ('postal_code', models.CharField(blank=True, default='78701', max_length=20)),
-                ('country', models.CharField(blank=True, default='US', max_length=10)),
-                ('price_range', models.CharField(blank=True, default='$$', max_length=10)),
-                ('site', models.OneToOneField(editable=False, on_delete=django.db.models.deletion.CASCADE, to='wagtailcore.site')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "site_name",
+                    models.CharField(
+                        default="MG Drywall USA",
+                        help_text="Business name used across headers, footers, and SEO metadata",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "tagline",
+                    models.TextField(
+                        blank=True,
+                        default="Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
+                        help_text="Primary business tagline displayed in the footer",
+                    ),
+                ),
+                (
+                    "phone_number",
+                    models.CharField(
+                        default="+1-555-DRYWALL", help_text="Primary public contact phone number", max_length=50
+                    ),
+                ),
+                (
+                    "contact_email",
+                    models.EmailField(
+                        default="info@mgdrywallusa.com",
+                        help_text="Primary public contact email address",
+                        max_length=254,
+                    ),
+                ),
+                ("address_locality", models.CharField(blank=True, default="Austin", max_length=100)),
+                ("address_region", models.CharField(blank=True, default="TX", max_length=100)),
+                ("postal_code", models.CharField(blank=True, default="78701", max_length=20)),
+                ("country", models.CharField(blank=True, default="US", max_length=10)),
+                ("price_range", models.CharField(blank=True, default="$$", max_length=10)),
+                (
+                    "site",
+                    models.OneToOneField(
+                        editable=False, on_delete=django.db.models.deletion.CASCADE, to="wagtailcore.site"
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
     ]

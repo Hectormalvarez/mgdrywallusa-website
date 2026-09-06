@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("portfolio", "0002_portfoliopage_remove_portfolioitem_image_and_more"),
         ("wagtailimages", "0027_image_description"),

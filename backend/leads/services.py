@@ -12,9 +12,7 @@ class StorageService:
     """Handles file persistence for lead photo attachments."""
 
     @staticmethod
-    def store_photos(
-        lead: "Lead", photos: list["InMemoryUploadedFile"]
-    ) -> None:
+    def store_photos(lead: "Lead", photos: list["InMemoryUploadedFile"]) -> None:
         """Save each uploaded photo as a LeadAttachment linked to *lead*."""
         from leads.models import LeadAttachment
 

@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("home", "0004_homepage_services_heading_and_more"),
         ("wagtailimages", "0027_image_description"),
@@ -86,9 +85,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="sitesettings",
             name="google_review_url",
-            field=models.URLField(
-                blank=True, default="", help_text="Direct link to leave a Google Review"
-            ),
+            field=models.URLField(blank=True, default="", help_text="Direct link to leave a Google Review"),
         ),
         migrations.AddField(
             model_name="sitesettings",

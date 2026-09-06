@@ -1,13 +1,8 @@
 """Tests for the PortfolioItem admin viewset."""
 
-import pytest
-from django.test import Client
-from wagtail.models import Page
-
-from portfolio.admin import PortfolioItemViewSet, portfolio_item_viewset
-from portfolio.models import PortfolioItem, PortfolioPage
+from portfolio.admin import portfolio_item_viewset
+from portfolio.models import PortfolioItem
 from portfolio.tables import ImageThumbnailColumn
-
 
 # ── Viewset Configuration ────────────────────────────────────────────────
 
@@ -38,4 +33,3 @@ def test_viewset_columns_include_thumbnail():
     """ViewSet columns should include ImageThumbnailColumn."""
     col_types = [type(c) for c in portfolio_item_viewset.columns]
     assert ImageThumbnailColumn in col_types
-

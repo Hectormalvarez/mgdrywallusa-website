@@ -25,11 +25,7 @@ def test_media_serve_with_debug_false(tmp_path, monkeypatch):
 
     (tmp_path / "hello.txt").write_text("hello media")
 
-    media_pattern = next(
-        p
-        for p in core.urls.urlpatterns
-        if getattr(p, "callback", None) is static_serve
-    )
+    media_pattern = next(p for p in core.urls.urlpatterns if getattr(p, "callback", None) is static_serve)
     monkeypatch.setitem(media_pattern.default_args, "document_root", str(tmp_path))
 
     client = Client()
@@ -58,9 +54,7 @@ def test_preview_url_validation_rejects_localhost():
 
 def test_preview_url_validation_accepts_https_in_production():
     """A valid public HTTPS origin should pass validation."""
-    _validate_wagtail_preview_url(
-        "https://mgdrywallusa.taylormadetech.net/api/preview", debug=False
-    )
+    _validate_wagtail_preview_url("https://mgdrywallusa.taylormadetech.net/api/preview", debug=False)
 
 
 def test_preview_url_validation_allows_anything_in_debug():

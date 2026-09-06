@@ -8,7 +8,6 @@ from django.test import Client
 @pytest.mark.django_db
 def test_preview_endpoint_token_flow(home_page):
     """Preview endpoint should return a JSON object with draft data."""
-    from wagtail_headless_preview.models import PagePreview
 
     home_page.hero_heading = "Draft Heading"
     home_page.save()
@@ -34,18 +33,15 @@ def test_preview_endpoint_token_flow(home_page):
 def test_preview_rejects_non_homepage_token():
     """Preview endpoint should return 400 for a token tied to a non-HomePage."""
     import json
-    from wagtail_headless_preview.models import PagePreview
+
     from wagtail.models import Page
+    from wagtail_headless_preview.models import PagePreview
 
     content_type = ContentType.objects.get_for_model(Page)
     PagePreview.objects.create(
         token="other-page-token",
         content_type=content_type,
-        content_json=json.dumps({
-            "pk": 999,
-            "content_type": content_type.id,
-            "title": "Not Home"
-        }),
+        content_json=json.dumps({"pk": 999, "content_type": content_type.id, "title": "Not Home"}),
     )
 
     client = Client()
@@ -57,7 +53,7 @@ def test_preview_rejects_non_homepage_token():
 @pytest.mark.django_db
 def test_preview_serializes_api_fields(home_page, test_image):
     """Preview response must match the published API contract for HomePage."""
-    from home.models import Service, HomePageFeaturedService
+    from home.models import HomePageFeaturedService, Service
 
     home_page.hero_heading = "API Contract Test"
     home_page.hero_image = test_image

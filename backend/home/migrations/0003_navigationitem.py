@@ -6,24 +6,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('home', '0002_homepage_lead_section_description_and_more'),
+        ("home", "0002_homepage_lead_section_description_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='NavigationItem',
+            name="NavigationItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('sort_order', models.IntegerField(blank=True, editable=False, null=True)),
-                ('label', models.CharField(help_text='Link text displayed in menu', max_length=100)),
-                ('url', models.CharField(help_text='Target URL or anchor (e.g. #portfolio)', max_length=255)),
-                ('setting', modelcluster.fields.ParentalKey(on_delete=django.db.models.deletion.CASCADE, related_name='navigation_items', to='home.sitesettings')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("sort_order", models.IntegerField(blank=True, editable=False, null=True)),
+                ("label", models.CharField(help_text="Link text displayed in menu", max_length=100)),
+                ("url", models.CharField(help_text="Target URL or anchor (e.g. #portfolio)", max_length=255)),
+                (
+                    "setting",
+                    modelcluster.fields.ParentalKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="navigation_items",
+                        to="home.sitesettings",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order'],
-                'abstract': False,
+                "ordering": ["sort_order"],
+                "abstract": False,
             },
         ),
     ]

@@ -2,10 +2,10 @@ from django.db import models
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from taggit.models import TaggedItemBase
-from wagtail.models import Page, Orderable
-from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.api import APIField
+from wagtail.fields import RichTextField
+from wagtail.models import Orderable, Page
 
 from .serializers import GalleryImageField, OptimizedPortfolioImageField, TagsField
 
@@ -141,4 +141,3 @@ class PortfolioItemImage(Orderable):
         FieldPanel("image"),
         FieldPanel("caption"),
     ]
-

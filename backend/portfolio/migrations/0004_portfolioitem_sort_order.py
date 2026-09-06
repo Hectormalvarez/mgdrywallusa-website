@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('portfolio', '0003_alter_portfolioitem_description_and_more'),
+        ("portfolio", "0003_alter_portfolioitem_description_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='portfolioitem',
-            name='sort_order',
-            field=models.IntegerField(default=0, help_text='Controls the display order on the portfolio listing (lower first)'),
+            model_name="portfolioitem",
+            name="sort_order",
+            field=models.IntegerField(
+                default=0, help_text="Controls the display order on the portfolio listing (lower first)"
+            ),
         ),
     ]

@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("site_settings", "0001_initial"),
         ("wagtailimages", "0027_image_description"),
@@ -15,16 +14,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="navigationitem",
             name="label",
-            field=models.CharField(
-                help_text="Link text displayed in menu", max_length=100
-            ),
+            field=models.CharField(help_text="Link text displayed in menu", max_length=100),
         ),
         migrations.AlterField(
             model_name="navigationitem",
             name="url",
-            field=models.CharField(
-                help_text="Target URL or anchor (e.g. #portfolio)", max_length=255
-            ),
+            field=models.CharField(help_text="Target URL or anchor (e.g. #portfolio)", max_length=255),
         ),
         migrations.AlterField(
             model_name="sitesettings",
@@ -95,9 +90,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="sitesettings",
             name="google_review_url",
-            field=models.URLField(
-                blank=True, default="", help_text="Direct link to leave a Google Review"
-            ),
+            field=models.URLField(blank=True, default="", help_text="Direct link to leave a Google Review"),
         ),
         migrations.AlterField(
             model_name="sitesettings",

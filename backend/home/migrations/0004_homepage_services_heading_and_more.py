@@ -6,35 +6,53 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('home', '0003_navigationitem'),
+        ("home", "0003_navigationitem"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='homepage',
-            name='services_heading',
-            field=models.CharField(default='Our Services', help_text='Header text for the services grid', max_length=255),
+            model_name="homepage",
+            name="services_heading",
+            field=models.CharField(
+                default="Our Services", help_text="Header text for the services grid", max_length=255
+            ),
         ),
         migrations.AddField(
-            model_name='homepage',
-            name='services_subheading',
-            field=models.TextField(blank=True, default='Specialized drywall installation, repair, and finishing solutions tailored to residential and commercial needs.', help_text='Subtitle instruction text below the services header'),
+            model_name="homepage",
+            name="services_subheading",
+            field=models.TextField(
+                blank=True,
+                default="Specialized drywall installation, repair, and finishing solutions tailored to residential and commercial needs.",
+                help_text="Subtitle instruction text below the services header",
+            ),
         ),
         migrations.CreateModel(
-            name='HomePageServiceItem',
+            name="HomePageServiceItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('sort_order', models.IntegerField(blank=True, editable=False, null=True)),
-                ('title', models.CharField(max_length=150)),
-                ('description', models.TextField()),
-                ('icon_name', models.CharField(blank=True, default='shield', help_text='Icon identifier (e.g. wall, patch, paint, building)', max_length=50)),
-                ('page', modelcluster.fields.ParentalKey(on_delete=django.db.models.deletion.CASCADE, related_name='services', to='home.homepage')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("sort_order", models.IntegerField(blank=True, editable=False, null=True)),
+                ("title", models.CharField(max_length=150)),
+                ("description", models.TextField()),
+                (
+                    "icon_name",
+                    models.CharField(
+                        blank=True,
+                        default="shield",
+                        help_text="Icon identifier (e.g. wall, patch, paint, building)",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "page",
+                    modelcluster.fields.ParentalKey(
+                        on_delete=django.db.models.deletion.CASCADE, related_name="services", to="home.homepage"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order'],
-                'abstract': False,
+                "ordering": ["sort_order"],
+                "abstract": False,
             },
         ),
     ]

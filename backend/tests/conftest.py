@@ -94,4 +94,3 @@ def portfolio_item(db, home_page, test_image, site):
     # Persist django-modelcluster tag changes by saving the parent page again.
     item.save()
     return item
-

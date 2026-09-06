@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from wagtail.models import Site
-from home.models import HomePage, Service, HomePageFeaturedService
+
+from home.models import HomePage, HomePageFeaturedService, Service
 from site_settings.models import NavigationItem, SiteSettings
 
 
@@ -65,9 +66,24 @@ class Command(BaseCommand):
 
         if home.featured_services.count() == 0:
             service_data = [
-                ("Level 5 Finishing", "level-5-finishing", "Flawless, glass-smooth surfaces for high-end residential interiors and architectural accent walls.", "paint"),
-                ("Drywall Repair & Patching", "drywall-repair-patching", "Seamless water damage repairs, stress crack fixes, and texture-matching for ceilings and walls.", "patch"),
-                ("ADU & Renovation Framing", "adu-renovation-framing", "Full-service drywall hanging and finishing for garage conversions, room additions, and basements.", "wall"),
+                (
+                    "Level 5 Finishing",
+                    "level-5-finishing",
+                    "Flawless, glass-smooth surfaces for high-end residential interiors and architectural accent walls.",
+                    "paint",
+                ),
+                (
+                    "Drywall Repair & Patching",
+                    "drywall-repair-patching",
+                    "Seamless water damage repairs, stress crack fixes, and texture-matching for ceilings and walls.",
+                    "patch",
+                ),
+                (
+                    "ADU & Renovation Framing",
+                    "adu-renovation-framing",
+                    "Full-service drywall hanging and finishing for garage conversions, room additions, and basements.",
+                    "wall",
+                ),
             ]
             for order, (name, slug, desc, icon) in enumerate(service_data):
                 service, _ = Service.objects.get_or_create(

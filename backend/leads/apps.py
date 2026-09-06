@@ -7,8 +7,9 @@ class LeadsConfig(AppConfig):
     verbose_name = "Leads"
 
     def ready(self):
+        from wagtail.snippets.models import register_snippet
+
         from leads.admin import LeadSnippetViewSet
         from leads.models import Lead
-        from wagtail.snippets.models import register_snippet
 
         register_snippet(Lead, viewset=LeadSnippetViewSet)

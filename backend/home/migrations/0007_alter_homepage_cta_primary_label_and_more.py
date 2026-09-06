@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("home", "0006_remove_sitesettings_and_navigationitem"),
         ("wagtailimages", "0027_image_description"),
@@ -91,9 +90,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="homepageserviceitem",
             name="description",
-            field=models.TextField(
-                help_text="Brief service description (2-3 sentences, shown on the service card)"
-            ),
+            field=models.TextField(help_text="Brief service description (2-3 sentences, shown on the service card)"),
         ),
         migrations.AlterField(
             model_name="homepageserviceitem",

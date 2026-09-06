@@ -31,6 +31,10 @@ jest.mock('@/lib/api', () => ({
     meta: { total_count: 0 },
     items: [],
   }),
+  fetchPortfolioItemsServer: jest.fn().mockResolvedValue({
+    meta: { total_count: 0 },
+    items: [],
+  }),
 }));
 
 import Home from '@/app/page';

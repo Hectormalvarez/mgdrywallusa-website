@@ -9,7 +9,6 @@ from wagtail.images.models import Image
 
 from portfolio.models import PortfolioItem, PortfolioItemImage, PortfolioPage
 
-
 PROJECTS = [
     {
         "title": "Santa Monica Residential Remodel",
@@ -119,9 +118,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'  Created: "{project["title"]}"'))
             created += 1
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Portfolio seed complete: {created} items created.")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Portfolio seed complete: {created} items created."))
 
     # -- Helpers -----------------------------------------------------------
 
@@ -129,10 +126,9 @@ class Command(BaseCommand):
         page = PortfolioPage.objects.first()
         if page:
             return page
-        from wagtail.models import Page
-
         # Prefer attaching under the default site's root page for a proper tree
-        from wagtail.models import Site
+        from wagtail.models import Page, Site
+
         site = Site.objects.filter(is_default_site=True).first()
         parent = site.root_page if site else Page.get_first_root_node()
         page = PortfolioPage(title="Portfolio", slug="portfolio")
@@ -154,6 +150,7 @@ class Command(BaseCommand):
         pil_img = PILImage.new("RGB", (width, height), color=color)
         try:
             from PIL import ImageDraw
+
             draw = ImageDraw.Draw(pil_img)
             text_color = tuple(min(255, c + 120) for c in color)
             draw.text((width // 4, height // 2 - 10), title[:40], fill=text_color)
