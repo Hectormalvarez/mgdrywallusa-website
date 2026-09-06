@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const siteUrl = getSiteUrl();
   return [
     {
-      url: "https://mgdrywallusa.taylormadetech.net",
+      url: siteUrl,
       lastModified: new Date().toISOString(),
       changeFrequency: "weekly",
       priority: 1.0,
