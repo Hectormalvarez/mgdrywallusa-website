@@ -46,6 +46,32 @@ const SCENARIOS = {
   // Detail-page dataset (also the default).
   default: [sampleProject],
 
+  // Two-item dataset for the /portfolio listing page assertions.
+  "listing-page": [
+    {
+      id: 1,
+      slug: "residential-project",
+      title: "Residential Project",
+      description: "<p>A home remodel.</p>",
+      scope: "residential",
+      scope_label: "Residential",
+      finish_tags: ["Level 5"],
+      featured_image: null,
+      gallery_images: [],
+    },
+    {
+      id: 2,
+      slug: "commercial-project",
+      title: "Commercial Project",
+      description: "<p>An office buildout.</p>",
+      scope: "commercial",
+      scope_label: "Commercial",
+      finish_tags: [],
+      featured_image: null,
+      gallery_images: [],
+    },
+  ],
+
   // Listing dataset with a description/caption/tags to assert against.
   listing: [
     {
