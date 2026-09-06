@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  REGISTRY_OWNER: ${{ github.repository_owner }}
+  REGISTRY_OWNER: hectormalvarez
 
 jobs:
   build-and-push:
@@ -32,17 +32,17 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Log in to GHCR
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.context }}/${{ matrix.dockerfile }}
@@ -57,10 +57,21 @@ jobs:
     name: Deploy to Server
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: secrets.SERVER_HOST != ''
     steps:
+      - name: Check deploy configuration
+        id: check
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          if [ -n "$SERVER_HOST" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "SERVER_HOST secret not set — skipping deploy"
+          fi
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@ca4a50aed7d013e86c6bb55ca5c1468e54a95154 # v1.1.0
+        if: steps.check.outputs.enabled == 'true'
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
