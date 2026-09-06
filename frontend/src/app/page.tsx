@@ -12,6 +12,10 @@ const LEAD_API_URL =
   process.env.NEXT_PUBLIC_LEAD_API_URL ??
   "/api/v1/leads/";
 
+const PORTFOLIO_API_URL =
+  process.env.NEXT_PUBLIC_WAGTAIL_API_URL ??
+  "/api/v1/pages/?type=portfolio.PortfolioItem&fields=*";
+
 export default async function Home() {
   const { isEnabled: isDraft } = await draftMode();
   const previewToken = isDraft
@@ -43,6 +47,7 @@ export default async function Home() {
         services={homeData?.featured_services}
       />
       <PortfolioSection
+        apiUrl={PORTFOLIO_API_URL}
         initialItems={portfolioData?.items}
         initialTotalCount={portfolioData?.meta.total_count}
         heading={homeData?.portfolio_heading}
