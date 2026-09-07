@@ -8,7 +8,7 @@
         {
           "match": {
             "type": "value",
-            "value": "{{ getenv \"WEBHOOK_TOKEN\" }}",
+            "value": "__WEBHOOK_TOKEN__",
             "parameter": {
               "source": "header",
               "name": "X-Webhook-Token"

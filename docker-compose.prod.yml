@@ -113,9 +113,9 @@ services:
     environment:
       WEBHOOK_TOKEN: ${WEBHOOK_TOKEN:?WEBHOOK_TOKEN is required}
     volumes:
-      - /opt/mgdrywallusa-website:/opt/mgdrywallusa-website
+      - .:/opt/mgdrywallusa-website
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./webhook/hooks.json:/etc/webhook/hooks.json:ro
+      - ./webhook/hooks.json:/etc/webhook/hooks.json.template:ro
     depends_on:
       - nginx
     cap_drop:
