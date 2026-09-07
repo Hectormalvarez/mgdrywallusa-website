@@ -28,6 +28,10 @@ export default defineConfig({
         viewport: { width: 1280, height: 720 },
       },
     },
+    {
+      name: "Mobile Safari",
+      use: devices["iPhone 15"],
+    },
   ],
 
   webServer: [
@@ -38,7 +42,7 @@ export default defineConfig({
       timeout: 30_000,
     },
     {
-      // next start is incompatible with output: standalone, so run the
+      // `next start` is incompatible with `output: "standalone"`, so run the
       // standalone server directly (mirrors Dockerfile.prod).
       command: `npm run build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && PORT=${PORT} HOSTNAME=0.0.0.0 node .next/standalone/server.js`,
       port: PORT,
@@ -51,3 +55,4 @@ export default defineConfig({
     },
   ],
 });
+
