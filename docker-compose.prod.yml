@@ -105,6 +105,32 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  webhook:
+    build: ./webhook
+    command: -verbose -hooks=/etc/webhook/hooks.json -hotreload
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      WEBHOOK_TOKEN: ${WEBHOOK_TOKEN:?WEBHOOK_TOKEN is required}
+    volumes:
+      - /opt/mgdrywallusa-website:/opt/mgdrywallusa-website
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./webhook/hooks.json:/etc/webhook/hooks.json:ro
+    depends_on:
+      - nginx
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   pgdata:
   media_data:
