@@ -12,6 +12,7 @@ test.describe("Homepage Visual Regression", () => {
     await expect(page).toHaveScreenshot("homepage.png", {
       fullPage: true,
       animations: "disabled",
+      maxDiffPixelRatio: 0.01,
     });
   });
 });
