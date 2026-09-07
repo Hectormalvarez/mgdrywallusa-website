@@ -20,7 +20,7 @@ info()  { printf "\033[0;36m▶ %s\033[0m\n" "$1"; }
 ok()    { printf "\033[0;32m✓ %s\033[0m\n" "$1"; }
 err()   { printf "\033[0;31m✗ %s\033[0m\n" "$1" >&2; exit 1; }
 
-COMPOSE="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILE"
+COMPOSE="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILE --env-file .env.prod"
 
 # ── Step 1: Snapshot current image references ──────────────────────
 info "Capturing current image references..."
