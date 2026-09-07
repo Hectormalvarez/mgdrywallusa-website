@@ -121,7 +121,7 @@ jobs:
             });
 
       - name: Update deployment status (failure)
-        if: failure()
+        if: failure() && steps.deployment.outputs.result
         uses: actions/github-script@60a0d8e0365f825c4985b8dd10ef5d32ab3c257c # v7.0.1
         with:
           script: |
