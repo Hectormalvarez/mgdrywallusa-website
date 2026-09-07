@@ -2,14 +2,10 @@
 set -euo pipefail
 
 # webhook-bridge.sh — Receives deployment payload from webhook daemon
-# Reads JSON from stdin, validates, and invokes deploy.sh
+# Arguments: $1=image_tag, $2=ref (passed via pass-arguments-to-command)
 
-# Read payload from stdin (webhook daemon passes it)
-PAYLOAD=$(cat)
-
-# Extract fields using jq
-IMAGE_TAG=$(echo "$PAYLOAD" | jq -r '.image_tag // "latest"')
-REF=$(echo "$PAYLOAD" | jq -r '.ref // ""')
+IMAGE_TAG="${1:-latest}"
+REF="${2:-}"
 
 # Validate ref is main
 if [ "$REF" != "main" ]; then

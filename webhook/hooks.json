@@ -3,6 +3,16 @@
     "id": "deploy",
     "execute-command": "/opt/mgdrywallusa-website/scripts/webhook-bridge.sh",
     "command-working-directory": "/opt/mgdrywallusa-website",
+    "pass-arguments-to-command": [
+      {
+        "source": "payload",
+        "name": "image_tag"
+      },
+      {
+        "source": "payload",
+        "name": "ref"
+      }
+    ],
     "trigger-rule": {
       "and": [
         {
