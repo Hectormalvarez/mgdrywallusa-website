@@ -10,10 +10,11 @@ cd "$PROJECT_DIR"
 # ── Configuration (override via environment) ──────────────────────
 COMPOSE_PROJECT="${COMPOSE_PROJECT:-mgdrywall-prod}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
-HEALTH_URL="${HEALTH_URL:-http://localhost/}"
+HEALTH_URL="${HEALTH_URL:-http://nginx/api/v1/settings/}"
 HEALTH_RETRIES="${HEALTH_RETRIES:-15}"
 HEALTH_INTERVAL="${HEALTH_INTERVAL:-4}"
 IMAGE_SERVICES="${IMAGE_SERVICES:-frontend backend nginx}"
+IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 # ── Helpers ────────────────────────────────────────────────────────
 info()  { printf "\033[0;36m▶ %s\033[0m\n" "$1"; }
@@ -24,13 +25,13 @@ COMPOSE="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILE --env-file .env.pro
 
 # ── Step 1: Snapshot current image references ──────────────────────
 info "Capturing current image references..."
-PREV_IMAGES=""
+PREV_IMAGE_TAGS=""
 for svc in $IMAGE_SERVICES; do
-  IMG_ID=$($COMPOSE exec -T "$svc" cat /proc/1/environ 2>/dev/null | tr '\0' '\n' | grep '^_' || true)
-  PREV_IMAGES="$PREV_IMAGES $(docker inspect --format='{{.Image}}' $COMPOSE ps -q "$svc" 2>/dev/null || true)"
+  # Get the current image tag for this service
+  CURRENT_TAG=$($COMPOSE images "$svc" --format json 2>/dev/null | jq -r ".[0].Tag // \"latest\"" 2>/dev/null || echo "latest")
+  PREV_IMAGE_TAGS="$PREV_IMAGE_TAGS $svc:$CURRENT_TAG"
 done
-PREV_IMAGES=$(echo "$PREV_IMAGES" | xargs)
-ok "Previous images captured"
+ok "Previous images captured: $PREV_IMAGE_TAGS"
 
 # ── Step 2: Pre-deploy backup ─────────────────────────────────────
 info "Running pre-deploy backup..."
@@ -62,8 +63,8 @@ info "Running health checks (max ${HEALTH_RETRIES} attempts)..."
 HEALTHY=false
 i=1
 while [ "$i" -le "$HEALTH_RETRIES" ]; do
-  # Use the backend container to check nginx internally (curl is available in backend image)
-  if $COMPOSE exec -T backend curl -sf -o /dev/null "http://nginx/" 2>/dev/null; then
+  # Use the backend container to check the health endpoint
+  if $COMPOSE exec -T backend curl -sf -o /dev/null "$HEALTH_URL" 2>/dev/null; then
     HEALTHY=true
     break
   fi
@@ -75,14 +76,34 @@ done
 if [ "$HEALTHY" = "false" ]; then
   err "Health check failed after $HEALTH_RETRIES attempts. Initiating rollback..."
 
-  # ── Rollback: restore images and re-swap ────────────────────────
+  # ── Rollback: restore previous image tags and re-swap ───────────
   info "Rolling back to previous images..."
-  for svc in $IMAGE_SERVICES; do
-    PREV_IMG=$(echo "$PREV_IMAGES" | awk -v s="$svc" '{print}')
-    [ -n "$PREV_IMG" ] && docker tag "$PREV_IMG" "ghcr.io/${REGISTRY_OWNER:-mgdrywall}/mgdrywall-${svc}:${IMAGE_TAG:-latest}" 2>/dev/null || true
+  for entry in $PREV_IMAGE_TAGS; do
+    svc="${entry%%:*}"
+    tag="${entry##*:}"
+    info "  Restoring $svc to tag: $tag"
   done
-  $COMPOSE up -d --remove-orphans
-  "$SCRIPT_DIR/restore.sh" "$("$SCRIPT_DIR/backup.sh" 2>&1 | grep -o 'backups/.*\.tar.gz' | head -1)" 2>/dev/null || true
+  
+  # Pull the previous image tags
+  for entry in $PREV_IMAGE_TAGS; do
+    svc="${entry%%:*}"
+    tag="${entry##*:}"
+    IMAGE_TAG="$tag" $COMPOSE pull "$svc" 2>/dev/null || true
+  done
+  
+  # Restart with previous images
+  for entry in $PREV_IMAGE_TAGS; do
+    svc="${entry%%:*}"
+    tag="${entry##*:}"
+    IMAGE_TAG="$tag" $COMPOSE up -d --no-deps "$svc" 2>/dev/null || true
+  done
+  
+  # Restore database backup if available
+  LATEST_BACKUP=$(ls -t backups/*.tar.gz 2>/dev/null | head -1)
+  if [ -n "$LATEST_BACKUP" ]; then
+    "$SCRIPT_DIR/restore.sh" "$LATEST_BACKUP" 2>/dev/null || true
+  fi
+  
   err "Rollback complete. Investigate and re-deploy."
 fi
 
