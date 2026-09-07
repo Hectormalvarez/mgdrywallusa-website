@@ -1,0 +1,21 @@
+[
+  {
+    "id": "deploy",
+    "execute-command": "/opt/mgdrywallusa-website/scripts/webhook-bridge.sh",
+    "command-working-directory": "/opt/mgdrywallusa-website",
+    "trigger-rule": {
+      "and": [
+        {
+          "match": {
+            "type": "value",
+            "value": "{{ getenv \"WEBHOOK_TOKEN\" }}",
+            "parameter": {
+              "source": "header",
+              "name": "X-Webhook-Token"
+            }
+          }
+        }
+      ]
+    }
+  }
+]
