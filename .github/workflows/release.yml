@@ -65,7 +65,7 @@ jobs:
       - name: Trigger production deploy via webhook
         id: webhook
         run: |
-          RESPONSE=$(curl -v -sS -w "\n%{http_code}" -X POST "${{ secrets.WEBHOOK_URL }}" \
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "${{ secrets.WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -H "X-Webhook-Token: ${{ secrets.WEBHOOK_TOKEN }}" \
             -d '{"image_tag":"sha-${{ github.event.workflow_run.head_sha }}","ref":"main"}' \
