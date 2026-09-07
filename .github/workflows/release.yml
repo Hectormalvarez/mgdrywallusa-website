@@ -65,11 +65,17 @@ jobs:
       - name: Trigger production deploy via webhook
         id: webhook
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.WEBHOOK_URL }}" \
+          RESPONSE=$(curl -v -sS -w "\n%{http_code}" -X POST "${{ secrets.WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -H "X-Webhook-Token: ${{ secrets.WEBHOOK_TOKEN }}" \
             -d '{"image_tag":"sha-${{ github.event.workflow_run.head_sha }}","ref":"main"}' \
-            --max-time 300)
+            --max-time 300 \
+            --connect-timeout 30 \
+            --retry 3 \
+            --retry-delay 5 \
+            --retry-max-time 60 \
+            --http1.1 \
+            -4 2>&1)
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -79,5 +85,7 @@ jobs:
           
           if [ "$HTTP_CODE" != "200" ]; then
             echo "Deploy failed with HTTP $HTTP_CODE"
+            echo "Full response:"
+            echo "$RESPONSE"
             exit 1
           fi
