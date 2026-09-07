@@ -194,14 +194,7 @@ const HOME_PAGE = {
   cta_secondary_url: "#portfolio",
   services_heading: "Our Services",
   services_subheading: "Expert drywall solutions.",
-  featured_services: [
-    {
-      name: "Level 5 Finishing",
-      slug: "level-5-finishing",
-      short_description: "Premium smooth-wall finishing.",
-      icon: "sparkles",
-    },
-  ],
+  featured_services: [],
   portfolio_heading: "Our Work",
   portfolio_empty_text: "No projects to display yet.",
   lead_section_heading: "Request a Quote",
