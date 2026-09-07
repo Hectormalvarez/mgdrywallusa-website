@@ -207,6 +207,11 @@ const HOME_PAGE = {
 
 let scenario = "default";
 
+/**
+ * @param {import("node:http").ServerResponse} res
+ * @param {number} status
+ * @param {unknown} body
+ */
 function json(res, status, body) {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
@@ -233,7 +238,7 @@ const server = createServer((req, res) => {
       try {
         const { name } = JSON.parse(body || "{}");
         // "error" is a flag scenario (no dataset), so treat it as valid too.
-        scenario = name === "error" || SCENARIOS[name] ? name : "default";
+        scenario = name === "error" || Object.prototype.hasOwnProperty.call(SCENARIOS, name) ? name : "default";
         json(res, 200, { ok: true, scenario });
       } catch {
         json(res, 400, { ok: false });
@@ -262,13 +267,13 @@ const server = createServer((req, res) => {
         json(res, 500, { error: "Server error" });
         return;
       }
-      const items = SCENARIOS[scenario] ?? SCENARIOS.default;
+      const items = SCENARIOS[/** @type {keyof typeof SCENARIOS} */ (scenario)] ?? SCENARIOS.default;
       const slug = url.searchParams.get("slug");
       const limit = Number(url.searchParams.get("limit") ?? "999999");
       const offset = Number(url.searchParams.get("offset") ?? "0");
 
       const result = slug
-        ? items.filter((item) => item.slug === slug)
+        ? items.filter(/** @param {{ slug: string }} item */ (item) => item.slug === slug)
         : items.slice(offset, offset + limit);
 
       json(res, 200, { meta: { total_count: items.length }, items: result });
