@@ -12,6 +12,8 @@ export default defineConfig({
 
   reporter: process.env.CI ? "github" : "list",
 
+  updateSnapshots: "missing",
+
   use: {
     baseURL: process.env.FRONTEND_URL ?? `http://localhost:${PORT}`,
     trace: "on-first-retry",
