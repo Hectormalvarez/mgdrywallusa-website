@@ -3,7 +3,6 @@ name: Release
 permissions:
   contents: read
   packages: write
-  deployments: write
 
 on:
   workflow_run:
@@ -63,29 +62,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Create GitHub Deployment
-        id: deployment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const deployment = await github.rest.repos.createDeployment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: '${{ github.event.workflow_run.head_sha }}',
-              environment: 'production',
-              auto_merge: false,
-              required_contexts: [],
-              description: 'Deploying via webhook'
-            });
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: deployment.data.id,
-              state: 'in_progress',
-              description: 'Deployment in progress'
-            });
-            return deployment.data.id;
-
       - name: Trigger production deploy via webhook
         id: webhook
         run: |
@@ -105,30 +81,3 @@ jobs:
             echo "Deploy failed with HTTP $HTTP_CODE"
             exit 1
           fi
-
-      - name: Update deployment status (success)
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: ${{ steps.deployment.outputs.result }},
-              state: 'success',
-              description: 'Deployment successful',
-              environment_url: 'https://mgdrywallusa.taylormadetech.net'
-            });
-
-      - name: Update deployment status (failure)
-        if: failure() && steps.deployment.outputs.result
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: ${{ steps.deployment.outputs.result }},
-              state: 'failure',
-              description: 'Deployment failed'
-            });
