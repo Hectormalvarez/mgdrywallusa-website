@@ -4,7 +4,7 @@ RUN apk add --no-cache git
 
 RUN go install github.com/adnanh/webhook@latest
 
-FROM alpine:3.19
+FROM alpine:3.21
 
 # Install git, jq, curl, docker-cli (with compose plugin), and ca-certificates
 # for deploy.sh, backup.sh, and the bridge script.
