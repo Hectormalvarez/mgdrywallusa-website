@@ -113,6 +113,13 @@ services:
     environment:
       WEBHOOK_TOKEN: ${WEBHOOK_TOKEN:?WEBHOOK_TOKEN is required}
     volumes:
+      # The host repo is mounted at /opt/mgdrywallusa-website inside the
+      # webhook container. This is an IN-CONTAINER path only — the host
+      # repo lives at /home/hadev/Projects/Code/mgdrywallusa-website.
+      # The identical-absolute-path mount is required so that when docker
+      # compose runs inside this container (via the mounted Docker socket),
+      # relative bind-mount sources in docker-compose.prod.yml resolve to
+      # the same absolute paths on the host filesystem.
       - .:/opt/mgdrywallusa-website
       - /var/run/docker.sock:/var/run/docker.sock
       - ./webhook/hooks.json:/etc/webhook/hooks.json.template:ro

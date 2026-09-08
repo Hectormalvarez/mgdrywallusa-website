@@ -21,7 +21,9 @@ fi
 
 echo "▶ Deploying image tag: $IMAGE_TAG (ref: $REF)" >&2
 
-# Run deploy.sh with IMAGE_TAG set
+# Run deploy.sh with IMAGE_TAG set.
+# /opt/mgdrywallusa-website is the IN-CONTAINER path — see docker-compose.prod.yml
+# volume mount comment for why this differs from the host working directory.
 cd /opt/mgdrywallusa-website
 IMAGE_TAG="$IMAGE_TAG" ./scripts/deploy.sh
 
