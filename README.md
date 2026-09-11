@@ -14,12 +14,18 @@ Mobile-first, single-page residential landing page for drywall & finishing contr
 │          │     │          │────▶│─────────│────▶│ Wagtail│
 │          │     │          │     │  /api/* │     │  CMS   │
 └──────────┘     └──────────┘     └─────────┘     └────────┘
-                                                        │
-                                                        ▼
-                                                  ┌───────────┐
-                                                  │ PostgreSQL │
-                                                  │    16      │
-                                                  └───────────┘
+      ▲                                                 │
+      │                                                 ▼
+┌──────────┐                                      ┌───────────┐
+│ Webhook  │                                      │ PostgreSQL │
+│ Service  │                                      │    16      │
+└──────────┘                                      └───────────┘
+      ▲
+      │
+┌──────────────────────────────────────────────────────────┐
+│ GitHub Actions Release Workflow                          │
+│ (CI → Build Images → Push to GHCR → Trigger Webhook)     │
+└──────────────────────────────────────────────────────────┘
 ```
 
 - **Cloudflare Tunnel** — Containerized edge, forwards external traffic to Nginx (no exposed host ports in prod)
@@ -27,6 +33,7 @@ Mobile-first, single-page residential landing page for drywall & finishing contr
 - **Frontend** — Next.js 16 (App Router, React 19, Tailwind 4)
 - **Backend** — Django 5.x + Wagtail CMS, REST API via DRF
 - **Database** — PostgreSQL 16
+- **Webhook Service** — Receives authenticated deploy requests from GitHub Actions and orchestrates production deployments
 
 ## Prerequisites
 
@@ -65,9 +72,11 @@ git clone <repo-url> && cd mgdrywallusa-website
 cp .env.sample .env.prod
 # Edit .env.prod — set all required variables including REGISTRY_OWNER, IMAGE_TAG
 
-# 2. Deploy
+# 2. Bring up the stack (initial setup only)
 docker compose -p mgdrywall-prod -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
+
+After initial setup, **production deploys are automated** — see [Webhook Deployments](#webhook-deployments) below.
 
 ## Access
 
@@ -111,20 +120,18 @@ All traffic is served through **Cloudflare Tunnel** — no ports are exposed on 
 | `make prod-verify` | Health check production endpoints (inside compose network) |
 | `make env-check` | Validate .env.prod before deploying |
 
-### Remote LAN Deployment
+### Webhook Deployments
 
-| Command | Description |
-| --- | --- |
-| `make deploy-remote` | Run deploy.sh on a remote host over SSH |
-| `make backup-remote` | Run backup.sh on a remote host over SSH |
+Production deploys are triggered automatically via the GitHub Actions **Release** workflow:
 
-Configure via environment:
+1. **CI workflow** runs on every push — tests, linting, type checks
+2. **Release workflow** triggers after CI passes on `main` — builds multi-arch images, pushes to GHCR, then calls the webhook
+3. **Webhook service** receives the payload over HTTPS (via Cloudflare Tunnel), authenticates with `WEBHOOK_TOKEN`, and runs `deploy.sh`
+4. **deploy.sh** orchestrates: backup → pull images → migrate → swap containers → health check → rollback on failure
 
-```bash
-export DEPLOY_HOST=your-host
-export DEPLOY_USER=$(whoami)
-make deploy-remote
-```
+To trigger a deploy manually, re-run the Release workflow from GitHub Actions, or push a new commit to `main`.
+
+See `webhook/README.md` for webhook architecture details.
 
 ## Environment Variables
 
@@ -139,6 +146,7 @@ See `.env.sample` for the full list. Key variables:
 | `NGINX_HOST_PORT` | ❌ | Port for dev Nginx (default: `8101`) |
 | `POSTGRES_HOST_PORT` | ❌ | Port for dev PostgreSQL (default: `5432`) |
 | `CLOUDFLARE_TUNNEL_TOKEN` | Production | Token for containerized Cloudflare Tunnel |
+| `WEBHOOK_TOKEN` | Production | Shared secret for webhook authentication (must match GitHub secret) |
 | `REGISTRY_OWNER` | Production | GHCR image namespace (default: `mgdrywall`) |
 | `IMAGE_TAG` | Production | Docker image tag (default: `latest`) |
 
