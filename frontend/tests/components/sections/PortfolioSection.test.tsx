@@ -371,5 +371,20 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
     });
   });
+
+  it('renders visible labels for the scope and tag filters', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Project type')).toBeVisible();
+    expect(screen.getByText('Finish')).toBeVisible();
+  });
 });
 
