@@ -112,7 +112,7 @@ Setup:
 3. Paste the connector token into the matching file:
    - dev → `CLOUDFLARE_TUNNEL_TOKEN=…` in `.env`
    - prod → `CLOUDFLARE_TUNNEL_TOKEN=…` in `.env.prod`
-4. Ensure the hostname appears in `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`, then:
+4. Ensure the hostname appears in `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and `ALLOWED_DEV_ORIGINS`, then:
 
 ```bash
 make dev-tunnel-up     # start the dev connector
