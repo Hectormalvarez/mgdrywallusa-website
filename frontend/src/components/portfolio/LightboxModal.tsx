@@ -19,6 +19,8 @@ export default function LightboxModal({
 }: LightboxModalProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const touchStartX = useRef(0);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   const goNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -27,6 +29,18 @@ export default function LightboxModal({
   const goPrev = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   }, [images.length]);
+
+  // Move focus into the dialog on open and restore it on close
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+
+    return () => {
+      previouslyFocused.current?.focus?.();
+    };
+  }, [isOpen]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -65,7 +79,9 @@ export default function LightboxModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+      ref={dialogRef}
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 focus:outline-none"
       role="dialog"
       aria-modal="true"
       aria-label="Image lightbox"
