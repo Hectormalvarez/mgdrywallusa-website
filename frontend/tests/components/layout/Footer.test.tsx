@@ -127,3 +127,26 @@ describe('Footer component', () => {
     expect(screen.queryByRole('link', { name: /view on yelp/i })).not.toBeInTheDocument();
   });
 });
+
+describe('Footer — cross-page navigation', () => {
+  afterEach(() => {
+    mockPathname = '/';
+  });
+
+  it('roots quick links at home when off the home page', () => {
+    mockPathname = '/portfolio';
+    render(<Footer settings={mockSettings} />);
+
+    mockSettings.nav.forEach((item) => {
+      const link = screen.getByRole('link', { name: item.label });
+      expect(link).toHaveAttribute('href', `/${item.href}`);
+    });
+  });
+
+  it('roots the quote CTA at home when off the home page', () => {
+    mockPathname = '/portfolio';
+    render(<Footer settings={mockSettings} />);
+    const cta = screen.getByRole('link', { name: /get a free quote/i });
+    expect(cta).toHaveAttribute('href', '/#lead-form');
+  });
+});
