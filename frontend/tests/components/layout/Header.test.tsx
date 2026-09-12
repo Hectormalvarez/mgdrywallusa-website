@@ -49,6 +49,12 @@ describe('Header component', () => {
     expect(brandLinks.length).toBeGreaterThan(0);
   });
 
+  it('points the brand logo at the home route', () => {
+    render(<Header settings={mockSettings} />);
+    const brandLink = screen.getByRole('link', { name: /mg drywall usa/i });
+    expect(brandLink).toHaveAttribute('href', '/');
+  });
+
   it('renders brand logo image when logo_url is provided', () => {
     const settingsWithLogo: SiteSettingsData = {
       ...mockSettings,
