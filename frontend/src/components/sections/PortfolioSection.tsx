@@ -131,7 +131,7 @@ export default function PortfolioSection({
 
         {!loading && !error && items.length > 0 && (
           <div
-            className="mt-8 rounded-xl border border-border bg-surface/60 p-4 sm:p-5"
+            className="mt-8 mb-8 rounded-xl border border-border bg-surface/60 p-4 sm:p-5"
             role="group"
             aria-label="Project filters"
           >
