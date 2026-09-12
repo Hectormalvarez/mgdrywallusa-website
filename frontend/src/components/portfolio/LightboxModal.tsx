@@ -111,8 +111,9 @@ export default function LightboxModal({
     >
       {/* Close button */}
       <button
+        type="button"
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 text-white/80 hover:text-white text-3xl leading-none"
+        className="absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-2xl leading-none text-white/90 transition-colors hover:bg-black/70 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         aria-label="Close lightbox"
       >
         &times;
@@ -121,11 +122,12 @@ export default function LightboxModal({
       {/* Previous button */}
       {images.length > 1 && (
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             goPrev();
           }}
-          className="absolute left-4 z-10 text-white/80 hover:text-white text-4xl leading-none select-none"
+          className="absolute left-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-3xl leading-none text-white/90 transition-colors select-none hover:bg-black/70 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           aria-label="Previous image"
         >
           &#8249;
@@ -135,11 +137,12 @@ export default function LightboxModal({
       {/* Next button */}
       {images.length > 1 && (
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             goNext();
           }}
-          className="absolute right-4 z-10 text-white/80 hover:text-white text-4xl leading-none select-none"
+          className="absolute right-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-3xl leading-none text-white/90 transition-colors select-none hover:bg-black/70 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           aria-label="Next image"
         >
           &#8250;
@@ -147,8 +150,8 @@ export default function LightboxModal({
       )}
 
       {/* Image container */}
-      <div
-        className="relative max-h-[80vh] max-w-[90vw]"
+      <figure
+        className="relative m-0 max-h-[80vh] max-w-[90vw]"
         onClick={(e) => e.stopPropagation()}
       >
         <Image
@@ -162,15 +165,17 @@ export default function LightboxModal({
         />
 
         {/* Caption and step indicator */}
-        <div className="mt-3 flex items-center justify-between text-sm text-white/70">
-          {current.caption && (
-            <span>{current.caption}</span>
-          )}
-          <span className="ml-auto">
+        <figcaption className="mt-3 flex items-center justify-between gap-4 text-sm text-white/80">
+          {current.caption && <span>{current.caption}</span>}
+          <span
+            role="status"
+            aria-live="polite"
+            className="ml-auto shrink-0 rounded-full bg-black/50 px-2.5 py-0.5"
+          >
             {currentIndex + 1} / {images.length}
           </span>
-        </div>
-      </div>
+        </figcaption>
+      </figure>
     </div>
   );
 }
