@@ -37,6 +37,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/settings/')"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - media_data:/app/media
     cap_drop:
@@ -55,7 +65,18 @@ services:
     restart: unless-stopped
     env_file: .env.prod
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - "CMD"
+        - "node"
+        - "-e"
+        - "fetch('http://127.0.0.1:3000/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     cap_drop:
       - ALL
     logging:
@@ -68,11 +89,15 @@ services:
     image: ghcr.io/${REGISTRY_OWNER:-mgdrywall}/mgdrywall-nginx:${IMAGE_TAG:-latest}
     build: ./nginx
     restart: unless-stopped
-    # Host ports removed — Cloudflare Tunnel forwards directly to http://nginx:80
-    # To access locally for debugging, use: docker compose -f docker-compose.prod.yml exec nginx wget -q -O - http://localhost/
+    # Publish the gateway on loopback only. Local tooling (make prod-verify)
+    # and the host Cloudflare Tunnel reach the stack via http://127.0.0.1:9417.
+    ports:
+      - "127.0.0.1:9417:80"
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     cap_drop:
