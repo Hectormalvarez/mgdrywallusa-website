@@ -37,10 +37,10 @@ export default function ScopeFilterTabs({
               aria-selected={isActive}
               onClick={() => onScopeChange(tab.value)}
               className={
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-in-out " +
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand " +
                 (isActive
                   ? "bg-brand text-white shadow-sm"
-                  : "bg-border/40 text-muted hover:bg-border/70 hover:text-ink")
+                  : "border border-border bg-surface text-ink hover:bg-border/40")
               }
             >
               {tab.label}
