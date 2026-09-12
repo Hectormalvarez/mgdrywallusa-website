@@ -9,9 +9,26 @@ class Command(BaseCommand):
     help = "Seeds default site settings, navigation, home page, services, and featured links if not present."
 
     def handle(self, *args, **options):
+        self._ensure_home_page()
         self._seed_site_settings()
         self._seed_services()
         self.stdout.write(self.style.SUCCESS("Seed defaults verified successfully."))
+
+    def _ensure_home_page(self):
+        """Root the default site at a HomePage, replacing Wagtail's stock
+        welcome page when the database has none yet.
+
+        Without this the admin's "Edit Home" shortcut has nothing to link to
+        and the homepage API returns an empty list.
+        """
+        if HomePage.objects.exists():
+            self.stdout.write("HomePage already exists -- skipping creation.")
+            return
+
+        if HomePage.ensure_for_site() is None:
+            self.stdout.write(self.style.WARNING("No default site found -- skipping HomePage creation."))
+        else:
+            self.stdout.write(self.style.SUCCESS("Created HomePage as the default site root."))
 
     def _seed_site_settings(self):
         default_site = Site.objects.filter(is_default_site=True).first()
@@ -59,7 +76,7 @@ class Command(BaseCommand):
             self.stdout.write("Navigation items already exist -- skipping.")
 
     def _seed_services(self):
-        home = HomePage.objects.first()
+        home = HomePage.get_home_for_site()
         if home is None:
             self.stdout.write(self.style.WARNING("No HomePage found -- skipping service seed."))
             return

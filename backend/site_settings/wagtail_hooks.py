@@ -160,13 +160,32 @@ def register_admin_home_menu_item():
 
 @hooks.register("register_admin_menu_item")
 def register_edit_homepage_menu_item():
-    """Add a one-click 'Edit Home' link to the sidebar."""
-    from django.apps import apps
+    """Add a one-click 'Edit Home' link to the sidebar.
 
-    HomePage = apps.get_model("home", "HomePage")
-    home = HomePage.objects.first()
-    url = reverse("wagtailadmin_pages:edit", args=[home.id]) if home else "#"
-    return MenuItem("Edit Home", url, icon_name="pencil", order=100)
+    ``prune_menu_items`` hides the Pages explorer, so this item is the only
+    route to the homepage editor.  When the site has no HomePage yet the item
+    points at the page-create view instead of degrading to a dead ``#`` link
+    that silently does nothing when clicked.
+    """
+    from wagtail.models import Page
+
+    from home.models import HomePage
+
+    home = HomePage.get_home_for_site()
+    if home is not None:
+        return MenuItem(
+            "Edit Home",
+            reverse("wagtailadmin_pages:edit", args=[home.id]),
+            icon_name="pencil",
+            order=100,
+        )
+
+    root = Page.get_first_root_node()
+    if root is not None:
+        url = reverse("wagtailadmin_pages:add", args=["home", "homepage", root.id])
+    else:
+        url = reverse("wagtailadmin_home")
+    return MenuItem("Create Home", url, icon_name="pencil", order=100)
 
 
 @hooks.register("register_admin_menu_item")

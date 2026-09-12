@@ -25,11 +25,18 @@ def root_page(db):
 
 @pytest.fixture
 def home_page(db, root_page):
-    """Create and return a HomePage under the root."""
+    """Return the site's HomePage, creating one under the root if absent.
+
+    The ``home.bootstrap.ensure_site_homepage`` post_migrate hook already roots
+    a fresh database at a HomePage (replacing Wagtail's stock welcome page), so
+    tests reuse that page rather than adding a second one.
+    """
     from home.models import HomePage
 
-    page = HomePage(title="Test Home", slug="test-home")
-    root_page.add_child(instance=page)
+    page = HomePage.objects.first()
+    if page is None:
+        page = HomePage(title="Test Home", slug="test-home")
+        root_page.add_child(instance=page)
     return page
 
 

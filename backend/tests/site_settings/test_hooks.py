@@ -90,6 +90,27 @@ def test_register_edit_homepage_menu_item(home_page, site):
     assert menu_item.label == "Edit Home"
     assert str(home_page.id) in menu_item.url
     assert menu_item.icon_name == "pencil"
+    # Regression guard: a "#" placeholder makes the sidebar item a dead click.
+    assert menu_item.url not in ("", "#")
+
+
+@pytest.mark.django_db
+def test_register_edit_homepage_menu_item_without_homepage(home_page, site):
+    """With no HomePage the item must offer creation, never a dead '#' link.
+
+    ``prune_menu_items`` hides the Pages explorer, so this item is the only way
+    to reach the homepage editor.
+    """
+    from home.models import HomePage
+    from site_settings.wagtail_hooks import register_edit_homepage_menu_item
+
+    HomePage.objects.all().delete()
+
+    menu_item = register_edit_homepage_menu_item()
+    assert menu_item.url not in ("", "#")
+    assert "/pages/add/" in menu_item.url
+    assert menu_item.label == "Create Home"
+    assert menu_item.icon_name == "pencil"
 
 
 @pytest.mark.django_db

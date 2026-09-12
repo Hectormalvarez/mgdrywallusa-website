@@ -198,6 +198,89 @@ class HomePage(HeadlessPreviewMixin, Page):
         APIField("lead_section_description"),
     ]
 
+    # ── Site integration helpers ─────────────────────────────────────────
+
+    @classmethod
+    def get_home_for_site(cls, site=None):
+        """Return the HomePage serving ``site`` (the default site when omitted).
+
+        Resolves the page the site is actually rooted at instead of assuming a
+        single global HomePage, then falls back to the first HomePage in the
+        tree for databases whose site root was never repointed.  Returns None
+        when no HomePage exists at all.
+        """
+        from wagtail.models import Site
+
+        if site is None:
+            site = Site.objects.filter(is_default_site=True).first() or Site.objects.first()
+        if site is not None and site.root_page is not None:
+            root = site.root_page.specific
+            if isinstance(root, cls):
+                return root
+        return cls.objects.first()
+
+    @classmethod
+    def ensure_for_site(cls, site=None):
+        """Return the site's HomePage, creating it when the site is still
+        rooted at Wagtail's stock "Welcome to your new Wagtail site!" page.
+
+        Children of the replaced page (for example the PortfolioPage subtree)
+        are reparented under the new HomePage so their URLs are preserved.
+        Returns the existing HomePage, a newly created one, or None when there
+        is no site to attach it to.
+
+        Used by ``manage.py seed`` and the ``home.bootstrap`` post_migrate hook
+        so a fresh or reset database matches production instead of leaving the
+        admin's "Edit Home" shortcut pointing at nothing.
+        """
+        from wagtail.models import Site
+
+        if site is None:
+            site = Site.objects.filter(is_default_site=True).first() or Site.objects.first()
+        if site is None:
+            return None
+
+        existing = cls.get_home_for_site(site)
+        if existing is not None:
+            return existing
+
+        old_root = site.root_page
+        parent = old_root.get_parent() if old_root is not None else None
+        if parent is None:
+            return None
+
+        # Siblings cannot share a slug, so rename the page being replaced before
+        # the HomePage claims its slug. It is deleted at the end of this method.
+        desired_slug = old_root.slug or "home"
+        taken = set(parent.get_children().values_list("slug", flat=True))
+        replacement_slug = f"{desired_slug}-replaced"
+        counter = 1
+        while replacement_slug in taken:
+            replacement_slug = f"{desired_slug}-replaced-{counter}"
+            counter += 1
+        old_root.slug = replacement_slug
+        old_root.set_url_path(parent)
+        old_root.save(update_fields=["slug", "url_path"])
+
+        # Detach the children next: deleting a page removes its whole subtree.
+        children = list(old_root.get_children())
+        for child in children:
+            child.move(parent, pos="last-child")
+
+        home = cls(title="Home", slug=desired_slug, live=True)
+        parent.add_child(instance=home)
+
+        for child in children:
+            child.move(home, pos="last-child")
+
+        # Repoint the site *before* deleting: Site.root_page is CASCADE, so
+        # deleting a page the site still points at would delete the site.
+        site.root_page = home
+        site.save(update_fields=["root_page"])
+
+        old_root.delete()
+        return home
+
 
 class HomePageFeaturedService(Orderable):
     """Through-model linking HomePage to Service snippets with display ordering."""
