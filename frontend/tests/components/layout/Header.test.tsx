@@ -183,6 +183,41 @@ describe('Header component', () => {
   });
 });
 
+describe('Header — cross-page navigation', () => {
+  afterEach(() => {
+    mockPathname = '/';
+  });
+
+  it('roots desktop nav anchors at home when off the home page', () => {
+    mockPathname = '/portfolio';
+    render(<Header settings={mockSettings} />);
+    const mainNav = screen.getAllByRole('navigation', { name: 'Main' })[0];
+
+    mockSettings.nav.forEach((item) => {
+      const link = screen.getAllByRole('link', { name: item.label })[0];
+      expect(mainNav).toContainElement(link);
+      expect(link).toHaveAttribute('href', `/${item.href}`);
+    });
+  });
+
+  it('roots mobile drawer anchors at home when off the home page', () => {
+    mockPathname = '/portfolio';
+    render(<Header settings={mockSettings} />);
+    fireEvent.click(screen.getByRole('button', { name: /open menu/i }));
+    const dialog = screen.getByRole('dialog', { name: /main navigation/i });
+
+    mockSettings.nav.forEach((item) => {
+      const link = within(dialog).getByRole('link', {
+        name: new RegExp(item.label),
+      });
+      expect(link).toHaveAttribute('href', `/${item.href}`);
+    });
+
+    const cta = within(dialog).getByRole('link', { name: /get a free quote/i });
+    expect(cta).toHaveAttribute('href', '/#lead-form');
+  });
+});
+
 describe('Header — accessibility', () => {
   it('has no accessibility violations when drawer is closed', async () => {
     const { container } = render(<Header settings={mockSettings} />);
