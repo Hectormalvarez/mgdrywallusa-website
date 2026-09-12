@@ -1,11 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import type { GalleryItem } from "@/types/portfolio";
+import Link from "next/link";
+import type { ImageRendition } from "@/types/portfolio";
+
+/** A single image shown in the lightbox. */
+export interface LightboxSlide {
+  id: number;
+  image: ImageRendition;
+  caption: string;
+  /** True for the project's featured image rather than a gallery photo. */
+  isFeatured?: boolean;
+}
+
+/** The project a set of slides belongs to. */
+export interface LightboxProject {
+  title: string;
+  slug: string;
+  scopeLabel?: string;
+  finishTags?: string[];
+}
 
 interface LightboxModalProps {
-  images: GalleryItem[];
+  images: LightboxSlide[];
+  /**
+   * Project the images belong to. Rendered under every slide so a visitor who
+   * opened an arbitrary photo still learns what they are looking at.
+   */
+  project?: LightboxProject;
   initialIndex: number;
   isOpen: boolean;
   onClose: () => void;
@@ -13,6 +36,7 @@ interface LightboxModalProps {
 
 export default function LightboxModal({
   images,
+  project,
   initialIndex,
   isOpen,
   onClose,
@@ -93,9 +117,32 @@ export default function LightboxModal({
     }
   };
 
+  // Human-readable label per slide, e.g. "Gallery photo 2 of 5".
+  const slideLabels = useMemo(() => {
+    const galleryTotal = images.filter((image) => !image.isFeatured).length;
+    return images.map((image, index) => {
+      if (image.isFeatured) return "Featured photo";
+      // 1-based position among the gallery photos only, ignoring the featured shot.
+      const position = images
+        .slice(0, index + 1)
+        .filter((candidate) => !candidate.isFeatured).length;
+      return galleryTotal > 1
+        ? `Gallery photo ${position} of ${galleryTotal}`
+        : "Gallery photo";
+    });
+  }, [images]);
+
   if (!isOpen || images.length === 0) return null;
 
   const current = images[currentIndex];
+  const caption = (current.caption ?? "").trim();
+  const altText = (current.image.alt ?? "").trim();
+  const slideLabel = slideLabels[currentIndex];
+  // Fall back to the caption/project title so the image is never announced bare.
+  const imageAlt = altText || caption || project?.title || "";
+  // Only surface the CMS description when it adds something beyond the caption
+  // or the generic "Gallery photo"/"Featured photo" label.
+  const showAltText = altText !== "" && altText !== caption && altText !== slideLabel;
 
   return (
     <div
@@ -159,18 +206,50 @@ export default function LightboxModal({
           width={1600}
           height={1200}
           src={current.image.full}
-          alt={current.image.alt || ""}
-          className="max-h-[80vh] w-auto object-contain"
+          alt={imageAlt}
+          className="max-h-[70vh] w-auto object-contain"
           priority
         />
 
-        {/* Caption and step indicator */}
-        <figcaption className="mt-3 flex items-center justify-between gap-4 text-sm text-white/80">
-          {current.caption && <span>{current.caption}</span>}
+        {/* Project context, image caption, and step indicator */}
+        <figcaption className="mt-3 flex flex-col gap-3 rounded-lg bg-black/60 px-4 py-3 text-sm text-white/85 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-white/60">
+              {slideLabel}
+            </p>
+
+            {project && (
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                <Link
+                  href={`/portfolio/${project.slug}`}
+                  className="rounded text-base font-semibold text-white underline-offset-2 transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  {project.title}
+                </Link>
+                {project.scopeLabel && (
+                  <span className="rounded bg-white/15 px-2 py-0.5 text-xs font-medium">
+                    {project.scopeLabel}
+                  </span>
+                )}
+                {project.finishTags?.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded bg-white/10 px-2 py-0.5 text-xs text-white/75"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </p>
+            )}
+
+            {caption && <p className="mt-1.5">{caption}</p>}
+            {showAltText && <p className="mt-1 text-white/60">{altText}</p>}
+          </div>
+
           <span
             role="status"
             aria-live="polite"
-            className="ml-auto shrink-0 rounded-full bg-black/50 px-2.5 py-0.5"
+            className="shrink-0 self-start rounded-full bg-black/50 px-2.5 py-0.5 text-xs"
           >
             {currentIndex + 1} / {images.length}
           </span>

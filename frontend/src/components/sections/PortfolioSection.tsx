@@ -6,7 +6,10 @@ import { fetchPortfolioItems, type PortfolioItem } from '@/lib/api';
 import type { PortfolioScope } from '@/types/portfolio';
 import PortfolioSkeleton from '@/components/sections/PortfolioSkeleton';
 import FilterMultiSelect, { type FilterOption } from '@/components/ui/FilterMultiSelect';
-import LightboxModal from '@/components/portfolio/LightboxModal';
+import LightboxModal, {
+  type LightboxProject,
+  type LightboxSlide,
+} from '@/components/portfolio/LightboxModal';
 import PortfolioGrid from '@/components/portfolio/PortfolioGrid';
 
 const SCOPE_LABELS: Record<PortfolioScope, string> = {
@@ -29,6 +32,11 @@ interface PortfolioSectionProps {
   pageLimit?: number;
   initialItems?: PortfolioItem[];
   initialTotalCount?: number;
+  /**
+   * Optional link rendered above the heading — e.g. back to the homepage when
+   * the section is used on the standalone /portfolio page.
+   */
+  backLink?: { href: string; label: string };
 }
 
 export default function PortfolioSection({
@@ -39,6 +47,7 @@ export default function PortfolioSection({
   pageLimit,
   initialItems,
   initialTotalCount,
+  backLink,
 }: PortfolioSectionProps) {
   const [items, setItems] = useState<PortfolioItem[]>(initialItems ?? []);
   const [loading, setLoading] = useState(!initialItems && !!apiUrl);
@@ -51,18 +60,37 @@ export default function PortfolioSection({
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [lightboxImages, setLightboxImages] = useState<PortfolioItem['gallery_images']>([]);
+  const [lightboxImages, setLightboxImages] = useState<LightboxSlide[]>([]);
+  const [lightboxProject, setLightboxProject] = useState<LightboxProject | null>(null);
 
   const openLightbox = useCallback((item: PortfolioItem, startIndex: number) => {
-    // Build gallery: featured image + gallery items
-    const allImages = [
+    // Build gallery: featured image + gallery items, tagged so the lightbox can
+    // say whether the visitor is looking at the hero shot or a gallery photo.
+    const allImages: LightboxSlide[] = [
       ...(item.featured_image
-        ? [{ id: -1, image: item.featured_image, caption: "" }]
+        ? [
+            {
+              id: -1,
+              image: item.featured_image,
+              caption: "",
+              isFeatured: true,
+            },
+          ]
         : []),
-      ...item.gallery_images,
+      ...item.gallery_images.map((galleryItem) => ({
+        ...galleryItem,
+        isFeatured: false,
+      })),
     ];
     setLightboxImages(allImages);
     setLightboxIndex(startIndex);
+    // Carry the project context so the lightbox always explains what is shown.
+    setLightboxProject({
+      title: item.title,
+      slug: item.slug,
+      scopeLabel: item.scope_label,
+      finishTags: item.finish_tags,
+    });
     setLightboxOpen(true);
   }, []);
 
@@ -152,6 +180,16 @@ export default function PortfolioSection({
       className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8"
     >
       <div className="mx-auto max-w-7xl">
+        {backLink && (
+          <Link
+            href={backLink.href}
+            className="mb-4 flex w-fit items-center gap-1.5 rounded text-sm font-semibold text-brand transition-colors hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            <span aria-hidden="true">←</span>
+            {backLink.label}
+          </Link>
+        )}
+
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <h2
             id="portfolio-heading"
@@ -257,6 +295,7 @@ export default function PortfolioSection({
         <LightboxModal
           key={lightboxIndex}
           images={lightboxImages}
+          project={lightboxProject ?? undefined}
           initialIndex={lightboxIndex}
           isOpen={lightboxOpen}
           onClose={() => setLightboxOpen(false)}

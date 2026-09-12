@@ -185,4 +185,99 @@ describe('LightboxModal', () => {
     const { container } = renderLightbox();
     expect(await axeCheck(container)).toHaveNoViolations();
   });
+
+  describe('project context', () => {
+    const project = {
+      title: 'Kitchen Remodel',
+      slug: 'kitchen-remodel',
+      scopeLabel: 'Residential',
+      finishTags: ['smooth', 'level-5'],
+    };
+
+    it('links to the project and names its scope and finish tags', () => {
+      renderLightbox({ project });
+
+      const titleLink = screen.getByRole('link', { name: 'Kitchen Remodel' });
+      expect(titleLink).toHaveAttribute('href', '/portfolio/kitchen-remodel');
+      expect(screen.getByText('Residential')).toBeInTheDocument();
+      expect(screen.getByText('smooth')).toBeInTheDocument();
+      expect(screen.getByText('level-5')).toBeInTheDocument();
+    });
+
+    it('shows the caption and the photo description together', () => {
+      renderLightbox({ project, initialIndex: 0 });
+
+      expect(screen.getByText('First caption')).toBeInTheDocument();
+      expect(screen.getByText('First photo')).toBeInTheDocument();
+    });
+
+    it('does not repeat the text when the caption and description match', () => {
+      renderLightbox({
+        project,
+        images: [
+          {
+            id: 7,
+            image: { ...images[0].image, alt: 'Taped seams' },
+            caption: 'Taped seams',
+          },
+        ],
+      });
+
+      expect(screen.getAllByText('Taped seams')).toHaveLength(1);
+    });
+
+    it('does not echo a generic photo description next to the generic label', () => {
+      renderLightbox({
+        project,
+        images: [
+          { id: 9, image: { ...images[0].image, alt: 'Gallery photo' }, caption: '' },
+        ],
+      });
+
+      // Only the "Gallery photo" label renders — not a second identical line.
+      expect(screen.getAllByText('Gallery photo')).toHaveLength(1);
+    });
+
+    it('falls back to the caption for the alt text when the CMS has none', () => {
+      renderLightbox({
+        project,
+        images: [
+          { id: 8, image: { ...images[0].image, alt: '' }, caption: 'Taped seams' },
+        ],
+      });
+
+      expect(screen.getByRole('img')).toHaveAttribute('alt', 'Taped seams');
+    });
+
+    it('identifies a photo that has no caption or description', () => {
+      renderLightbox({ project, initialIndex: 2 });
+
+      // Third fixture image has neither a caption nor alt text.
+      expect(screen.getByText('Gallery photo 3 of 3')).toBeInTheDocument();
+    });
+
+    it('marks the featured image and numbers the gallery photos', () => {
+      renderLightbox({
+        project,
+        images: [
+          { ...images[0], id: -1, isFeatured: true, caption: '' },
+          images[1],
+          images[2],
+        ],
+      });
+
+      expect(screen.getByText('Featured photo')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Next image' }));
+      expect(screen.getByText('Gallery photo 1 of 2')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Next image' }));
+      expect(screen.getByText('Gallery photo 2 of 2')).toBeInTheDocument();
+    });
+
+    it('has no accessibility violations with the project context', async () => {
+      const { container } = renderLightbox({ project });
+      expect(await axeCheck(container)).toHaveNoViolations();
+    });
+  });
 });

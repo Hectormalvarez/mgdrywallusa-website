@@ -83,6 +83,48 @@ test.describe("Portfolio Listing Page", () => {
       page.getByRole("link", { name: /view all projects/i })
     ).not.toBeVisible();
   });
+
+  test("offers a clear way back to the homepage", async ({ page }) => {
+    await setScenario(page, "listing-page");
+
+    await page.goto("/portfolio");
+
+    const backLink = page.getByRole("link", { name: /back to home/i });
+    await expect(backLink).toBeVisible();
+    await expect(backLink).toHaveAttribute("href", "/");
+
+    await backLink.click();
+    await expect(page).toHaveURL(/\/$/);
+  });
+});
+
+// ===========================================================================
+// Lightbox — photo & project context
+// ===========================================================================
+test.describe("Portfolio Lightbox", () => {
+  test("explains the clicked photo and the project it belongs to", async ({ page }) => {
+    await setScenario(page, "listing");
+
+    await page.goto("/");
+
+    const section = page.locator("#portfolio");
+    await expect(section.locator("article").first()).toBeVisible({ timeout: 5000 });
+
+    // Open a gallery photo (not the featured image) so context cannot be guessed
+    await section
+      .getByRole("button", { name: /view gallery image 1 for sample project/i })
+      .click();
+
+    const dialog = page.getByRole("dialog", { name: /image lightbox/i });
+    await expect(dialog).toBeVisible();
+
+    await expect(dialog.getByText("Gallery photo")).toBeVisible();
+    await expect(dialog.getByText("Finished living room wall")).toBeVisible();
+    await expect(
+      dialog.getByRole("link", { name: "Sample Project" })
+    ).toHaveAttribute("href", "/portfolio/sample-project");
+    await expect(dialog.getByRole("status")).toHaveText("2 / 2");
+  });
 });
 
 // ===========================================================================

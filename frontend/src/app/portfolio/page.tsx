@@ -26,6 +26,7 @@ export default async function PortfolioPage() {
         apiUrl={PORTFOLIO_API_URL}
         heading="Our Work"
         pageLimit={6}
+        backLink={{ href: "/", label: "Back to Home" }}
       />
     </main>
   );

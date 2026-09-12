@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { http, HttpResponse } from 'msw';
 import { axeCheck } from '@tests/utils/axe-helper';
@@ -435,6 +435,44 @@ describe('PortfolioSection', () => {
     expect(
       screen.queryByRole('button', { name: /clear filters/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('opens the lightbox with the project context for the clicked photo', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    // Featured image -> labelled as the featured photo
+    fireEvent.click(
+      screen.getByRole('button', { name: /open lightbox for kitchen remodel/i })
+    );
+
+    let dialog = await screen.findByRole('dialog', { name: /image lightbox/i });
+    expect(within(dialog).getByText('Featured photo')).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('link', { name: 'Kitchen Remodel' })
+    ).toHaveAttribute('href', '/portfolio/kitchen-remodel');
+
+    fireEvent.click(screen.getByRole('button', { name: /close lightbox/i }));
+
+    // Gallery photo -> keeps the caption plus the project it belongs to
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /view gallery image 1 for kitchen remodel/i,
+      })
+    );
+
+    dialog = await screen.findByRole('dialog', { name: /image lightbox/i });
+    expect(within(dialog).getByText('Gallery photo')).toBeInTheDocument();
+    expect(within(dialog).getByText('Smooth ceiling finish')).toBeInTheDocument();
+    expect(within(dialog).getByText(/residential/i)).toBeInTheDocument();
+    expect(within(dialog).getByRole('status')).toHaveTextContent('2 / 2');
   });
 
   it('renders the filter toolbar in the same row as the section heading', async () => {

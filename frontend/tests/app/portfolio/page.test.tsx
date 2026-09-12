@@ -102,4 +102,14 @@ describe('Portfolio listing page', () => {
       screen.queryByRole('link', { name: /view all projects/i })
     ).not.toBeInTheDocument();
   });
+
+  it('renders a back link to the homepage', async () => {
+    await act(async () => {
+      render(await PortfolioPage());
+    });
+
+    const backLink = screen.getByRole('link', { name: /back to home/i });
+    expect(backLink).toBeInTheDocument();
+    expect(backLink).toHaveAttribute('href', '/');
+  });
 });
