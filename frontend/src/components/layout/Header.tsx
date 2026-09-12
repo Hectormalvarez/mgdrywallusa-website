@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { resolveNavHref } from "@/lib/nav";
 import type { SiteSettingsData } from "@/types/settings";
@@ -95,8 +96,9 @@ export default function Header({ settings }: HeaderProps) {
 
       <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur supports-backdrop-filter:bg-surface/80 border-b border-border">
         <div className="mx-auto max-w-7xl flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-          <a
+          <Link
             href="/"
+            prefetch={false}
             className="flex items-center gap-2 font-extrabold text-lg text-brand tracking-tight"
           >
             {settings.logo_url ? (
@@ -111,7 +113,7 @@ export default function Header({ settings }: HeaderProps) {
             ) : (
               settings.site_name
             )}
-          </a>
+          </Link>
 
           {/* Desktop nav */}
           <nav aria-label="Main" className="hidden md:block">
