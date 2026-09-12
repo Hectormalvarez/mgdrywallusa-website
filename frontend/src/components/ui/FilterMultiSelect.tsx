@@ -17,6 +17,12 @@ interface FilterMultiSelectProps {
   onChange: (values: string[]) => void;
   /** Colour theme; `brand` for the primary filter, `accent` for the secondary. */
   tone?: "brand" | "accent";
+  /**
+   * Which edge of the trigger the panel is anchored to. Use `right` for a
+   * control that sits near the right edge of its container, so the panel does
+   * not overflow the viewport.
+   */
+  align?: "left" | "right";
 }
 
 /**
@@ -32,6 +38,7 @@ export default function FilterMultiSelect({
   selected,
   onChange,
   tone = "brand",
+  align = "left",
 }: FilterMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -128,7 +135,10 @@ export default function FilterMultiSelect({
           id={panelId}
           role="group"
           aria-label={label}
-          className="absolute left-0 z-30 mt-2 max-h-64 w-56 overflow-auto rounded-lg border border-border bg-surface p-1.5 shadow-lg"
+          className={cn(
+            "absolute z-30 mt-2 max-h-64 w-56 overflow-auto rounded-lg border border-border bg-surface p-1.5 shadow-lg",
+            align === "right" ? "right-0" : "left-0"
+          )}
         >
           {options.map((option) => {
             const isChecked = selected.includes(option.value);

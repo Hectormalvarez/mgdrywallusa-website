@@ -152,42 +152,46 @@ export default function PortfolioSection({
       className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8"
     >
       <div className="mx-auto max-w-7xl">
-        <h2
-          id="portfolio-heading"
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-ink"
-        >
-          {heading}
-        </h2>
-
-        {!loading && !error && items.length > 0 && (
-          <div
-            className="mt-8 mb-6 flex flex-wrap items-center gap-3"
-            role="group"
-            aria-label="Project filters"
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <h2
+            id="portfolio-heading"
+            className="text-2xl sm:text-3xl font-bold tracking-tight text-ink"
           >
-            <FilterMultiSelect
-              label="Project type"
-              options={scopeOptions}
-              selected={selectedScopes}
-              onChange={setSelectedScopes}
-            />
-            <FilterMultiSelect
-              label="Finish"
-              options={tagOptions}
-              selected={selectedTags}
-              onChange={setSelectedTags}
-              tone="accent"
-            />
-            <button
-              type="button"
-              onClick={clearFilters}
-              disabled={!hasActiveFilters}
-              className="ml-auto rounded-lg px-3 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent"
+            {heading}
+          </h2>
+
+          {!loading && !error && items.length > 0 && (
+            <div
+              className="flex flex-wrap items-center gap-2"
+              role="group"
+              aria-label="Project filters"
             >
-              Clear filters
-            </button>
-          </div>
-        )}
+              <FilterMultiSelect
+                label="Project type"
+                options={scopeOptions}
+                selected={selectedScopes}
+                onChange={setSelectedScopes}
+              />
+              <FilterMultiSelect
+                label="Finish"
+                options={tagOptions}
+                selected={selectedTags}
+                onChange={setSelectedTags}
+                tone="accent"
+                align="right"
+              />
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {loading && (
           <div className="mt-8">
@@ -207,7 +211,9 @@ export default function PortfolioSection({
 
         {!loading && !error && items.length > 0 && (
           <>
-            <PortfolioGrid items={filteredItems} onImageClick={openLightbox} />
+            <div className="mt-8">
+              <PortfolioGrid items={filteredItems} onImageClick={openLightbox} />
+            </div>
             {filteredItems.length === 0 && items.length > 0 && (
               <p className="mt-6 text-center text-muted">
                 No projects match this filter.

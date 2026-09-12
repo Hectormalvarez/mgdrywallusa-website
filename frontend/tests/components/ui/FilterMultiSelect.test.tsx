@@ -172,4 +172,39 @@ describe('FilterMultiSelect', () => {
 
     expect(await axeCheck(container)).toHaveNoViolations();
   });
+
+  it("anchors the panel to the trigger's left edge by default", () => {
+    render(
+      <FilterMultiSelect
+        label="Project type"
+        options={OPTIONS}
+        selected={[]}
+        onChange={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /project type/i }));
+
+    const panel = screen.getByRole('group', { name: 'Project type' });
+    expect(panel).toHaveClass('left-0');
+    expect(panel).not.toHaveClass('right-0');
+  });
+
+  it('anchors the panel to the right edge when used near the container edge', () => {
+    render(
+      <FilterMultiSelect
+        label="Finish"
+        options={OPTIONS}
+        selected={[]}
+        onChange={() => {}}
+        align="right"
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /finish/i }));
+
+    const panel = screen.getByRole('group', { name: 'Finish' });
+    expect(panel).toHaveClass('right-0');
+    expect(panel).not.toHaveClass('left-0');
+  });
 });

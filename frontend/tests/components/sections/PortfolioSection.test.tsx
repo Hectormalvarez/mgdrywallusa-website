@@ -401,7 +401,7 @@ describe('PortfolioSection', () => {
     expect(screen.getByText('2 selected')).toBeInTheDocument();
   });
 
-  it('clears every filter with the Clear filters button', async () => {
+  it('shows Clear filters only while a filter is active, and resets every filter', async () => {
     render(
       <PortfolioSection
         apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
@@ -412,8 +412,10 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
     });
 
-    // Nothing selected yet, so the button is inert
-    expect(screen.getByRole('button', { name: /clear filters/i })).toBeDisabled();
+    // Nothing selected yet, so the reset action is not rendered at all
+    expect(
+      screen.queryByRole('button', { name: /clear filters/i })
+    ).not.toBeInTheDocument();
 
     openFilter(/^project type/i);
     fireEvent.click(screen.getByRole('checkbox', { name: 'Residential' }));
@@ -421,18 +423,21 @@ describe('PortfolioSection', () => {
     await waitFor(() => {
       expect(screen.queryByText('Office Build-Out')).not.toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: /clear filters/i })).toBeEnabled();
+    const clearButton = screen.getByRole('button', { name: /clear filters/i });
+    expect(clearButton).toBeEnabled();
 
-    fireEvent.click(screen.getByRole('button', { name: /clear filters/i }));
+    fireEvent.click(clearButton);
 
     await waitFor(() => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
       expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: /clear filters/i })).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: /clear filters/i })
+    ).not.toBeInTheDocument();
   });
 
-  it('renders visible labels for the scope and tag filters', async () => {
+  it('renders the filter toolbar in the same row as the section heading', async () => {
     render(
       <PortfolioSection
         apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
@@ -445,7 +450,12 @@ describe('PortfolioSection', () => {
 
     expect(screen.getByText('Project type')).toBeVisible();
     expect(screen.getByText('Finish')).toBeVisible();
-    expect(screen.getByRole('button', { name: /clear filters/i })).toBeVisible();
+
+    // The heading and the filters share one flex row, so the toolbar does not
+    // add a second block of vertical space above the grid.
+    const heading = screen.getByRole('heading', { name: 'Our Work' });
+    const toolbar = screen.getByRole('group', { name: 'Project filters' });
+    expect(toolbar.parentElement).toBe(heading.parentElement);
   });
 });
 
