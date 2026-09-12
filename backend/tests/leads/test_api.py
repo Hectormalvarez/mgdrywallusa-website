@@ -33,6 +33,16 @@ def _make_photo(name="photo.jpg", size=None, content_type="image/jpeg", image_fo
     return InMemoryUploadedFile(io.BytesIO(data), "image", name, content_type, len(data), None)
 
 
+def _make_spoofed_photo(name="evil.jpg", content_type="image/jpeg", payload=None):
+    """Return a non-image payload masquerading as an allowed image upload.
+
+    The filename extension and the client-declared ``content_type`` both pass
+    the string checks; only the binary magic-byte inspection should reject it.
+    """
+    payload = payload if payload is not None else b"<?php echo 'pwned'; ?>"
+    return InMemoryUploadedFile(io.BytesIO(payload), "image", name, content_type, len(payload), None)
+
+
 def _valid_payload(photos=None, **overrides):
     """Build a dict of multipart form data with sensible defaults."""
     data = {
@@ -283,6 +293,20 @@ class TestLeadCreateEndpoint:
         assert resp.status_code == 400
         assert "photos" in resp.json()["errors"]
 
+    def test_spoofed_jpeg_payload_returns_400(self):
+        client = Client()
+        photos = [_make_spoofed_photo()]
+        resp = client.post(LEAD_URL, _valid_payload(photos=photos))
+        assert resp.status_code == 400
+        assert "photos" in resp.json()["errors"]
+
+    def test_spoofed_webp_payload_returns_400(self):
+        client = Client()
+        photos = [_make_spoofed_photo(name="payload.webp", content_type="image/webp")]
+        resp = client.post(LEAD_URL, _valid_payload(photos=photos))
+        assert resp.status_code == 400
+        assert "photos" in resp.json()["errors"]
+
     def test_honeypot_skips_validation(self):
         client = Client()
         data = _valid_payload(name="", email="")
@@ -451,6 +475,38 @@ class TestLeadSerializer:
         )
         assert not s.is_valid()
         assert "photos" in s.errors
+
+    def test_spoofed_image_payload_rejected(self):
+        """A renamed non-image must fail even with valid MIME + extension."""
+        from leads.serializers import LeadSerializer
+
+        photo = _make_spoofed_photo()
+        s = LeadSerializer(
+            data={
+                "name": "Jane",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+                "photos": [photo],
+            }
+        )
+        assert not s.is_valid()
+        assert "photos" in s.errors
+
+    def test_genuine_image_payload_accepted(self):
+        from leads.serializers import LeadSerializer
+
+        photo = _make_photo()
+        s = LeadSerializer(
+            data={
+                "name": "Jane",
+                "phone": "555-1234",
+                "email": "jane@example.com",
+                "project_tier": "repair",
+                "photos": [photo],
+            }
+        )
+        assert s.is_valid(), s.errors
 
 
 @pytest.mark.django_db
