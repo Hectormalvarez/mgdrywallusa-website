@@ -30,10 +30,10 @@ export default function TagFilter({ tags, activeTags, onTagToggle }: TagFilterPr
               aria-label={tag}
               onClick={() => onTagToggle(tag)}
               className={
-                "rounded-full px-3 py-1 text-xs font-medium transition-all duration-200 " +
+                "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent " +
                 (isActive
                   ? "bg-accent text-white"
-                  : "bg-accent-tint/30 text-accent hover:bg-accent-tint/60")
+                  : "border border-accent/30 bg-accent-tint/40 text-accent-strong hover:bg-accent-tint/70")
               }
             >
               {tag}
