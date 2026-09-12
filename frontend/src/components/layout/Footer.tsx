@@ -153,7 +153,11 @@ export default function Footer({ settings }: FooterProps) {
             )}
 
             <div className="mt-6">
-              <Button href="#lead-form" variant="inverse" size="md">
+              <Button
+                href={resolveNavHref("#lead-form", pathname)}
+                variant="inverse"
+                size="md"
+              >
                 Get a Free Quote
               </Button>
             </div>
