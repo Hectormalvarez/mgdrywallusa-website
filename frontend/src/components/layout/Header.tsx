@@ -93,7 +93,7 @@ export default function Header({ settings }: HeaderProps) {
       <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur supports-backdrop-filter:bg-surface/80 border-b border-border">
         <div className="mx-auto max-w-7xl flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
           <a
-            href="#"
+            href="/"
             className="flex items-center gap-2 font-extrabold text-lg text-brand tracking-tight"
           >
             {settings.logo_url ? (
