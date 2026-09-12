@@ -4,7 +4,7 @@ DEPLOY_HOST ?=
 DEPLOY_USER ?= $(USER)
 DEPLOY_DIR ?= /opt/mgdrywallusa-website
 
-.PHONY: dev-up dev-down dev-reset dev-health dev-logs test lint format typecheck check prod-deploy prod-seed prod-logs prod-status prod-verify env-check deploy-remote backup-remote
+.PHONY: dev-up dev-down dev-reset dev-health dev-logs dev-tunnel-up dev-tunnel-down dev-tunnel-logs test lint format typecheck check prod-deploy prod-seed prod-logs prod-status prod-verify env-check deploy-remote backup-remote
 
 # ─── Development ───────────────────────────────────────────────
 dev-up:
@@ -12,7 +12,8 @@ dev-up:
 	docker compose ps
 
 dev-down:
-	docker compose down
+	# --profile tunnel so an opt-in dev tunnel is stopped too, not orphaned.
+	docker compose --env-file .env --profile tunnel down
 
 # ─── Reset dev environment (removes anonymous volumes so node_modules resync) ──
 dev-reset:
@@ -31,6 +32,27 @@ dev-health:
 
 dev-logs:
 	docker compose logs -f
+
+# ─── Containerized Cloudflare Tunnel for the dev stack ────────────
+# Opt-in: `make dev-up` does NOT start it. Lives in the mgdrywall-dev
+# project, fully separate from the mgdrywall-prod connector.
+dev-tunnel-up:
+	@if ! grep -qE '^CLOUDFLARE_TUNNEL_TOKEN=.+' .env; then \
+		echo "\033[0;31m✗ CLOUDFLARE_TUNNEL_TOKEN is not set in .env\033[0m"; \
+		echo "  Create a tunnel, then add its token to .env (see README > Cloudflare Tunnel)."; \
+		exit 1; \
+	fi
+	@if [ -f .env.prod ] && [ "$$(sed -n 's/^CLOUDFLARE_TUNNEL_TOKEN=//p' .env)" = "$$(sed -n 's/^CLOUDFLARE_TUNNEL_TOKEN=//p' .env.prod)" ]; then \
+		echo "\033[0;33m⚠ dev and prod share the same tunnel token — Cloudflare will split traffic across both connectors.\033[0m"; \
+	fi
+	docker compose --env-file .env --profile tunnel up -d cloudflared
+	@docker compose --env-file .env --profile tunnel ps cloudflared
+
+dev-tunnel-down:
+	docker compose --env-file .env --profile tunnel rm -sf cloudflared
+
+dev-tunnel-logs:
+	docker compose --env-file .env --profile tunnel logs -f cloudflared
 
 # ─── Dev quality gates (run on host, no Docker required) ──────────
 test:

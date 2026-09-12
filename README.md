@@ -28,7 +28,7 @@ Mobile-first, single-page residential landing page for drywall & finishing contr
 └──────────────────────────────────────────────────────────┘
 ```
 
-- **Cloudflare Tunnel** — Containerized edge, forwards external traffic to Nginx (no exposed host ports in prod)
+- **Cloudflare Tunnel** — Containerized edge, forwards external traffic to Nginx (no exposed host ports). Each stack runs its **own** connector: `mgdrywall-dev` (opt-in, `make dev-tunnel-up`) and `mgdrywall-prod`
 - **Nginx** — Reverse proxy, single origin for all routes
 - **Frontend** — Next.js 16 (App Router, React 19, Tailwind 4)
 - **Backend** — Django 5.x + Wagtail CMS, REST API via DRF
@@ -62,6 +62,10 @@ docker compose exec backend python manage.py seed_defaults
 #    Frontend: https://your-dev-domain.com
 #    Admin:    https://your-dev-domain.com/admin/
 #    Local:    http://localhost:8101
+
+# 5. Optional: expose the dev stack through its own Cloudflare Tunnel
+#    (containerized, in the mgdrywall-dev project — separate from prod)
+make dev-tunnel-up
 ```
 
 ### Pre-built Image Pull (production)
@@ -90,6 +94,38 @@ All traffic is served through **Cloudflare Tunnel** — no ports are exposed on 
 
 **Dev access:** When running on the local network, `http://localhost:8101` also works.
 
+### Cloudflare Tunnel
+
+The tunnel is **containerized and per-stack** — there is no host `cloudflared` service to manage:
+
+| Stack | Compose project | Token lives in | Started by | Tunnel origin |
+| --- | --- | --- | --- | --- |
+| Dev | `mgdrywall-dev` | `.env` | `make dev-tunnel-up` | `http://nginx:80` |
+| Prod | `mgdrywall-prod` | `.env.prod` | `make prod-deploy` | `http://nginx:80` |
+
+The dev connector sits behind the compose `tunnel` profile, so `make dev-up` never starts it and you never need the prod stack to run a dev tunnel. `make dev-down` tears it down if it is running.
+
+Setup:
+
+1. Cloudflare dashboard → **Zero Trust → Networks → Tunnels → Create a tunnel** (type *Cloudflared*). Do this **twice** — one tunnel for dev, one for prod.
+2. Add a public hostname to each tunnel (e.g. `mgdrywallusa-dev.taylormadetech.net`) with service type **HTTP** and URL **`nginx:80`**. In-container DNS resolves the `nginx` service name; a host loopback such as `127.0.0.1:8101` will **not** work from inside the tunnel container.
+3. Paste the connector token into the matching file:
+   - dev → `CLOUDFLARE_TUNNEL_TOKEN=…` in `.env`
+   - prod → `CLOUDFLARE_TUNNEL_TOKEN=…` in `.env.prod`
+4. Ensure the hostname appears in `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`, then:
+
+```bash
+make dev-tunnel-up     # start the dev connector
+make dev-tunnel-logs   # expect: "Registered tunnel connection ... connIndex=0"
+make dev-tunnel-down   # stop it
+```
+
+> If a host `cloudflared` systemd service is still running on this machine, disable it first so two connectors don't compete for the same tunnel: `sudo systemctl disable --now cloudflared`.
+
+Never reuse one token across both files — a single tunnel with two connectors load-balances visitors across the dev and prod stacks. `make dev-tunnel-up` warns when it detects the same token in `.env` and `.env.prod`.
+
+
+
 ## Common Commands
 
 ### Development
@@ -101,6 +137,9 @@ All traffic is served through **Cloudflare Tunnel** — no ports are exposed on 
 | `make dev-reset` | Full reset (destroys volumes + rebuild) |
 | `make dev-health` | Check if services are responding |
 | `make dev-logs` | Tail logs from all services |
+| `make dev-tunnel-up` | Start the containerized dev Cloudflare Tunnel (opt-in) |
+| `make dev-tunnel-down` | Stop and remove the dev tunnel container |
+| `make dev-tunnel-logs` | Tail dev tunnel connector logs |
 
 ### Quality Gates (run on host)
 
@@ -145,7 +184,7 @@ See `.env.sample` for the full list. Key variables:
 | `DEBUG` | ❌ | `True` for dev, `False` for prod (default: `False`) |
 | `NGINX_HOST_PORT` | ❌ | Port for dev Nginx (default: `8101`) |
 | `POSTGRES_HOST_PORT` | ❌ | Port for dev PostgreSQL (default: `5432`) |
-| `CLOUDFLARE_TUNNEL_TOKEN` | Production | Token for containerized Cloudflare Tunnel |
+| `CLOUDFLARE_TUNNEL_TOKEN` | Dev + Prod | Token for the containerized Cloudflare Tunnel (`.env` = dev, `.env.prod` = prod; use a **different** tunnel for each) |
 | `WEBHOOK_TOKEN` | Production | Shared secret for webhook authentication (must match GitHub secret) |
 | `REGISTRY_OWNER` | Production | GHCR image namespace (default: `mgdrywall`) |
 | `IMAGE_TAG` | Production | Docker image tag (default: `latest`) |
