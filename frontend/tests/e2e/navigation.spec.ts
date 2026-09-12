@@ -29,3 +29,23 @@ test.describe("Desktop Navigation", () => {
     await expect(skipLink).toBeFocused();
   });
 });
+
+// ===========================================================================
+// Cross-page Navigation — returning home from a sub-route
+// ===========================================================================
+test.describe("Cross-page Navigation", () => {
+  test.use({ viewport: { width: 1280, height: 720 } });
+
+  test("brand logo returns to the home page from /portfolio", async ({
+    page,
+  }) => {
+    await page.goto("/portfolio");
+
+    const logo = page
+      .locator("header")
+      .getByRole("link", { name: "MG Drywall USA" });
+    await logo.click();
+
+    await expect(page).toHaveURL(/\/$/);
+  });
+});
