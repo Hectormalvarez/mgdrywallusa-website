@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { resolveNavHref } from "@/lib/nav";
 import type { SiteSettingsData } from "@/types/settings";
 
 const currentYear = new Date().getFullYear();
@@ -9,6 +13,7 @@ interface FooterProps {
 }
 
 export default function Footer({ settings }: FooterProps) {
+  const pathname = usePathname();
   const hasSocialLinks =
     settings.google_review_url ||
     settings.yelp_url ||
@@ -57,7 +62,7 @@ export default function Footer({ settings }: FooterProps) {
               {settings.nav.map((item) => (
                 <li key={item.href}>
                   <a
-                    href={item.href}
+                    href={resolveNavHref(item.href, pathname)}
                     className="inline-flex items-center h-11 text-sm text-white/90 transition-colors hover:text-white hover:underline underline-offset-4"
                   >
                     {item.label}
