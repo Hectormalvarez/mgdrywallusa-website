@@ -1,9 +1,15 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { http, HttpResponse } from 'msw';
 import { axeCheck } from '@tests/utils/axe-helper';
 import { server } from '@tests/mocks/server';
 import PortfolioSection from '@/components/sections/PortfolioSection';
+
+/** Expand one of the filter dropdowns so its options become reachable. */
+const openFilter = (name: RegExp) => {
+  fireEvent.click(screen.getByRole('button', { name }));
+};
+
 
 describe('PortfolioSection', () => {
   it('has no accessibility violations', async () => {
@@ -290,7 +296,7 @@ describe('PortfolioSection', () => {
     expect(screen.getByText(/all projects loaded/i)).toBeInTheDocument();
   });
 
-  it('has no accessibility violations with tag filter', async () => {
+  it('has no accessibility violations with the filters open', async () => {
     const { container } = render(
       <PortfolioSection
         apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
@@ -301,14 +307,13 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
     });
 
-    // Verify tag chips are rendered
-    expect(screen.getByRole('checkbox', { name: 'smooth' })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'level-5' })).toBeInTheDocument();
+    openFilter(/^finish/i);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'smooth' }));
 
     expect(await axeCheck(container)).toHaveNoViolations();
   });
 
-  it('extracts and renders unique finish tags as filter chips', async () => {
+  it('exposes the unique finish tags as multi-select options', async () => {
     render(
       <PortfolioSection
         apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
@@ -319,11 +324,11 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
     });
 
+    openFilter(/^finish/i);
+
     // Mock data has tags: 'smooth' and 'level-5'
-    const tagChips = screen.getAllByRole('checkbox');
-    const tagLabels = tagChips.map((el) => el.textContent?.trim());
-    expect(tagLabels).toContain('smooth');
-    expect(tagLabels).toContain('level-5');
+    expect(screen.getByRole('checkbox', { name: 'smooth' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'level-5' })).toBeInTheDocument();
   });
 
   it('filters items by selected finish tag', async () => {
@@ -337,9 +342,8 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
     });
 
-    // Click the 'smooth' tag chip
-    const smoothChip = screen.getByRole('checkbox', { name: 'smooth' });
-    smoothChip.click();
+    openFilter(/^finish/i);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'smooth' }));
 
     await waitFor(() => {
       // Kitchen Remodel has 'smooth', Office Build-Out does not
@@ -348,7 +352,7 @@ describe('PortfolioSection', () => {
     });
   });
 
-  it('shows all items when tag filter is cleared', async () => {
+  it('shows all items when a finish tag is deselected', async () => {
     render(
       <PortfolioSection
         apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
@@ -359,17 +363,73 @@ describe('PortfolioSection', () => {
       expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
     });
 
-    // Click 'smooth' to filter
-    screen.getByRole('checkbox', { name: 'smooth' }).click();
+    // Select 'smooth' to filter
+    openFilter(/^finish/i);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'smooth' }));
     await waitFor(() => {
       expect(screen.queryByText('Office Build-Out')).not.toBeInTheDocument();
     });
 
-    // Click 'smooth' again to deselect
-    screen.getByRole('checkbox', { name: 'smooth' }).click();
+    // Deselect 'smooth' to restore everything
+    fireEvent.click(screen.getByRole('checkbox', { name: 'smooth' }));
     await waitFor(() => {
       expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
     });
+  });
+
+  it('filters by more than one project type at once', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    openFilter(/^project type/i);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Residential' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Commercial' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+      expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
+    });
+
+    // The trigger summarises the multi-selection
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+  });
+
+  it('clears every filter with the Clear filters button', async () => {
+    render(
+      <PortfolioSection
+        apiUrl="http://localhost:8001/api/v1/pages/?type=portfolio.PortfolioItem&fields=*"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+    });
+
+    // Nothing selected yet, so the button is inert
+    expect(screen.getByRole('button', { name: /clear filters/i })).toBeDisabled();
+
+    openFilter(/^project type/i);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Residential' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Office Build-Out')).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /clear filters/i })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /clear filters/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument();
+      expect(screen.getByText('Office Build-Out')).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /clear filters/i })).toBeDisabled();
   });
 
   it('renders visible labels for the scope and tag filters', async () => {
@@ -385,6 +445,7 @@ describe('PortfolioSection', () => {
 
     expect(screen.getByText('Project type')).toBeVisible();
     expect(screen.getByText('Finish')).toBeVisible();
+    expect(screen.getByRole('button', { name: /clear filters/i })).toBeVisible();
   });
 });
 

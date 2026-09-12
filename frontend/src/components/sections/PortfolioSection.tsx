@@ -5,10 +5,21 @@ import Link from "next/link";
 import { fetchPortfolioItems, type PortfolioItem } from '@/lib/api';
 import type { PortfolioScope } from '@/types/portfolio';
 import PortfolioSkeleton from '@/components/sections/PortfolioSkeleton';
-import ScopeFilterTabs from '@/components/ui/ScopeFilterTabs';
-import TagFilter from '@/components/ui/TagFilter';
+import FilterMultiSelect, { type FilterOption } from '@/components/ui/FilterMultiSelect';
 import LightboxModal from '@/components/portfolio/LightboxModal';
 import PortfolioGrid from '@/components/portfolio/PortfolioGrid';
+
+const SCOPE_LABELS: Record<PortfolioScope, string> = {
+  residential: 'Residential',
+  commercial: 'Commercial',
+  adu_renovation: 'ADU & Remodel',
+};
+
+const SCOPE_ORDER: PortfolioScope[] = [
+  'residential',
+  'commercial',
+  'adu_renovation',
+];
 
 interface PortfolioSectionProps {
   apiUrl?: string;
@@ -33,8 +44,8 @@ export default function PortfolioSection({
   const [loading, setLoading] = useState(!initialItems && !!apiUrl);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeScope, setActiveScope] = useState<PortfolioScope | 'all'>('all');
-  const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [totalCount, setTotalCount] = useState(initialTotalCount ?? 0);
 
   // Lightbox state
@@ -55,33 +66,52 @@ export default function PortfolioSection({
     setLightboxOpen(true);
   }, []);
 
-  const uniqueTags = useMemo(() => {
+  const scopeOptions = useMemo<FilterOption[]>(() => {
+    const labels = new Map<string, string>(
+      Object.entries(SCOPE_LABELS) as [string, string][]
+    );
+    // Prefer the human-readable label supplied by the CMS when present.
+    for (const item of items) {
+      if (item.scope_label) labels.set(item.scope, item.scope_label);
+    }
+    return SCOPE_ORDER.map((scope) => ({
+      value: scope,
+      label: labels.get(scope) ?? scope,
+    }));
+  }, [items]);
+
+  const tagOptions = useMemo<FilterOption[]>(() => {
     const tagSet = new Set<string>();
     for (const item of items) {
       for (const tag of item.finish_tags) {
         tagSet.add(tag);
       }
     }
-    return Array.from(tagSet).sort();
+    return Array.from(tagSet)
+      .sort()
+      .map((tag) => ({ value: tag, label: tag }));
   }, [items]);
 
   const filteredItems = useMemo(() => {
-    let result = items;
-    if (activeScope !== 'all') {
-      result = result.filter((item) => item.scope === activeScope);
-    }
-    if (activeTags.length > 0) {
-      result = result.filter((item) =>
-        activeTags.some((tag) => item.finish_tags.includes(tag))
-      );
-    }
-    return result;
-  }, [items, activeScope, activeTags]);
+    return items.filter((item) => {
+      if (selectedScopes.length > 0 && !selectedScopes.includes(item.scope)) {
+        return false;
+      }
+      if (
+        selectedTags.length > 0 &&
+        !selectedTags.some((tag) => item.finish_tags.includes(tag))
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [items, selectedScopes, selectedTags]);
 
-  const toggleTag = useCallback((tag: string) => {
-    setActiveTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
+  const hasActiveFilters = selectedScopes.length > 0 || selectedTags.length > 0;
+
+  const clearFilters = useCallback(() => {
+    setSelectedScopes([]);
+    setSelectedTags([]);
   }, []);
 
   useEffect(() => {
@@ -131,12 +161,31 @@ export default function PortfolioSection({
 
         {!loading && !error && items.length > 0 && (
           <div
-            className="mt-8 mb-8 rounded-xl border border-border bg-surface/60 p-4 sm:p-5"
+            className="mt-8 mb-6 flex flex-wrap items-center gap-3"
             role="group"
             aria-label="Project filters"
           >
-            <ScopeFilterTabs activeScope={activeScope} onScopeChange={setActiveScope} />
-            <TagFilter tags={uniqueTags} activeTags={activeTags} onTagToggle={toggleTag} />
+            <FilterMultiSelect
+              label="Project type"
+              options={scopeOptions}
+              selected={selectedScopes}
+              onChange={setSelectedScopes}
+            />
+            <FilterMultiSelect
+              label="Finish"
+              options={tagOptions}
+              selected={selectedTags}
+              onChange={setSelectedTags}
+              tone="accent"
+            />
+            <button
+              type="button"
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+              className="ml-auto rounded-lg px-3 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent"
+            >
+              Clear filters
+            </button>
           </div>
         )}
 

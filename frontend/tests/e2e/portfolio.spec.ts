@@ -156,7 +156,7 @@ test.describe("Pagination", () => {
 // Tag Filtering
 // ===========================================================================
 test.describe("Tag Filtering", () => {
-  test("renders tag filter chips and filters items", async ({ page }) => {
+  test("multi-selects finish tags and clears them", async ({ page }) => {
     await setScenario(page, "tags");
 
     await page.goto("/");
@@ -164,6 +164,8 @@ test.describe("Tag Filtering", () => {
     const section = page.locator("#portfolio");
     await expect(section.locator("article").first()).toBeVisible({ timeout: 5000 });
 
+    // Expand the Finish multi-select, then check "Level 5"
+    await section.getByRole("button", { name: /finish/i }).click();
     const level5Chip = section.getByRole("checkbox", { name: "Level 5" });
     await expect(level5Chip).toBeVisible();
 
@@ -172,7 +174,8 @@ test.describe("Tag Filtering", () => {
     await expect(section.getByText("Project A")).toBeVisible();
     await expect(section.getByText("Project B")).not.toBeVisible();
 
-    await level5Chip.click();
+    // Clear filters restores every project
+    await section.getByRole("button", { name: /clear filters/i }).click();
     await expect(section.locator("article")).toHaveCount(3);
   });
 });
