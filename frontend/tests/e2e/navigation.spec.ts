@@ -48,4 +48,19 @@ test.describe("Cross-page Navigation", () => {
 
     await expect(page).toHaveURL(/\/$/);
   });
+
+  test("header nav anchor returns to the home page section from /portfolio", async ({
+    page,
+  }) => {
+    await page.goto("/portfolio");
+
+    const services = page
+      .locator("header")
+      .getByRole("link", { name: "Services" });
+    await expect(services).toHaveAttribute("href", "/#services");
+
+    await services.click();
+
+    await expect(page).toHaveURL(/\/#services$/);
+  });
 });
