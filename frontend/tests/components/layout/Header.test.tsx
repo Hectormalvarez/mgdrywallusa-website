@@ -4,6 +4,12 @@ import { axeCheck } from '@tests/utils/axe-helper';
 import Header from '@/components/layout/Header';
 import type { SiteSettingsData } from '@/types/settings';
 
+let mockPathname = '/';
+
+jest.mock('next/navigation', () => ({
+  usePathname: () => mockPathname,
+}));
+
 const mockSettings: SiteSettingsData = {
   site_name: 'MG Drywall USA',
   tagline: 'Professional drywall installation and repair.',

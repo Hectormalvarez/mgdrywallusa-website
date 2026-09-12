@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import { resolveNavHref } from "@/lib/nav";
 import type { SiteSettingsData } from "@/types/settings";
 
 interface HeaderProps {
@@ -13,6 +15,7 @@ export default function Header({ settings }: HeaderProps) {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   const close = useCallback(() => {
     setOpen(false);
@@ -116,7 +119,7 @@ export default function Header({ settings }: HeaderProps) {
               {settings.nav.map((item) => (
                 <li key={item.href}>
                   <a
-                    href={item.href}
+                    href={resolveNavHref(item.href, pathname)}
                     className="inline-flex items-center h-11 px-4 text-sm font-semibold text-brand rounded-md transition-colors hover:bg-brand/10"
                   >
                     {item.label}
