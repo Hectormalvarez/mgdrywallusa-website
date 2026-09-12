@@ -216,7 +216,7 @@ export default function Header({ settings }: HeaderProps) {
               {settings.nav.map((item, i) => (
                 <li key={item.href}>
                   <a
-                    href={item.href}
+                    href={resolveNavHref(item.href, pathname)}
                     onClick={close}
                     className="group flex items-center gap-3 rounded-lg px-4 py-3.5 text-base font-semibold text-ink transition-colors hover:bg-brand/5"
                   >
@@ -242,7 +242,7 @@ export default function Header({ settings }: HeaderProps) {
               {settings.phone_number}
             </a>
             <a
-              href="#lead-form"
+              href={resolveNavHref("#lead-form", pathname)}
               onClick={close}
               className="flex items-center justify-center w-full h-12 rounded-lg bg-accent text-white font-semibold text-base transition-colors hover:bg-accent-strong"
             >
