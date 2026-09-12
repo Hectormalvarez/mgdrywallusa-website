@@ -7,6 +7,6 @@ from leads.models import Lead
 
 class LeadSnippetViewSet(SnippetViewSet):
     model = Lead
-    list_display = ["name", "email", "phone", "project_tier", "submitted_at"]
+    list_display = ["name", "email", "phone", "project_tier", "status", "submitted_at"]
     search_fields = ["name", "email", "phone"]
-    list_filter = ["project_tier", "submitted_at"]
+    list_filter = ["status", "project_tier", "submitted_at"]
