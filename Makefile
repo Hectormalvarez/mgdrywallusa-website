@@ -4,7 +4,7 @@ DEPLOY_HOST ?=
 DEPLOY_USER ?= $(USER)
 DEPLOY_DIR ?= /opt/mgdrywallusa-website
 
-.PHONY: dev-up dev-down dev-reset dev-health dev-logs dev-tunnel-up dev-tunnel-down dev-tunnel-logs test lint format typecheck check prod-deploy prod-seed prod-logs prod-status prod-verify env-check deploy-remote backup-remote
+.PHONY: dev-up dev-down dev-reset dev-seed dev-health dev-logs dev-tunnel-up dev-tunnel-down dev-tunnel-logs test lint format typecheck check prod-deploy prod-seed prod-logs prod-status prod-verify env-check deploy-remote backup-remote
 
 # ─── Development ───────────────────────────────────────────────
 dev-up:
@@ -22,6 +22,14 @@ dev-reset:
 	@echo "\033[0;36m▶ Rebuilding frontend image and restarting stack...\033[0m"
 	docker compose --env-file .env up -d --build
 	@echo "\033[0;32m✓ Dev stack reset. Run 'make dev-health' to verify.\033[0m"
+
+# ─── Seed default CMS content (idempotent) ────────────────────────
+dev-seed:
+	@echo "\033[0;36m▶ Seeding default site settings, navigation, and services...\033[0m"
+	docker compose exec -T backend python manage.py seed
+	@echo "\033[0;36m▶ Seeding sample portfolio items...\033[0m"
+	docker compose exec -T backend python manage.py seed_portfolio
+	@echo "\033[0;32m✓ Defaults seeded.\033[0m"
 
 # ─── Quick health check for dev stack ──
 dev-health:
@@ -99,8 +107,8 @@ prod-deploy:
 	@docker compose -p mgdrywall-prod -f docker-compose.prod.yml ps
 
 prod-seed:
-	@echo "\033[0;36m\u25b6 Running seed_defaults on production...\033[0m"
-	docker compose -p mgdrywall-prod -f docker-compose.prod.yml exec backend python manage.py seed_defaults
+	@echo "\033[0;36m\u25b6 Running seed on production...\033[0m"
+	docker compose -p mgdrywall-prod -f docker-compose.prod.yml exec -T backend python manage.py seed
 
 prod-logs:
 	docker compose -p mgdrywall-prod -f docker-compose.prod.yml logs -f

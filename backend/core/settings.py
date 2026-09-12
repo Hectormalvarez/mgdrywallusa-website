@@ -70,6 +70,9 @@ INSTALLED_APPS = [
     "home",
     "portfolio",
     "leads",
+    # Project config package. It is an installed app so that Django discovers
+    # the management commands under core/management/commands/ (e.g. `seed`).
+    "core",
 ]
 
 MIDDLEWARE = [

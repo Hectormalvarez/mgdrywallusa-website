@@ -56,7 +56,7 @@ cp .env.sample .env
 make dev-up
 
 # 3. Seed the CMS with default content
-docker compose exec backend python manage.py seed_defaults
+make dev-seed
 
 # 4. Access via Cloudflare Tunnel or local port
 #    Frontend: https://your-dev-domain.com
@@ -135,6 +135,7 @@ Never reuse one token across both files — a single tunnel with two connectors 
 | `make dev-up` | Build and start all services |
 | `make dev-down` | Stop all services |
 | `make dev-reset` | Full reset (destroys volumes + rebuild) |
+| `make dev-seed` | Seed default CMS content (site settings, nav, services, portfolio) |
 | `make dev-health` | Check if services are responding |
 | `make dev-logs` | Tail logs from all services |
 | `make dev-tunnel-up` | Start the containerized dev Cloudflare Tunnel (opt-in) |
