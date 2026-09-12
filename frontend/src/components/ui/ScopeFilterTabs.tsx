@@ -19,7 +19,7 @@ export default function ScopeFilterTabs({
   onScopeChange,
 }: ScopeFilterTabsProps) {
   return (
-    <div className="mt-6">
+    <div className="mt-0">
       <p id="scope-filter-label" className="text-sm font-semibold text-ink">
         Project type
       </p>
