@@ -19,30 +19,35 @@ export default function ScopeFilterTabs({
   onScopeChange,
 }: ScopeFilterTabsProps) {
   return (
-    <div
-      className="mt-6 flex flex-wrap gap-2"
-      role="tablist"
-      aria-label="Filter projects by scope"
-    >
-      {TABS.map((tab) => {
-        const isActive = activeScope === tab.value;
-        return (
-          <button
-            key={tab.value}
-            role="tab"
-            aria-selected={isActive}
-            onClick={() => onScopeChange(tab.value)}
-            className={
-              "rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-in-out " +
-              (isActive
-                ? "bg-brand text-white shadow-sm"
-                : "bg-border/40 text-muted hover:bg-border/70 hover:text-ink")
-            }
-          >
-            {tab.label}
-          </button>
-        );
-      })}
+    <div className="mt-6">
+      <p id="scope-filter-label" className="text-sm font-semibold text-ink">
+        Project type
+      </p>
+      <div
+        className="mt-2 flex flex-wrap gap-2"
+        role="tablist"
+        aria-labelledby="scope-filter-label"
+      >
+        {TABS.map((tab) => {
+          const isActive = activeScope === tab.value;
+          return (
+            <button
+              key={tab.value}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onScopeChange(tab.value)}
+              className={
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-in-out " +
+                (isActive
+                  ? "bg-brand text-white shadow-sm"
+                  : "bg-border/40 text-muted hover:bg-border/70 hover:text-ink")
+              }
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
