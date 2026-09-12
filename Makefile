@@ -87,10 +87,10 @@ prod-status:
 	docker compose -p mgdrywall-prod -f docker-compose.prod.yml ps
 
 prod-verify:
-	@echo "\033[0;36m\u25b6 Verifying production stack inside compose network...\033[0m"
-	@docker compose -p mgdrywall-prod -f docker-compose.prod.yml exec -T backend curl -sf -H "X-Forwarded-Proto: https" "http://nginx/api/v1/pages/?type=home.HomePage" > /dev/null && echo "\033[0;32m\u2713 Pages API: OK\033[0m" || echo "\033[0;31m\u2717 Pages API: FAIL\033[0m"
-	@docker compose -p mgdrywall-prod -f docker-compose.prod.yml exec -T backend curl -sf -H "X-Forwarded-Proto: https" "http://nginx/api/v1/settings/" > /dev/null && echo "\033[0;32m\u2713 Settings API: OK\033[0m" || echo "\033[0;31m\u2717 Settings API: FAIL\033[0m"
-	@docker compose -p mgdrywall-prod -f docker-compose.prod.yml exec -T backend curl -sf "http://nginx/" > /dev/null && echo "\033[0;32m\u2713 Frontend: OK\033[0m" || echo "\033[0;31m\u2717 Frontend: FAIL\033[0m"
+	@echo "\033[0;36m\u25b6 Verifying production stack through the published nginx port...\033[0m"
+	@curl -sf -H "X-Forwarded-Proto: https" "http://127.0.0.1:9417/api/v1/pages/?type=home.HomePage" > /dev/null && echo "\033[0;32m\u2713 Pages API: OK\033[0m" || echo "\033[0;31m\u2717 Pages API: FAIL\033[0m"
+	@curl -sf -H "X-Forwarded-Proto: https" "http://127.0.0.1:9417/api/v1/settings/" > /dev/null && echo "\033[0;32m\u2713 Settings API: OK\033[0m" || echo "\033[0;31m\u2717 Settings API: FAIL\033[0m"
+	@curl -sf "http://127.0.0.1:9417/" > /dev/null && echo "\033[0;32m\u2713 Frontend: OK\033[0m" || echo "\033[0;31m\u2717 Frontend: FAIL\033[0m"
 
 # ─── Environment guard (catches misconfigured env before Docker starts) ──
 env-check:
