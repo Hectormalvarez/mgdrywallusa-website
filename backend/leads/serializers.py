@@ -3,6 +3,7 @@
 import os
 import re
 
+from PIL import Image, UnidentifiedImageError
 from rest_framework import serializers
 
 from leads.models import TIER_CHOICES
@@ -20,6 +21,28 @@ VALID_PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 # Honeypot field name — if present and non-empty, treat as spam
 HONEYPOT_FIELD = "company"
+
+
+def _is_decodable_image(photo) -> bool:
+    """Return True when *photo* actually contains a decodable image.
+
+    Both ``content_type`` and the filename extension are attacker-controlled
+    multipart metadata, so a non-image payload can be trivially disguised as a
+    JPEG/PNG/WebP upload. ``Image.verify()`` inspects the binary structure
+    (magic bytes + container integrity) and raises for spoofed payloads.
+
+    The file pointer is always reset to the start so downstream storage can
+    still read the full file.
+    """
+    try:
+        photo.seek(0)
+        with Image.open(photo) as image:
+            image.verify()
+        return True
+    except (UnidentifiedImageError, OSError, ValueError, SyntaxError):
+        return False
+    finally:
+        photo.seek(0)
 
 
 class LeadSerializer(serializers.Serializer):
@@ -59,6 +82,10 @@ class LeadSerializer(serializers.Serializer):
                 )
             if f.size > MAX_FILE_SIZE_BYTES:
                 raise serializers.ValidationError(f"'{f.name}' exceeds the 10 MB limit.")
+            # Ensure the payload is a genuine image, not a renamed arbitrary file.
+            if not _is_decodable_image(f):
+                raise serializers.ValidationError(f"'{f.name}' is not a valid image file.")
+            f.seek(0)
             total += f.size
         if total > MAX_TOTAL_SIZE_BYTES:
             raise serializers.ValidationError("Total upload size exceeds 10 MB.")

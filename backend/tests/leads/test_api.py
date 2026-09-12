@@ -6,6 +6,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test import Client
+from PIL import Image as PILImage
 
 from leads.models import Lead, LeadAttachment
 
@@ -16,10 +17,20 @@ from leads.models import Lead, LeadAttachment
 LEAD_URL = "/api/v1/leads/"
 
 
-def _make_photo(name="photo.jpg", size=1024, content_type="image/jpeg"):
-    """Return an InMemoryUploadedFile of the given size bytes."""
-    buf = io.BytesIO(b"\x00" * size)
-    return InMemoryUploadedFile(buf, None, name, content_type, size, None)
+def _make_photo(name="photo.jpg", size=None, content_type="image/jpeg", image_format="JPEG"):
+    """Return an InMemoryUploadedFile containing a genuine, decodable image.
+
+    ``size`` (when provided) zero-pads the payload to that many bytes so the
+    size-limit tests can exceed the cap. Padding is appended after the image
+    data; oversized uploads are rejected by the size check before the
+    magic-byte inspection runs.
+    """
+    buf = io.BytesIO()
+    PILImage.new("RGB", (8, 8), color="white").save(buf, format=image_format)
+    data = buf.getvalue()
+    if size is not None and size > len(data):
+        data = data + b"\x00" * (size - len(data))
+    return InMemoryUploadedFile(io.BytesIO(data), "image", name, content_type, len(data), None)
 
 
 def _valid_payload(photos=None, **overrides):
