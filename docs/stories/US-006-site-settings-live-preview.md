@@ -1,6 +1,6 @@
 # US-006 — See settings changes before they go live
 
-**Status:** Draft · **Priority:** 3 (before the US-005 walkthrough) · **Depends on:** —  
+**Status:** Done (2026-09-13) · **Priority:** 3 (before the US-005 walkthrough) · **Depends on:** —  
 **Origin:** owner request, 2026-09-13 — "when you edit site settings you can't see the live preview like you do when you edit the rest of the page."
 
 ## Description

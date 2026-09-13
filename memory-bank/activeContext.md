@@ -4,7 +4,7 @@
 
 ## Current focus
 
-**US-002 pipeline CLOSED (2026-09-13)** — all gates passed (QA: all ACs verified; Code Review: APPROVED). Next story in queue: **US-006** (settings live preview, priority 3).
+**US-006 pipeline CLOSED (2026-09-13)** — all gates passed, including a live end-to-end smoke through the running dev stack. Next stories in queue: **US-004** (mobile walkthrough) → **US-005** (owner loop).
 
 ## Shipped: US-001 + US-003 (sprint "Flow Sign-off #1", `tasks/sprint.md`)
 
@@ -25,9 +25,21 @@
 
 **Gates at close:** jest 21 suites / 248 tests, coverage 96.74/86.84/95.03/98.68; tsc + eslint clean; e2e navigation 11/11 (Desktop Chrome, free ports). QA residual deferred to US-004: 768px visual crowding check.
 
+## Shipped: US-006 (sprint "Settings Live Preview")
+
+1. **`SettingsPreview` model** — transient token-gated payload store, 24h TTL pruned on create; never touches live settings (`site_settings/migrations/0003`).
+2. **POST `/admin/settings-preview/`** (admin-authed via `register_admin_urls`) — binds the *unsaved* edit-form values (incl. in-memory nav children via ClusterForm `save(commit=False)`) to a transient SiteSettings, serializes through the same `SiteSettingsSerializer` (AC4 parity), returns the preview URL. **URL base is `FRONTEND_URL`** — `WAGTAIL_PREVIEW_URL` already ends in `/api/preview` (live smoke caught the doubling).
+3. **GET `/api/v1/settings-preview/<token>/`** — public, token-gated, `settings_preview` throttle scope; 404 on unknown/expired.
+4. **Admin "Preview site" button** — JS hook on the settings edit form; serializes the live form, opens the draft URL; failure shows an inline message, form untouched (AC3).
+5. **`/api/preview?settings_token=`** route branch — Draft Mode + cookie + redirect `/`.
+6. **`@/lib/settings.server.ts` `getSiteSettings()`** — reads Draft Mode + cookie, delegates to `fetchSiteSettings(isDraft, token)`. `@/lib/api` stays client-safe (LeadIntakeForm imports it — next/headers there broke the build; found live).
+7. **Live smoke (proof)**: mint token → `/api/preview` 307 + cookies → homepage renders `PREVIEW SMOKE NAME`/banner/phone; **no-cookie homepage and DB unchanged**; `get_nav` now iterates the cluster manager so unsaved nav children serialize.
+
+**Gates at close:** backend pytest 132 (incl. roundtrip + no-side-effect + expiry tests); jest 21 suites / 253 tests, coverage 96.79/86.98/95.03/98.7; tsc + eslint clean; live e2e smoke PASS. Also fixed a latent test bug: `process.env.X = undefined` coerces to the string "undefined" (poisoned later tests).
+
 ## Git state
 
-- Branch `main`, **58 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
+- Branch `main`, **65 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
 - Working tree clean at the US-001/US-003 close-out commit.
 
 
@@ -43,10 +55,9 @@
 ## Next steps (in order)
 
 1. **US-006** — settings live preview (drafted; needs PO→Architect pass on the mechanism).
-3. **US-004** — human mobile walkthrough of the full funnel; record found issues to backlog.
-4. **US-005** — owner edit→preview→publish walkthrough (now covers settings preview via US-006).
-5. Regenerate the e2e visual baseline (`tests/e2e/visual/`) — **only once portfolio data renders via the real backend**; regenerating against the broken mock wiring would bake in a wrong baseline.
-6. Push when the user approves (production deploy trigger!).
+2. **US-005** — owner edit→preview→publish walkthrough (now covers settings preview via US-006).
+3. Regenerate the e2e visual baseline (`tests/e2e/visual/`) — **only once portfolio data renders via the real backend**; regenerating against the broken mock wiring would bake in a wrong baseline.
+4. Push when the user approves (production deploy trigger!).
 
 ## Open items parked with the user
 
