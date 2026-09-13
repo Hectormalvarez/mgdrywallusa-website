@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { draftMode } from "next/headers";
 import { GET } from "@/app/api/preview/route";
 
 // Mock next/headers — draftMode().enable() must be callable.
@@ -91,7 +92,45 @@ describe("POST /api/preview — redirect URL", () => {
       const location = res.headers.get("location");
       expect(location).toBe("https://example.com/");
     } finally {
-      process.env.FRONTEND_URL = originalEnv;
+      // Node coerces `process.env.X = undefined` into the string "undefined",
+      // which would poison later tests — delete the key instead.
+      if (originalEnv === undefined) {
+        delete process.env.FRONTEND_URL;
+      } else {
+        process.env.FRONTEND_URL = originalEnv;
+      }
     }
+  });
+});
+
+describe("GET /api/preview — site settings preview (US-006)", () => {
+  const BASE = "http://localhost:3000/api/preview";
+
+  it("activates draft mode and sets the settings preview cookie", async () => {
+    const enable = jest.fn();
+    (draftMode as jest.Mock).mockResolvedValue({ enable });
+
+    const req = makeRequest(`${BASE}?settings_token=tok-xyz`, {
+      host: "localhost:3000",
+    });
+    const res = await GET(req);
+
+    expect(res.status).toBe(307);
+    expect(enable).toHaveBeenCalled();
+    expect(res.headers.get("location")).toBe("http://localhost:3000/");
+    const setCookie = res.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain("settings_preview_token=tok-xyz");
+  });
+
+  it("takes precedence over the page-preview token branch", async () => {
+    const req = makeRequest(
+      `${BASE}?content_type=home.homepage&token=page-tok&settings_token=settings-tok`,
+      { host: "localhost:3000" },
+    );
+    const res = await GET(req);
+
+    const setCookie = res.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain("settings_preview_token=settings-tok");
+    expect(setCookie).not.toContain("preview_token=page-tok");
   });
 });

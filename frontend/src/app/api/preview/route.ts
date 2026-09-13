@@ -7,9 +7,12 @@ import { draftMode } from "next/headers";
  * Wagtail `wagtail-headless-preview` redirects editors here:
  *   /api/preview?content_type=home.HomePage&token=<PagePreview.token>
  *
- * We validate the content type, activate Next.js Draft Mode, persist the
- * preview token in a cookie, then redirect to `/` where the page component
- * detects draft mode and fetches preview data from the backend.
+ * Site Settings previews (US-006) arrive as:
+ *   /api/preview?settings_token=<SettingsPreview.token>
+ *
+ * We validate the parameters, activate Next.js Draft Mode, persist the
+ * preview token(s) in cookies, then redirect to `/` where the page
+ * component detects draft mode and fetches preview data from the backend.
  */
 const ALLOWED_CONTENT_TYPES = ["home.homepage"] as const;
 
@@ -48,6 +51,23 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const token = searchParams.get("token");
   const contentType = searchParams.get("content_type");
+  const settingsToken = searchParams.get("settings_token");
+
+  // --- Site Settings preview branch (US-006) ---
+  if (settingsToken) {
+    const draft = await draftMode();
+    draft.enable();
+
+    const origin = getPublicOrigin(request);
+    const response = NextResponse.redirect(new URL("/", origin));
+    response.cookies.set("settings_preview_token", settingsToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
+    return response;
+  }
 
   // --- Token presence ---
   if (!token) {
