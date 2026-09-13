@@ -24,6 +24,9 @@ media/
 test-results/
 playwright-report/
 
+# Cline config (machine-local symlink into the ai-prompts repo — see its projects/README.md)
+.clinerules
+
 # Static files
 staticfiles/
 
