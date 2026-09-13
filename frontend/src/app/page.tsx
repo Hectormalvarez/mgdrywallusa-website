@@ -57,7 +57,7 @@ export default async function Home() {
       <section
         id="lead-form"
         aria-label="Contact"
-        className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8"
+        className="scroll-mt-16 py-16 sm:py-20 px-4 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-xl">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
