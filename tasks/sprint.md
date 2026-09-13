@@ -1,7 +1,7 @@
 # Sprint — Flow Sign-off #1: Sitewide Conversion & Orientation
 
 **Stories:** US-001 (Reach the business from anywhere) + US-003 (Never stuck off the main site) — shipped together, same surface.  
-**Pipeline:** PO ✓ (US-001…006 drafts) · SDM ✓ · Architect ✓ · Human gate ✓ (2026-09-13) · **Developer: complete**
+**Pipeline:** PO ✓ · SDM ✓ · Architect ✓ · Human gate ✓ · Developer ✓ (8 commits) · QA ✓ (all ACs PASS) · Code Review ✓ APPROVED · CLOSED 2026-09-13
 
 ## Tasks
 

@@ -1,6 +1,6 @@
 # US-003 — Never stuck off the main site
 
-**Status:** In Progress · **Priority:** 1 (ship with US-001 — same surface) · **Depends on:** —
+**Status:** Done (2026-09-13) · **Priority:** 1 (ship with US-001 — same surface) · **Depends on:** —
 
 ## Description
 

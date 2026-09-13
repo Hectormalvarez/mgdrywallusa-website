@@ -1,6 +1,6 @@
 # US-001 — Reach the business from anywhere
 
-**Status:** In Progress · **Priority:** 1 · **Depends on:** — · **Ships with:** US-003
+**Status:** Done (2026-09-13) · **Priority:** 1 · **Depends on:** — · **Ships with:** US-003
 
 ## Description
 

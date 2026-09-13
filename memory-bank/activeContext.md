@@ -4,30 +4,24 @@
 
 ## Current focus
 
-**Feature pipeline in flight for US-001 + US-003, paused at Gate 3/4.** SDM breakdown approved; Architect constraints issued (verdict: Yes). Awaiting the combined Gate 3/4 human sign-off before the Developer gate starts writing code. **US-006 drafted** from the owner (settings live preview).
+**US-001 + US-003 pipeline CLOSED (2026-09-13)** — all gates passed (QA: all ACs PASS; Code Review: APPROVED). Next story in queue: **US-002** (sitewide phone visibility). **US-006 drafted** (settings live preview, priority 3).
 
-## Pipeline state — US-001 + US-003 (approved plan to implement against)
+## Shipped: US-001 + US-003 (sprint "Flow Sign-off #1", `tasks/sprint.md`)
 
-**SDM tasks (T0–T5), one micro-commit each:**
-- T0 create `tasks/sprint.md` + mark stories In Progress
-- T1 desktop header "Get a Free Quote" CTA
-- T2 detail-page CTA band (found + not-found variants)
-- T3 detail-page home links (both variants)
-- T4 global 404 portfolio path
-- T5 e2e additions + full gate (`npm test`, `tsc`, `eslint`, e2e on free ports)
+1. **Desktop header CTA** — `Get a Free Quote` `Button` in the desktop nav (`hidden md:flex` parent), `resolveNavHref("#lead-form", pathname)`; drawer CTA untouched.
+2. **Detail-page CTA band** after the article (`/#lead-form`), on **both** found and not-found variants.
+3. **`scroll-mt-16`** on the `#lead-form` section (`src/app/page.tsx`) — anchor landings clear the 64px sticky header (verified in e2e with `toBeInViewport`; banner-enabled case safe because the banner scrolls away).
+4. **Detail-page nav row** — `Home · ← Back to Portfolio` on both variants.
+5. **Global 404** — `Browse our work` (`/portfolio`) beside `Go back home`.
+6. **E2E** — 5 new tests in `navigation.spec.ts` (Conversion & Orientation describe); scope CTA queries to `page.locator("main")` on detail pages to avoid strict-mode collisions with the footer CTA.
 
-**Architect constraints:**
-- T1: `<Button href={resolveNavHref("#lead-form", pathname)}>Get a Free Quote</Button>` — variant `primary`, size `md`, `className="hidden md:inline-flex"`, placed after the nav `<ul>` in the desktop block (`Header.tsx` ~L118–138). Drawer CTA untouched.
-- T2: band after `</article>` inside the `max-w-4xl` container; renders on BOTH the found and "Project Not Found" variants (AC3 + no-dead-ends). Detail page stays a server component (`resolveNavHref` is pure).
-- T2b (in-scope correction): `scroll-mt-16` on the `#lead-form` section (`src/app/page.tsx:58`) so anchor landings clear the 64px sticky header. QA caveat: with the banner enabled, 16 may undershoot — verify visually.
-- T4: global 404 (`app/not-found.tsx`) gains a portfolio path beside "Go back home", reusing existing link classes.
-- Tests extend existing files: `tests/components/layout/Header.test.tsx`, `tests/app/portfolio/[slug]/page.test.tsx`, `tests/app/not-found.test.tsx`, `tests/e2e/navigation.spec.ts`. No new test files.
-- Forbidden: no duplicated lead form on portfolio pages; no new CtaBand component (reuse `Button`); no US-002 work (separate story/commit); no client-component conversion; drawer CTA and Footer untouched.
+**Gates at close:** jest 21 suites / 244 tests, coverage 96.74/86.73/95.03/98.68; tsc + eslint clean; e2e navigation 10/10 (Desktop Chrome, free ports).
 
 ## Git state
 
-- Branch `main`, **44 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
-- Working tree clean at the latest `docs(memory)` commit (pipeline state + US-006 draft).
+- Branch `main`, **54 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
+- Working tree clean at the US-001/US-003 close-out commit.
+
 
 ## Shipped this stretch (2026-09-12/13)
 
@@ -40,13 +34,12 @@
 
 ## Next steps (in order)
 
-1. **Gate 4 → Developer gate for US-001 + US-003** — implement T0–T5 per the approved constraints above.
-2. **US-002** — sitewide phone visibility from SiteSettings (same header row; separate commit/story).
-3. **US-006** — settings live preview (drafted; needs PO→Architect pass on the mechanism).
-4. **US-004** — human mobile walkthrough of the full funnel; record found issues to backlog.
-5. **US-005** — owner edit→preview→publish walkthrough (now covers settings preview via US-006).
-6. Regenerate the e2e visual baseline (`tests/e2e/visual/`) — **only once portfolio data renders via the real backend**; regenerating against the broken mock wiring would bake in a wrong baseline.
-7. Push when the user approves (production deploy trigger!).
+1. **US-002** — sitewide phone visibility from SiteSettings (same header row as the new CTA; separate story + commit).
+2. **US-006** — settings live preview (drafted; needs PO→Architect pass on the mechanism).
+3. **US-004** — human mobile walkthrough of the full funnel; record found issues to backlog.
+4. **US-005** — owner edit→preview→publish walkthrough (now covers settings preview via US-006).
+5. Regenerate the e2e visual baseline (`tests/e2e/visual/`) — **only once portfolio data renders via the real backend**; regenerating against the broken mock wiring would bake in a wrong baseline.
+6. Push when the user approves (production deploy trigger!).
 
 ## Open items parked with the user
 
