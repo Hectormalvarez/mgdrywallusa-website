@@ -1,6 +1,6 @@
 # US-002 — Phone number on every page
 
-**Status:** Draft · **Priority:** 2 · **Depends on:** —
+**Status:** Done (2026-09-13) · **Priority:** 2 · **Depends on:** —
 
 ## Description
 

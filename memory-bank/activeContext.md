@@ -4,7 +4,7 @@
 
 ## Current focus
 
-**US-001 + US-003 pipeline CLOSED (2026-09-13)** — all gates passed (QA: all ACs PASS; Code Review: APPROVED). Next story in queue: **US-002** (sitewide phone visibility). **US-006 drafted** (settings live preview, priority 3).
+**US-002 pipeline CLOSED (2026-09-13)** — all gates passed (QA: all ACs verified; Code Review: APPROVED). Next story in queue: **US-006** (settings live preview, priority 3).
 
 ## Shipped: US-001 + US-003 (sprint "Flow Sign-off #1", `tasks/sprint.md`)
 
@@ -17,9 +17,17 @@
 
 **Gates at close:** jest 21 suites / 244 tests, coverage 96.74/86.73/95.03/98.68; tsc + eslint clean; e2e navigation 10/10 (Desktop Chrome, free ports).
 
+## Shipped: US-002 (sprint "Sitewide Phone")
+
+1. **Desktop header phone link** — `tel:` link (phone SVG + number) before the quote CTA in the desktop nav, `hidden md:inline-flex` (drawer owns mobile), rendered only when `settings.phone_number` is set.
+2. **Empty-number guards** — drawer phone link and Footer phone link no longer render a dead `tel:` link when the setting is empty (AC3 was violated on both before this sprint).
+3. **E2E** — phone visible with correct `tel:` href from `/portfolio` (navigation.spec, Cross-page describe).
+
+**Gates at close:** jest 21 suites / 248 tests, coverage 96.74/86.84/95.03/98.68; tsc + eslint clean; e2e navigation 11/11 (Desktop Chrome, free ports). QA residual deferred to US-004: 768px visual crowding check.
+
 ## Git state
 
-- Branch `main`, **54 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
+- Branch `main`, **58 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
 - Working tree clean at the US-001/US-003 close-out commit.
 
 
@@ -34,8 +42,7 @@
 
 ## Next steps (in order)
 
-1. **US-002** — sitewide phone visibility from SiteSettings (same header row as the new CTA; separate story + commit).
-2. **US-006** — settings live preview (drafted; needs PO→Architect pass on the mechanism).
+1. **US-006** — settings live preview (drafted; needs PO→Architect pass on the mechanism).
 3. **US-004** — human mobile walkthrough of the full funnel; record found issues to backlog.
 4. **US-005** — owner edit→preview→publish walkthrough (now covers settings preview via US-006).
 5. Regenerate the e2e visual baseline (`tests/e2e/visual/`) — **only once portfolio data renders via the real backend**; regenerating against the broken mock wiring would bake in a wrong baseline.
