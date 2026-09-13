@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { fetchPortfolioItems, INTERNAL_FETCH_HEADERS } from "@/lib/api";
 import type { PortfolioItem } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,19 @@ export default async function PortfolioDetailPage({
           >
             ← Back to Portfolio
           </Link>
+          <div className="mt-10 rounded-lg border border-border bg-border/10 px-6 py-8">
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-ink">
+              Need a quote for your own project?
+            </h2>
+            <p className="mt-2 text-muted">
+              Tell us about your project and we&apos;ll get back to you promptly.
+            </p>
+            <div className="mt-5 flex justify-center">
+              <Button href="/#lead-form" variant="primary" size="lg">
+                Get a Free Quote
+              </Button>
+            </div>
+          </div>
         </div>
       </main>
     );
@@ -149,6 +163,20 @@ export default async function PortfolioDetailPage({
             </div>
           )}
         </article>
+
+        <div className="mt-16 rounded-lg border border-border bg-border/10 px-6 py-10 text-center sm:px-10">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-ink">
+            Want results like this?
+          </h2>
+          <p className="mt-2 text-muted">
+            Tell us about your project and we&apos;ll get back to you promptly.
+          </p>
+          <div className="mt-6 flex justify-center">
+            <Button href="/#lead-form" variant="primary" size="lg">
+              Get a Free Quote
+            </Button>
+          </div>
+        </div>
       </div>
     </main>
   );

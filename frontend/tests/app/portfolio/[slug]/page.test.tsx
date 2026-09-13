@@ -115,12 +115,37 @@ describe('Portfolio detail page', () => {
     expect(backLink).toHaveAttribute('href', '/portfolio');
   });
 
+  it('renders a quote CTA band pointing at the lead form', async () => {
+    await act(async () => {
+      render(await PortfolioDetailPage({ params: Promise.resolve({ slug: 'kitchen-remodel' }) }));
+    });
+
+    expect(
+      screen.getByRole('heading', { name: /want results like this/i })
+    ).toBeInTheDocument();
+    const cta = screen.getByRole('link', { name: /get a free quote/i });
+    expect(cta).toHaveAttribute('href', '/#lead-form');
+  });
+
   it('shows not found for unknown slug', async () => {
     await act(async () => {
       render(await PortfolioDetailPage({ params: Promise.resolve({ slug: 'unknown' }) }));
     });
 
     expect(screen.getByText(/not found/i)).toBeInTheDocument();
+  });
+
+  it('keeps the quote CTA and paths available on the not-found variant', async () => {
+    await act(async () => {
+      render(await PortfolioDetailPage({ params: Promise.resolve({ slug: 'unknown' }) }));
+    });
+
+    const cta = screen.getByRole('link', { name: /get a free quote/i });
+    expect(cta).toHaveAttribute('href', '/#lead-form');
+    expect(screen.getByRole('link', { name: /back to portfolio/i })).toHaveAttribute(
+      'href',
+      '/portfolio'
+    );
   });
 });
 
