@@ -1,4 +1,8 @@
+import uuid
+from datetime import timedelta
+
 from django.db import models
+from django.utils import timezone
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
@@ -204,3 +208,54 @@ class NavigationItem(Orderable):
 
     def __str__(self):
         return self.label
+
+
+class SettingsPreview(models.Model):
+    """Transient payload powering the Site Settings live preview (US-006).
+
+    Stores the serialized *unsaved* settings form values behind an unguessable
+    token so the frontend can render the site with the editor's draft values.
+    Rows are pruned on every create — nothing here is ever applied to the
+    live SiteSettings, so previewing has no side effects.
+    """
+
+    token = models.CharField(max_length=64, unique=True, editable=False)
+    site = models.ForeignKey(
+        "wagtailcore.Site",
+        on_delete=models.CASCADE,
+        related_name="settings_previews",
+    )
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    TTL_HOURS = 24
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @classmethod
+    def store(cls, site, payload):
+        """Prune expired previews, then persist a new token-gated payload."""
+        cutoff = timezone.now() - timedelta(hours=cls.TTL_HOURS)
+        cls.objects.filter(created_at__lt=cutoff).delete()
+        obj = cls.objects.create(
+            token=uuid.uuid4().hex,
+            site=site,
+            payload=payload,
+        )
+        return obj
+
+    @classmethod
+    def get_valid(cls, token):
+        """Return the preview for a token, or None when unknown/expired."""
+        try:
+            preview = cls.objects.get(token=token)
+        except cls.DoesNotExist:
+            return None
+        cutoff = timezone.now() - timedelta(hours=cls.TTL_HOURS)
+        if preview.created_at < cutoff:
+            return None
+        return preview
+
+    def __str__(self):
+        return f"Settings preview {self.token[:8]}…"
