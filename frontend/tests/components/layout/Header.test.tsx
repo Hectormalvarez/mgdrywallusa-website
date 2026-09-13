@@ -91,6 +91,25 @@ describe('Header component', () => {
     expect(cta).toHaveAttribute('href', '#lead-form');
   });
 
+  it('renders the phone number as a tel link in the main nav', () => {
+    render(<Header settings={mockSettings} />);
+    const mainNav = screen.getAllByRole('navigation', { name: 'Main' })[0];
+    const phone = within(mainNav).getByRole('link', {
+      name: mockSettings.phone_number,
+    });
+    expect(phone).toHaveAttribute('href', `tel:${mockSettings.phone_number}`);
+    // Desktop-only: the mobile drawer owns the phone affordance below md.
+    expect(phone).toHaveClass('hidden');
+    expect(phone).toHaveClass('md:inline-flex');
+  });
+
+  it('omits the phone link entirely when no phone number is set', () => {
+    render(<Header settings={{ ...mockSettings, phone_number: '' }} />);
+    const mainNav = screen.getAllByRole('navigation', { name: 'Main' })[0];
+    expect(within(mainNav).queryByRole('link', { name: /tel:/i })).toBeNull();
+    expect(within(mainNav).queryByText(/\+1-555/i)).toBeNull();
+  });
+
   it('toggles mobile drawer and updates aria-expanded state', () => {
     render(<Header settings={mockSettings} />);
     const hamburger = screen.getByRole('button', { name: /open menu/i });
@@ -185,7 +204,10 @@ describe('Header component', () => {
 
   it('renders phone link in mobile drawer footer', () => {
     render(<Header settings={mockSettings} />);
-    const phoneLink = screen.getByRole('link', { name: /555-drywall/i });
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    fireEvent.click(hamburger);
+    const dialog = screen.getByRole('dialog', { name: /main navigation/i });
+    const phoneLink = within(dialog).getByRole('link', { name: /555-drywall/i });
     expect(phoneLink).toHaveAttribute('href', 'tel:+1-555-DRYWALL');
   });
 });
