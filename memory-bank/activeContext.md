@@ -8,8 +8,8 @@ MVP sign-off pass on the user flow (PO scrutiny complete). Stories US-001…US-0
 
 ## Git state
 
-- Branch `main`, **28 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
-- Working tree clean at commit `70e1087` (fix(admin): make the "Edit Home" sidebar shortcut always work).
+- Branch `main`, **42 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
+- Working tree clean at commit `31725c9` (`70e1087` admin fix → memory bank init → stories → gitignore → README intent correction).
 
 ## Shipped this stretch (2026-09-12/13)
 
