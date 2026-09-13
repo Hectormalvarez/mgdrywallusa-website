@@ -6,6 +6,18 @@ import pytest
 
 
 @pytest.mark.django_db
+def test_settings_preview_js_is_injected(site):
+    """The admin JS hook should register the Preview site button script."""
+    from site_settings.wagtail_hooks import settings_preview_js
+
+    js = settings_preview_js()
+    text = str(js)
+    assert "Preview site" in text
+    assert "/admin/settings-preview/" in text
+    assert "settings_token" not in text  # URL comes from the endpoint, not the JS
+
+
+@pytest.mark.django_db
 def test_global_admin_css_returns_html(site):
     """The global_admin_css hook should return style HTML with the primary color."""
     from site_settings.models import SiteSettings
