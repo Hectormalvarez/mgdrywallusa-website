@@ -63,12 +63,23 @@ export default async function PortfolioDetailPage({
           <p className="mt-4 text-muted">
             The project you&apos;re looking for doesn&apos;t exist or has been removed.
           </p>
-          <Link
-            href="/portfolio"
-            className="mt-6 inline-flex items-center text-sm font-semibold text-brand hover:text-brand-strong transition-colors"
-          >
-            ← Back to Portfolio
-          </Link>
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm font-semibold">
+            <Link
+              href="/"
+              className="text-brand hover:text-brand-strong transition-colors"
+            >
+              Home
+            </Link>
+            <span aria-hidden="true" className="text-muted">
+              ·
+            </span>
+            <Link
+              href="/portfolio"
+              className="inline-flex items-center text-brand hover:text-brand-strong transition-colors"
+            >
+              ← Back to Portfolio
+            </Link>
+          </div>
           <div className="mt-10 rounded-lg border border-border bg-border/10 px-6 py-8">
             <h2 className="text-lg sm:text-xl font-bold tracking-tight text-ink">
               Need a quote for your own project?
@@ -98,12 +109,23 @@ export default async function PortfolioDetailPage({
   return (
     <main id="main-content" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
-        <Link
-          href="/portfolio"
-          className="inline-flex items-center text-sm font-semibold text-brand hover:text-brand-strong transition-colors mb-8"
-        >
-          ← Back to Portfolio
-        </Link>
+        <div className="mb-8 flex items-center gap-2 text-sm font-semibold">
+          <Link
+            href="/"
+            className="text-brand hover:text-brand-strong transition-colors"
+          >
+            Home
+          </Link>
+          <span aria-hidden="true" className="text-muted">
+            ·
+          </span>
+          <Link
+            href="/portfolio"
+            className="inline-flex items-center text-brand hover:text-brand-strong transition-colors"
+          >
+            ← Back to Portfolio
+          </Link>
+        </div>
 
         <article>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">

@@ -115,6 +115,15 @@ describe('Portfolio detail page', () => {
     expect(backLink).toHaveAttribute('href', '/portfolio');
   });
 
+  it('renders a home link beside the back link', async () => {
+    await act(async () => {
+      render(await PortfolioDetailPage({ params: Promise.resolve({ slug: 'kitchen-remodel' }) }));
+    });
+
+    const homeLink = screen.getByRole('link', { name: 'Home' });
+    expect(homeLink).toHaveAttribute('href', '/');
+  });
+
   it('renders a quote CTA band pointing at the lead form', async () => {
     await act(async () => {
       render(await PortfolioDetailPage({ params: Promise.resolve({ slug: 'kitchen-remodel' }) }));
@@ -146,6 +155,7 @@ describe('Portfolio detail page', () => {
       'href',
       '/portfolio'
     );
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
   });
 });
 
