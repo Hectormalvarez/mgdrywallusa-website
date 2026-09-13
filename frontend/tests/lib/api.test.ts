@@ -5,27 +5,11 @@
  * error handling, and data normalization for the functions that power SSR.
  */
 
-// draftMode()/cookies() only work inside a request scope; tests drive them.
-let mockDraftEnabled = false;
-let mockSettingsToken: string | undefined;
-
-jest.mock("next/headers", () => ({
-  draftMode: jest.fn(async () => ({ isEnabled: mockDraftEnabled })),
-  cookies: jest.fn(async () => ({
-    get: (name: string) =>
-      name === "settings_preview_token"
-        ? { value: mockSettingsToken }
-        : undefined,
-  })),
-}));
-
 describe("@/lib/api — server-side helpers", () => {
   let fetchSpy: jest.SpyInstance;
   beforeEach(() => {
     jest.resetModules();
     fetchSpy = jest.spyOn(global, "fetch");
-    mockDraftEnabled = false;
-    mockSettingsToken = undefined;
   });
   afterEach(() => {
     fetchSpy.mockRestore();
@@ -92,13 +76,11 @@ describe("@/lib/api — server-side helpers", () => {
     });
 
     it("fetches the unsaved preview payload in draft mode with a token", async () => {
-      mockDraftEnabled = true;
-      mockSettingsToken = "tok-123";
       const settings = { site_name: "Unsaved Preview", nav: [] };
       fetchSpy.mockResolvedValue(OK(settings));
 
       const { fetchSiteSettings } = await import("@/lib/api");
-      const result = await fetchSiteSettings();
+      const result = await fetchSiteSettings(true, "tok-123");
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const [url] = fetchSpy.mock.calls[0] as [string];
@@ -106,13 +88,11 @@ describe("@/lib/api — server-side helpers", () => {
       expect(result.site_name).toBe("Unsaved Preview");
     });
 
-    it("fetches published settings in draft mode when no token cookie exists", async () => {
-      mockDraftEnabled = true;
-      mockSettingsToken = undefined;
+    it("fetches published settings in draft mode when no token is given", async () => {
       fetchSpy.mockResolvedValue(OK({ site_name: "Live Site", nav: [] }));
 
       const { fetchSiteSettings } = await import("@/lib/api");
-      const result = await fetchSiteSettings();
+      const result = await fetchSiteSettings(true);
 
       const [url] = fetchSpy.mock.calls[0] as [string];
       expect(url).toContain("/settings/");
@@ -121,12 +101,10 @@ describe("@/lib/api — server-side helpers", () => {
     });
 
     it("falls back to the hard-coded defaults when the preview token has expired", async () => {
-      mockDraftEnabled = true;
-      mockSettingsToken = "expired-token";
       fetchSpy.mockResolvedValue(FAIL(404));
 
       const { fetchSiteSettings } = await import("@/lib/api");
-      const result = await fetchSiteSettings();
+      const result = await fetchSiteSettings(true, "expired-token");
 
       expect(result.site_name).toBe("MG Drywall USA");
     });

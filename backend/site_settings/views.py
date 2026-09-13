@@ -139,6 +139,8 @@ class SettingsPreviewCreateView(View):
         from site_settings.models import SettingsPreview
 
         record = SettingsPreview.store(site, payload)
-        preview_url = django_settings.WAGTAIL_PREVIEW_URL.rstrip("/") + f"/api/preview?settings_token={record.token}"
+        # FRONTEND_URL is the bare public origin; WAGTAIL_PREVIEW_URL already
+        # contains the /api/preview path, so it must not be appended again.
+        preview_url = django_settings.FRONTEND_URL.rstrip("/") + f"/api/preview?settings_token={record.token}"
         messages.info(request, "Preview opened in a new tab. Nothing has been published.")
         return JsonResponse({"url": preview_url})

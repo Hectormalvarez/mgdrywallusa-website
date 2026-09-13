@@ -60,6 +60,9 @@ def test_preview_roundtrip_serializes_unsaved_values(admin_client, site):
 
     assert response.status_code == 200
     url = response.json()["url"]
+    # Exactly one /api/preview path — FRONTEND_URL is a bare origin, and the
+    # headless WAGTAIL_PREVIEW_URL must not be appended on top of it.
+    assert url.count("/api/preview") == 1
     assert "settings_token=" in url
 
     token = url.split("settings_token=")[1]

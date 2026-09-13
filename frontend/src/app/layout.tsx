@@ -4,7 +4,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSiteUrl } from "@/lib/site-url";
-import { fetchSiteSettings } from "@/lib/api";
+import { getSiteSettings } from "@/lib/settings.server";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,7 +15,7 @@ const inter = Inter({
 const siteUrl = getSiteUrl();
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await fetchSiteSettings();
+  const settings = await getSiteSettings();
   return {
     metadataBase: new URL(siteUrl),
     title: {
@@ -50,7 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export async function generateViewport(): Promise<Viewport> {
-  const settings = await fetchSiteSettings();
+  const settings = await getSiteSettings();
   return { themeColor: settings.primary_color };
 }
 
@@ -59,7 +59,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const settings = await fetchSiteSettings();
+  const settings = await getSiteSettings();
 
   const jsonLd = {
     "@context": "https://schema.org",

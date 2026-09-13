@@ -3,7 +3,6 @@
  */
 
 import { cache } from "react";
-import { cookies, draftMode } from "next/headers";
 import type { HomePageData, WagtailPagesResponse } from "@/types/home";
 import type { SiteSettingsData } from "@/types/settings";
 import type {
@@ -157,41 +156,39 @@ const SITE_SETTINGS_FALLBACK: SiteSettingsData = {
  * the layout (Header / Footer / metadata) can still render during local
  * development or if the API is temporarily down.
  *
- * Draft-aware (US-006): while Next.js Draft Mode is active *and* a
- * settings preview token cookie is present, fetches the transient
- * unsaved-settings payload instead of the published values. An expired or
- * invalid token falls back to the published settings — a broken preview
- * never breaks the render.
+ * Draft-aware (US-006): pass `draft: true` with a preview token to fetch the
+ * transient unsaved-settings payload instead of the published values. An
+ * expired or invalid token falls back to the hard-coded defaults — a broken
+ * preview never breaks the render. Cookie/draft-mode detection lives in the
+ * server-only wrapper (`@/lib/settings.server`) so this module stays
+ * importable from client components.
  *
  * Wrapped with `react.cache` so multiple callers in the same server request
  * (e.g. `generateMetadata` + `RootLayout`) share a single fetch.
  */
-export const fetchSiteSettings = cache(async (): Promise<SiteSettingsData> => {
-  try {
-    let url = `${WAGTAIL_API_BASE}/settings/`;
-    if ((await draftMode()).isEnabled) {
-      const settingsToken = (await cookies()).get(
-        "settings_preview_token",
-      )?.value;
-      if (settingsToken) {
-        url = `${WAGTAIL_API_BASE}/settings-preview/${settingsToken}/`;
+export const fetchSiteSettings = cache(
+  async (draft = false, token?: string): Promise<SiteSettingsData> => {
+    try {
+      let url = `${WAGTAIL_API_BASE}/settings/`;
+      if (draft && token) {
+        url = `${WAGTAIL_API_BASE}/settings-preview/${token}/`;
       }
-    }
 
-    const res = await fetch(url, {
-      cache: "no-store",
-      headers: INTERNAL_FETCH_HEADERS,
-    });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    return (await res.json()) as SiteSettingsData;
-  } catch (error) {
-    // Only log in development — in production / CI the fallback is expected.
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Settings Fetch Error]", error);
+      const res = await fetch(url, {
+        cache: "no-store",
+        headers: INTERNAL_FETCH_HEADERS,
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      return (await res.json()) as SiteSettingsData;
+    } catch (error) {
+      // Only log in development — in production / CI the fallback is expected.
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[Settings Fetch Error]", error);
+      }
+      return SITE_SETTINGS_FALLBACK;
     }
-    return SITE_SETTINGS_FALLBACK;
-  }
-});
+  },
+);
 
 // ---------------------------------------------------------------------------
 // Home Page
