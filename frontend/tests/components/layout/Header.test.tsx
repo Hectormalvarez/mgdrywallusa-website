@@ -84,6 +84,13 @@ describe('Header component', () => {
     });
   });
 
+  it('renders the desktop quote CTA in the main nav pointing at the lead form', () => {
+    render(<Header settings={mockSettings} />);
+    const mainNav = screen.getAllByRole('navigation', { name: 'Main' })[0];
+    const cta = within(mainNav).getByRole('link', { name: /get a free quote/i });
+    expect(cta).toHaveAttribute('href', '#lead-form');
+  });
+
   it('toggles mobile drawer and updates aria-expanded state', () => {
     render(<Header settings={mockSettings} />);
     const hamburger = screen.getByRole('button', { name: /open menu/i });
@@ -198,6 +205,14 @@ describe('Header — cross-page navigation', () => {
       expect(mainNav).toContainElement(link);
       expect(link).toHaveAttribute('href', `/${item.href}`);
     });
+  });
+
+  it('roots the desktop quote CTA at home when off the home page', () => {
+    mockPathname = '/portfolio';
+    render(<Header settings={mockSettings} />);
+    const mainNav = screen.getAllByRole('navigation', { name: 'Main' })[0];
+    const cta = within(mainNav).getByRole('link', { name: /get a free quote/i });
+    expect(cta).toHaveAttribute('href', '/#lead-form');
   });
 
   it('roots mobile drawer anchors at home when off the home page', () => {

@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { resolveNavHref } from "@/lib/nav";
+import { Button } from "@/components/ui/Button";
 import type { SiteSettingsData } from "@/types/settings";
 
 interface HeaderProps {
@@ -116,7 +117,7 @@ export default function Header({ settings }: HeaderProps) {
           </Link>
 
           {/* Desktop nav */}
-          <nav aria-label="Main" className="hidden md:block">
+          <nav aria-label="Main" className="hidden md:flex items-center gap-3">
             <ul className="flex items-center gap-1">
               {settings.nav.map((item) => (
                 <li key={item.href}>
@@ -129,6 +130,13 @@ export default function Header({ settings }: HeaderProps) {
                 </li>
               ))}
             </ul>
+            <Button
+              href={resolveNavHref("#lead-form", pathname)}
+              variant="primary"
+              size="md"
+            >
+              Get a Free Quote
+            </Button>
           </nav>
 
           {/* Hamburger toggle */}
