@@ -49,6 +49,18 @@ test.describe("Cross-page Navigation", () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
+  test("phone number is visible in the header from /portfolio", async ({
+    page,
+  }) => {
+    await page.goto("/portfolio");
+
+    const phone = page
+      .locator("header")
+      .getByRole("link", { name: "+1-555-DRYWALL" });
+    await expect(phone).toBeVisible();
+    await expect(phone).toHaveAttribute("href", "tel:+1-555-DRYWALL");
+  });
+
   test("header nav anchor returns to the home page section from /portfolio", async ({
     page,
   }) => {
