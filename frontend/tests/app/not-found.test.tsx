@@ -16,4 +16,10 @@ describe('NotFoundPage', () => {
     const link = screen.getByRole('link', { name: /go back home/i });
     expect(link).toHaveAttribute('href', '/');
   });
+
+  it('renders a portfolio link alongside the home link', () => {
+    render(<NotFoundPage />);
+    const link = screen.getByRole('link', { name: /browse our work/i });
+    expect(link).toHaveAttribute('href', '/portfolio');
+  });
 });

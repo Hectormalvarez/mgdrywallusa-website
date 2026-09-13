@@ -11,12 +11,18 @@ export default function NotFound() {
         <p className="mt-4 text-lg text-muted">
           Sorry, we couldn&apos;t find the page you&apos;re looking for.
         </p>
-        <div className="mt-8 flex items-center justify-center gap-4">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link
             href="/"
             className="inline-flex items-center justify-center h-12 px-8 rounded-lg bg-accent text-white font-semibold text-lg transition-colors hover:bg-accent-strong"
           >
             Go back home
+          </Link>
+          <Link
+            href="/portfolio"
+            className="inline-flex items-center justify-center h-12 px-8 rounded-lg border-2 border-brand text-brand font-semibold text-lg transition-colors hover:bg-brand hover:text-white"
+          >
+            Browse our work
           </Link>
         </div>
       </div>
