@@ -1,6 +1,6 @@
 # Progress — MGDrywall USA
 
-*Status: visitor flow MVP-complete pending sign-off stories US-001…US-005; 28 unpushed commits on `main`.*
+*Status: visitor flow MVP-complete pending sign-off stories US-001…US-006; 44 unpushed commits on `main`; US-001+US-003 pipeline paused at the Developer gate (plan approved).*
 
 ## What works (verified)
 
@@ -21,12 +21,13 @@
 
 ## What's left (priority order — see `activeContext.md`)
 
-1. **US-001 (+US-003)** sitewide quote/call CTA + detail-page home link — the weak link in the funnel.
+1. **US-001 (+US-003)** sitewide quote/call CTA + detail-page home links — **in flight** (SDM + Architect approved; Developer gate next; approved plan recorded in `activeContext.md`).
 2. **US-002** sitewide phone visibility (SiteSettings-driven).
-3. **US-004** human mobile walkthrough.
-4. **US-005** owner edit→preview→publish walkthrough.
-5. Regenerate visual baseline against real backend data.
-6. Correct README's stale "single-page" intent; document `/portfolio` as first-class.
+3. **US-006** settings live preview — **drafted** from the owner (see `docs/stories/US-006-…`); pages preview via Draft Mode, settings saves are instantly live with no preview.
+4. **US-004** human mobile walkthrough.
+5. **US-005** owner edit→preview→publish walkthrough (covers settings preview via US-006).
+6. Regenerate visual baseline against real backend data.
+7. ~~Correct README's stale "single-page" intent~~ — **done 2026-09-13** (`119ae86`).
 
 ## Known issues (pre-existing / environmental)
 
@@ -34,7 +35,7 @@
 - **Portfolio e2e requires free ports** — Playwright reuses whatever listens on configured ports; with unrelated server on 8000, use `MOCK_PORT=8010 HOST_FRONTEND_PORT=3100`.
 - **WebKit broken in sandbox** — all Mobile Safari e2e errors are environmental ("WebKit encountered an internal error").
 - **`npm run lint` noise** — ~243 errors all from stale `frontend/.next.rootbak/`.
-- **28 commits unpushed** — production deploys on push; needs explicit approval.
+- **43 commits unpushed** — production deploys on push; needs explicit approval.
 - `mock-backend.mjs` uses *global* scenario state — spec files running in parallel can leak scenarios (one portfolio e2e flake; passes in isolation).
 
 ## Milestones
@@ -44,3 +45,4 @@
 | 2026-09-12 | Visitor nav + portfolio filter + lightbox UX overhaul (micro-committed, fully gated) |
 | 2026-09-13 | Admin "Edit Home" root cause fixed; local DB parity with production |
 | 2026-09-13 | PO flow scrutiny; memory bank initialized; US-001…US-005 drafted |
+| 2026-09-13 | Feature pipeline for US-001+US-003: SDM + Architect gates approved; US-006 (settings live preview) drafted |

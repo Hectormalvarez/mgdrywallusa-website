@@ -32,9 +32,15 @@ Root (id 1)
 - Lead intake security: DRF throttle scope (`LeadRateThrottle`) + honeypot field (`company` → silent fake 201).
 - Wagtail response quirks (e.g. hoisting `meta.slug`) normalize in `api.ts`, never in components.
 
+## Preview machinery (verified 2026-09-13)
+
+- **Pages:** wagtail-headless-preview → `/api/preview?content_type=…&token=…` → Next.js Draft Mode → page fetches draft fields via `PagePreviewAPIView` (token → draft page data). Home page only today (`ALLOWED_CONTENT_TYPES = ["home.homepage"]`).
+- **SiteSettings has NO draft/preview path** — settings saves apply instantly to the live site, and page previews render chrome from the last *saved* settings. US-006 addresses this.
+
 ## Patterns in use
 
 - **Navigation across pages:** `src/lib/nav.ts` `resolveNavHref(href, pathname)` — rewrites `#anchor` to `/#anchor` when not on `/`; used by Header + Footer.
+- **CTA buttons in chrome** (header/footer/drawer): reuse `src/components/ui/Button.tsx` (`cva`, polymorphic — passing `href` renders an `<a>`). Labels are **intentionally hardcoded**; CMS-editable conversion copy lives in the HomePage hero fields and Site Settings.
 - **Reusable filter UI:** `frontend/src/components/ui/FilterMultiSelect.tsx` — accessible multi-select (`aria-expanded`, real checkboxes, Escape/outside-click close); supports multi-select; `align` prop for panel anchoring.
 - **Lightbox:** `LightboxModal.tsx` exports `LightboxSlide`/`LightboxProject`; presentational, focus-trapped.
 - **Seeding/bootstrap:** idempotent `seed`/`seed_portfolio` commands + `home/bootstrap.py` post_migrate hook. Never data migrations for cross-app page-tree bootstrap (tables of other apps may not exist mid-migration; modelsearch signal handlers aren't disabled during migrations).
