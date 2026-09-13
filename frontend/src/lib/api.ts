@@ -3,6 +3,7 @@
  */
 
 import { cache } from "react";
+import { cookies, draftMode } from "next/headers";
 import type { HomePageData, WagtailPagesResponse } from "@/types/home";
 import type { SiteSettingsData } from "@/types/settings";
 import type {
@@ -156,12 +157,28 @@ const SITE_SETTINGS_FALLBACK: SiteSettingsData = {
  * the layout (Header / Footer / metadata) can still render during local
  * development or if the API is temporarily down.
  *
+ * Draft-aware (US-006): while Next.js Draft Mode is active *and* a
+ * settings preview token cookie is present, fetches the transient
+ * unsaved-settings payload instead of the published values. An expired or
+ * invalid token falls back to the published settings — a broken preview
+ * never breaks the render.
+ *
  * Wrapped with `react.cache` so multiple callers in the same server request
  * (e.g. `generateMetadata` + `RootLayout`) share a single fetch.
  */
 export const fetchSiteSettings = cache(async (): Promise<SiteSettingsData> => {
   try {
-    const res = await fetch(`${WAGTAIL_API_BASE}/settings/`, {
+    let url = `${WAGTAIL_API_BASE}/settings/`;
+    if ((await draftMode()).isEnabled) {
+      const settingsToken = (await cookies()).get(
+        "settings_preview_token",
+      )?.value;
+      if (settingsToken) {
+        url = `${WAGTAIL_API_BASE}/settings-preview/${settingsToken}/`;
+      }
+    }
+
+    const res = await fetch(url, {
       cache: "no-store",
       headers: INTERNAL_FETCH_HEADERS,
     });
