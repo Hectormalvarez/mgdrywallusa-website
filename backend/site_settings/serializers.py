@@ -57,8 +57,13 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         return resolve_image_url(obj.favicon)
 
     def get_nav(self, obj):
-        """Build navigation list; fall back to sensible defaults."""
-        nav_items = list(obj.navigation_items.values("label", "url"))
+        """Build navigation list; fall back to sensible defaults.
+
+        Iterates the cluster manager (``.all()``) rather than a DB queryset so
+        that *unsaved* in-memory ``NavigationItem`` children — the live
+        preview's transient settings — serialize identically to saved ones.
+        """
+        nav_items = [{"label": item.label, "url": item.url} for item in obj.navigation_items.all()]
         if not nav_items:
             nav_items = [
                 {"label": "Services", "url": "#services"},

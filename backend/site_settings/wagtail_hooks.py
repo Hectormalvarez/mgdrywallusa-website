@@ -188,6 +188,22 @@ def register_edit_homepage_menu_item():
     return MenuItem("Create Home", url, icon_name="pencil", order=100)
 
 
+@hooks.register("register_admin_urls")
+def settings_preview_admin_urls():
+    """Expose the admin-only endpoint that stores unsaved settings previews."""
+    from django.urls import path
+
+    from site_settings.views import SettingsPreviewCreateView
+
+    return [
+        path(
+            "settings-preview/",
+            SettingsPreviewCreateView.as_view(),
+            name="settings-preview-create",
+        )
+    ]
+
+
 @hooks.register("register_admin_menu_item")
 def register_site_settings_menu_item():
     """Add a top-level Site Settings shortcut linking to the edit view."""

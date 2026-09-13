@@ -57,6 +57,17 @@ def site(db, home_page):
 
 
 @pytest.fixture
+def admin_client(db, client):
+    """A Django test client logged into the Wagtail admin as a superuser."""
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    user = User.objects.create_superuser(username="admin", email="admin@example.com", password="password")
+    client.force_login(user)
+    return client
+
+
+@pytest.fixture
 def test_image(db):
     """Create a minimal valid 100x100 PNG image."""
     pil_img = PILImage.new("RGB", (100, 100), color="red")

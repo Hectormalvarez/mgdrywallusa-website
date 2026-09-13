@@ -213,5 +213,6 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "60/min",
         "lead": "3/min",
+        "settings_preview": "30/min",
     },
 }
