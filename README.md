@@ -1,6 +1,6 @@
 # MGDrywall USA Website
 
-Mobile-first, single-page residential landing page for drywall & finishing contractors.
+Mobile-first marketing site for a drywall & finishing contractor: a CMS-driven landing page plus a first-class, browsable portfolio (listing and project pages) that doubles as an SEO destination.
 
 **Stack:** Next.js 16 · Django 5.x / Wagtail CMS · PostgreSQL 16 · Nginx reverse proxy
 
