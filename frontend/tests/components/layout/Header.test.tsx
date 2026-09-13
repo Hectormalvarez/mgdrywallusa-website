@@ -210,6 +210,17 @@ describe('Header component', () => {
     const phoneLink = within(dialog).getByRole('link', { name: /555-drywall/i });
     expect(phoneLink).toHaveAttribute('href', 'tel:+1-555-DRYWALL');
   });
+
+  it('omits the drawer phone link but keeps the quote CTA when no phone number is set', () => {
+    render(<Header settings={{ ...mockSettings, phone_number: '' }} />);
+    const hamburger = screen.getByRole('button', { name: /open menu/i });
+    fireEvent.click(hamburger);
+    const dialog = screen.getByRole('dialog', { name: /main navigation/i });
+    expect(within(dialog).queryByRole('link', { name: /555-drywall/i })).toBeNull();
+    expect(
+      within(dialog).getByRole('link', { name: /get a free quote/i })
+    ).toHaveAttribute('href', '#lead-form');
+  });
 });
 
 describe('Header — cross-page navigation', () => {
