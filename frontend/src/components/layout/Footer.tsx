@@ -78,12 +78,14 @@ export default function Footer({ settings }: FooterProps) {
               Contact Us
             </h3>
             <address className="mt-4 not-italic flex flex-col gap-1 text-sm">
-              <a
-                href={`tel:${settings.phone_number}`}
-                className="inline-flex items-center h-11 text-white/90 transition-colors hover:text-white hover:underline underline-offset-4"
-              >
-                {settings.phone_number}
-              </a>
+              {settings.phone_number && (
+                <a
+                  href={`tel:${settings.phone_number}`}
+                  className="inline-flex items-center h-11 text-white/90 transition-colors hover:text-white hover:underline underline-offset-4"
+                >
+                  {settings.phone_number}
+                </a>
+              )}
               <a
                 href={`mailto:${settings.contact_email}`}
                 className="inline-flex items-center h-11 text-white/90 transition-colors hover:text-white hover:underline underline-offset-4"

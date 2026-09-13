@@ -90,6 +90,14 @@ describe('Footer component', () => {
     expect(emailLink).toHaveAttribute('href', 'mailto:info@mgdrywallusa.com');
   });
 
+  it('omits the phone link but keeps the email when no phone number is set', () => {
+    render(<Footer settings={{ ...mockSettings, phone_number: '' }} />);
+    expect(screen.queryByRole('link', { name: /tel:/i })).toBeNull();
+    expect(
+      screen.getByRole('link', { name: 'info@mgdrywallusa.com' })
+    ).toBeInTheDocument();
+  });
+
   it('renders all quick navigation links', () => {
     render(<Footer settings={mockSettings} />);
     mockSettings.nav.forEach((item) => {
