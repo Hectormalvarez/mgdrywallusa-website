@@ -73,12 +73,14 @@ Smoke against the real dev backend (Django test client, admin-authenticated):
 
 ## Next steps (in order)
 
-1. **US-006** — settings live preview (drafted; needs PO→Architect pass on the mechanism).
-2. **US-005** — owner edit→preview→publish walkthrough (now covers settings preview via US-006).
-3. Regenerate the e2e visual baseline (`tests/e2e/visual/`) — **only once portfolio data renders via the real backend**; regenerating against the broken mock wiring would bake in a wrong baseline.
-4. Push when the user approves (production deploy trigger!).
+1. **US-005** — owner walkthrough of the admin loop (backend pre-verification passed 2026-09-14: publish/unpublish roundtrip clean, invalid saves reject without touching live). Awaiting the user's 3-step admin eyeball: homepage preview loop, portfolio publish/unpublish, settings preview button.
+2. Analytics/instrumentation story as the natural follow-up after the sign-off batch.
 
-## Open items parked with the user
+## Sync state (2026-09-14)
 
-- Push approval (deploys to prod on push).
-- Analytics/instrumentation story as the natural follow-up after US-001/US-002.
+- **All work pushed to `origin/main`; CI fully green; Release workflow deployed successfully.**
+- **First CI run failed; triaged via `gh` and fixed** (commits `065d7e3`, `c25ec98`):
+  1. `mobile-funnel.spec.ts` ran under Desktop Chrome in CI and its `.tap()` calls need `hasTouch` — fixed with `testIgnore: [/mobile-funnel/]` on the Desktop Chrome project (spec is untouched and passes on Mobile Chrome + Mobile Safari).
+  2. Stale visual baselines — refreshed **from the CI run's uploaded artifact** (`playwright-report` → `homepage-actual.png` per project), the one environment where mock data renders correctly. Added the missing `Mobile-Chrome.png` baseline. **Never regenerate locally** (sandbox renders an empty portfolio section).
+- Key lesson: WebKit **works in CI** — "Mobile Safari broken" is local-sandbox-only. Verify failures against CI before treating them as product bugs.
+- Baseline refresh procedure for future visual changes: push, download the failed run's artifact, copy `homepage-actual.png` per project into `__screenshots__/visual/homepage.spec.ts/homepage/`.

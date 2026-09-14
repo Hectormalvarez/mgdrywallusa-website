@@ -29,9 +29,9 @@
 
 1. **E2E needs free ports**: Playwright's `reuseExistingServer` happily reuses whatever listens on the configured ports. With port 8000 occupied, the mock backend never starts and every data-dependent test fails with "Failed to load portfolio". Run e2e as:
    `MOCK_PORT=8010 HOST_FRONTEND_PORT=3100 npx playwright test …`
-2. **Mobile Safari (WebKit) project is broken in this sandbox** — every WebKit test errors with "WebKit encountered an internal error", including untouched specs. Desktop Chrome/Edge are fine. Treat WebKit failures as environmental, not regressions.
+2. **Mobile Safari (WebKit) project is broken in this sandbox** — every WebKit test errors with "WebKit encountered an internal error" locally, but the **same project passes in GitHub Actions CI** (verified 2026-09-14: only the visual baseline failed there, and only because it was stale). Treat WebKit failures as *local-sandbox* environmental issues, not regressions.
 3. **`npm run lint` reports ~243 errors, all from stale `frontend/.next.rootbak/`** (pre-existing artifact). Lint specific files instead.
-4. **Visual baseline** `tests/e2e/visual/__screenshots__/homepage.png` is stale (portfolio section changes). Regenerate (`--update-snapshots`) only once portfolio data renders through the real backend wiring.
+4. **Visual baselines** are per-project (`tests/e2e/__screenshots__/visual/homepage.spec.ts/homepage/{Desktop-Chrome,Mobile-Safari,Mobile-Chrome}.png`), refreshed 2026-09-14 from CI-rendered actuals (the one environment where mock data flows correctly). Do NOT regenerate locally — the sandbox's homepage renders with an empty portfolio section and would bake in a broken baseline. Mobile-funnel spec runs only on touch projects (Desktop Chrome has `testIgnore: [/mobile-funnel/]`).
 5. Backend tests are fast (~15s, 120 tests); frontend jest suite ~230 tests.
 
 ## Safety
