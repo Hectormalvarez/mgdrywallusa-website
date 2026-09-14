@@ -46,6 +46,16 @@
 
 **Gates at close:** Mobile Chrome mobile-funnel 4/4; (jest/tsc/eslint unchanged from US-006 close).
 
+## US-005 — backend pre-verification DONE (2026-09-13)
+
+Smoke against the real dev backend (Django test client, admin-authenticated):
+- **Publish roundtrip:** new PortfolioItem under the listing appears in `/api/v1/pages/?type=portfolio.PortfolioItem` (total 7→8) and detail returns 200.
+- **Unpublish:** item vanishes from listing, detail returns 404, listing API stays healthy — AC5 verified programmatically.
+- **Invalid save:** POSTing HomePage edit with empty `hero_heading` → 400 with validation surfaced; **live API payload byte-identical before/after** — AC6 verified programmatically.
+- Smoke artifacts cleaned up (item deleted).
+
+**Owner handoff (remaining eyeball steps):** ① homepage draft→Preview shows the edit without saving, and live site is unchanged until publish; ② new portfolio item appears in "Our Work"/listing after publish; ③ Site Settings "Preview site" button shows unsaved edits (mechanism already smoke-tested live in US-006). Admin at `localhost:8101/admin/`.
+
 ## Git state
 
 - Branch `main`, **67 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).

@@ -1,6 +1,6 @@
 # US-005 — Owner can run the site without a developer
 
-**Status:** Draft · **Priority:** 4 · **Depends on:** —
+**Status:** In Progress — backend pre-verification passed (publish/unpublish/invalid-save verified programmatically 2026-09-13); owner walkthrough pending · **Priority:** 4 · **Depends on:** —
 
 ## Description
 
