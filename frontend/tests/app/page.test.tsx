@@ -6,6 +6,9 @@ jest.mock('next/headers', () => ({
   cookies: jest.fn().mockResolvedValue({
     get: jest.fn().mockReturnValue(null),
   }),
+  headers: jest.fn().mockResolvedValue({
+    get: jest.fn().mockReturnValue(null),
+  }),
 }));
 
 jest.mock('@/lib/api', () => ({

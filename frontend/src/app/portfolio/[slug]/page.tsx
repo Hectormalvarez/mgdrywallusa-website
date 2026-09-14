@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { fetchPortfolioItems, INTERNAL_FETCH_HEADERS } from "@/lib/api";
 import type { PortfolioItem } from "@/lib/api";
+import { e2eScenarioHeaders } from "@/lib/e2e-headers";
 import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,9 @@ const PORTFOLIO_API_URL = `${WAGTAIL_API_BASE}/pages/?type=portfolio.PortfolioIt
 async function getItem(slug: string): Promise<PortfolioItem | null> {
   try {
     const url = `${PORTFOLIO_API_URL}&slug=${encodeURIComponent(slug)}`;
-    const data = await fetchPortfolioItems(url, undefined, { headers: INTERNAL_FETCH_HEADERS });
+    const data = await fetchPortfolioItems(url, undefined, {
+      headers: { ...INTERNAL_FETCH_HEADERS, ...(await e2eScenarioHeaders()) },
+    });
     return data.items?.[0] ?? null;
   } catch {
     return null;

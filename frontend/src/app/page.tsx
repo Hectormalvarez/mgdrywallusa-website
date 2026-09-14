@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 import PortfolioSection from "@/components/sections/PortfolioSection";
 import LeadIntakeForm from "@/components/forms/LeadIntakeForm";
 import { fetchHomePage, fetchPortfolioItemsServer } from "@/lib/api";
+import { e2eScenarioHeaders } from "@/lib/e2e-headers";
 
 const LEAD_API_URL =
   process.env.NEXT_PUBLIC_LEAD_API_URL ??
@@ -27,7 +28,10 @@ export default async function Home() {
   const homeData = await fetchHomePage(isDraft, previewToken).catch(() => null);
 
   // Pre-fetch portfolio items server-side so they render without client JS.
-  const portfolioData = await fetchPortfolioItemsServer().catch(() => null);
+  const portfolioData = await fetchPortfolioItemsServer(
+    undefined,
+    await e2eScenarioHeaders(),
+  ).catch(() => null);
 
   return (
     <main id="main-content">

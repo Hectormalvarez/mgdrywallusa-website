@@ -41,6 +41,9 @@ const mockItem = {
 
 jest.mock('next/headers', () => ({
   draftMode: jest.fn().mockResolvedValue({ isEnabled: false }),
+  headers: jest.fn().mockResolvedValue({
+    get: jest.fn().mockReturnValue(null),
+  }),
 }));
 
 jest.mock('@/lib/api', () => ({

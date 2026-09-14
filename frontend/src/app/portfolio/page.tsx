@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import PortfolioSection from "@/components/sections/PortfolioSection";
 import { fetchPortfolioItemsServer } from "@/lib/api";
+import { e2eScenarioHeaders } from "@/lib/e2e-headers";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,10 @@ export const metadata: Metadata = {
 
 export default async function PortfolioPage() {
   // Pre-fetch first page server-side so portfolio renders without client JS.
-  const portfolioData = await fetchPortfolioItemsServer({ limit: 6 }).catch(() => null);
+  const portfolioData = await fetchPortfolioItemsServer(
+    { limit: 6 },
+    await e2eScenarioHeaders(),
+  ).catch(() => null);
 
   return (
     <main id="main-content">

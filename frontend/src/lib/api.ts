@@ -102,9 +102,12 @@ export async function fetchPortfolioItems(
  */
 export async function fetchPortfolioItemsServer(
   options?: { limit?: number; offset?: number },
+  extraHeaders?: Record<string, string>,
 ): Promise<PortfolioApiResponse> {
   const url = `${WAGTAIL_API_BASE}/pages/?type=portfolio.PortfolioItem&fields=*`;
-  return fetchPortfolioItems(url, options, { headers: INTERNAL_FETCH_HEADERS });
+  return fetchPortfolioItems(url, options, {
+    headers: { ...INTERNAL_FETCH_HEADERS, ...extraHeaders },
+  });
 }
 
 // ---------------------------------------------------------------------------
