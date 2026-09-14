@@ -107,6 +107,30 @@ Smoke against the real dev backend (Django test client, admin-authenticated):
    while the live site stays unchanged; homepage 200; backend 120 pytest,
    frontend 251 jest, e2e navigation 11/11.
 
+## E2E scenario isolation sprint (2026-09-14, branch `test/e2e-scenario-isolation`)
+
+1. **Root flake fixed:** mock-backend.mjs no longer keeps server-global
+   scenario state — the dataset is resolved per request from `X-E2E-Scenario`
+   (header > default). Control endpoint `POST /__e2e__/scenario` deleted.
+2. **Shared fixtures** (`tests/e2e/test-fixtures.ts`): all specs import
+   `test`/`expect` from it; the `page` fixture routes every request and stamps
+   the scenario header on documents, RSC prefetches, and `/api/v1/pages/`.
+   `setScenario(page, name)` keeps its old call signature (registers a
+   later-matching route that wins). `mainText(page, text)` scopes text
+   assertions to `<main>` (strict-mode chrome-collision guard).
+3. **SSR forwarding:** `@/lib/e2e-headers.ts` `e2eScenarioHeaders()` reads the
+   header via `next/headers` (no-op in prod); merged into
+   `fetchPortfolioItemsServer` + detail-page fetches. Jest `next/headers`
+   mocks needed a `headers` entry (smoke + 3 page tests).
+4. **Config:** CI workers 1 → 4 (safe now), `trace: "retain-on-failure"`.
+5. **Isolation regression spec** `scenario-isolation.spec.ts`: two concurrent
+   contexts with different scenarios must each render their own dataset.
+6. **Gates:** jest 21/251, tsc, eslint (touched files), e2e **128/128 passed
+   (1.2m)** incl. Mobile Safari locally. 4 micro-commits, tree clean.
+   **NOT pushed** — awaiting approval; next: push branch + PR, confirm CI
+   (workers=4 parallel run is the real proof), then visual-baseline procedure
+   unchanged for future layout changes.
+
 ## CI triage (2026-09-14, post-US-007) — CLOSED
 
 1. **Root causes found & fixed:** (a) detail-page e2e used unscoped

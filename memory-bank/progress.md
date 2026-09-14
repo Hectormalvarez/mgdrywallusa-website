@@ -36,7 +36,7 @@
 - **WebKit broken in sandbox** — all Mobile Safari e2e errors are environmental ("WebKit encountered an internal error").
 - **`npm run lint` noise** — ~243 errors all from stale `frontend/.next.rootbak/`.
 - **54 commits unpushed** — production deploys on push; needs explicit approval.
-- `mock-backend.mjs` uses *global* scenario state — spec files running in parallel can leak scenarios (one portfolio e2e flake; passes in isolation).
+- ~~`mock-backend.mjs` uses *global* scenario state~~ — **fixed 2026-09-14**: per-request `X-E2E-Scenario` header (see activeContext, e2e isolation sprint); CI runs 4 parallel workers.
 
 ## Milestones
 
