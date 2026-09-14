@@ -29,6 +29,8 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
       },
+      // Tap-driven mobile specs require a hasTouch context.
+      testIgnore: [/mobile-funnel/],
     },
     {
       // US-004: the funnel must work on a phone. Chromium-based emulation
