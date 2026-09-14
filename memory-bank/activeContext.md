@@ -4,7 +4,7 @@
 
 ## Current focus
 
-**US-004 automated mobile walkthrough DONE (2026-09-13)** — funnel proven on emulated Mobile Chrome (375×812, touch); the on-device human pass is the remaining open item. Next: **US-005** (owner loop walkthrough).
+**US-004 automated mobile walkthrough DONE (2026-09-13)** — funnel proven on emulated Mobile Chrome (375×812, touch); the owner completed the on-device pass ("tested on my phone and it looks good") — US-004 Done. Next: **US-005** (owner loop walkthrough).
 
 ## Shipped: US-001 + US-003 (sprint "Flow Sign-off #1", `tasks/sprint.md`)
 
@@ -42,7 +42,7 @@
 1. **`Mobile Chrome` Playwright project** added (Pixel 7 device, 375×812 viewport) — replaces the environmentally-broken WebKit project for mobile coverage.
 2. **`tests/e2e/mobile-funnel.spec.ts`** — 4 tests: no horizontal overflow on the 3 funnel pages; a tap-only walk (home → drawer → Our Work → lightbox next/close → View all → listing → detail → quote form `toBeInViewport`); tap-target heights (hamburger 44, drawer CTA 48, lightbox arrow ≥44); lead submit succeeds with a 1.2s-throttled POST.
 3. **Result: 4/4 PASS.** Two early failures were spec bugs (tapping the card text area instead of the image button; missing Project Tier select), not product bugs. Drawer panel is always in DOM off-screen (`translate-x-full`) — `getByRole` counts it; use visibility checks, not count.
-4. **Remaining for US-004 sign-off:** human on-device pass (rotate/keyboard-dismiss persistence, real-thumb tap ergonomics, WebKit/Safari in the wild).
+4. **US-004 sign-off:** owner on-device pass completed 2026-09-13 — no issues reported. Story is Done.
 
 **Gates at close:** Mobile Chrome mobile-funnel 4/4; (jest/tsc/eslint unchanged from US-006 close).
 

@@ -1,6 +1,6 @@
 # US-004 — The funnel works on a phone, not just in a test suite
 
-**Status:** In Progress — automated leg done; on-device human pass pending · **Priority:** 3 · **Depends on:** US-001, US-002 (walk the funnel after the CTA/phone gaps are closed, so the walkthrough is of the real funnel)
+**Status:** Done — automated suite green (4/4) and owner on-device pass completed 2026-09-13 · **Priority:** 3 · **Depends on:** US-001, US-002 (walk the funnel after the CTA/phone gaps are closed, so the walkthrough is of the real funnel)
 
 ## Description
 
