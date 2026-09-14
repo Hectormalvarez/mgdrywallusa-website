@@ -106,3 +106,22 @@ Smoke against the real dev backend (Django test client, admin-authenticated):
 5. **Verified live:** draft homepage renders smoke chrome (+1-999-SMOKE)
    while the live site stays unchanged; homepage 200; backend 120 pytest,
    frontend 251 jest, e2e navigation 11/11.
+
+## CI triage (2026-09-14, post-US-007) — CLOSED
+
+1. **Root causes found & fixed:** (a) detail-page e2e used unscoped
+   `getByText("Residential")` — now collides with chrome text since US-007
+   moved the footer description onto the homepage payload; fixed by scoping
+   to `main` + exact match. (b) `mobile-funnel.spec.ts` never declared a
+   mock scenario — it rode whatever the server-global scenario state was,
+   so results depended on spec-file ordering; pinned via `beforeEach`
+   `setScenario(page, "listing")`. (c) Mobile-Chrome + Mobile-Safari
+   homepage baselines predated US-007's 31px chrome shift — refreshed from
+   the CI artifact's `homepage-actual.png` (never regenerate WebKit
+   baselines locally; local WebKit renders differ from CI).
+2. **Known residual flake (documented, unfixed by design):** the mock
+   backend's scenario state is server-global, so parallel workers running
+   the error-scenario test can flip state under other specs. CI-green;
+   proper fix is per-request scenario headers — backlog candidate.
+3. Final state: CI run 34889725773 **success**, Release 34890046599
+   **success** (deployed). `main` == `origin/main` at `6fff0ef`, tree clean.
