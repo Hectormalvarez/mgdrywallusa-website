@@ -373,7 +373,7 @@ class HomePage(HeadlessPreviewMixin, Page):
         APIField("facebook_url"),
         APIField("instagram_url"),
         APIField("seo", serializer=serializers.JSONField()),
-        APIField("navigation_items", serializer=ChromeNavigationField()),
+        APIField("nav", serializer=ChromeNavigationField()),
     ]
 
     # ── Computed chrome values for the API ──────────────────────────────
@@ -389,6 +389,11 @@ class HomePage(HeadlessPreviewMixin, Page):
         from core.utils import resolve_image_url
 
         return resolve_image_url(self.favicon)
+
+    @property
+    def nav(self):
+        """Expose navigation under the frontend's ``nav`` contract key."""
+        return self.navigation_items
 
     @property
     def seo(self):

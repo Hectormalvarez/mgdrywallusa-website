@@ -41,9 +41,7 @@ def copy_chrome(apps, schema_editor):
     if home is None:
         return
 
-    settings_obj = (
-        SiteSettings.objects.filter(site=site).first() or SiteSettings.objects.first()
-    )
+    settings_obj = SiteSettings.objects.filter(site=site).first() or SiteSettings.objects.first()
     if settings_obj is None:
         return
 
