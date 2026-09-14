@@ -1,13 +1,20 @@
 from django.db import models
 from django.utils.text import slugify
 from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
+from rest_framework import serializers
+from wagtail.admin.panels import (
+    FieldPanel,
+    InlinePanel,
+    MultiFieldPanel,
+    ObjectList,
+    TabbedInterface,
+)
 from wagtail.api import APIField
 from wagtail.images.api.fields import ImageRenditionField
 from wagtail.models import Orderable, Page
 from wagtail_headless_preview.models import HeadlessPreviewMixin
 
-from home.serializers import FeaturedServicesField
+from home.serializers import ChromeNavigationField, FeaturedServicesField
 
 
 class Service(models.Model):
@@ -139,6 +146,98 @@ class HomePage(HeadlessPreviewMixin, Page):
         help_text="Fallback text when no portfolio items are published",
     )
 
+    # ── Site chrome (US-007) ────────────────────────────────────────────
+    # Visitor-facing site chrome lives on the homepage — the site root — so
+    # the owner customizes and *live-previews* it in the page editor with
+    # full draft/publish/revision semantics. Operational-only configuration
+    # (lead alert emails, auto-responder) remains in SiteSettings.
+
+    # General & identity
+    site_name = models.CharField(
+        max_length=255,
+        default="MG Drywall USA",
+        help_text="Business name used across headers, footers, and SEO metadata",
+    )
+    tagline = models.TextField(
+        blank=True,
+        default="Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
+        help_text="Primary business tagline displayed in the footer",
+    )
+    phone_number = models.CharField(
+        max_length=50,
+        default="+1-555-DRYWALL",
+        help_text="Primary public contact phone number",
+    )
+    contact_email = models.EmailField(
+        default="info@mgdrywallusa.com",
+        help_text="Primary public contact email address",
+    )
+    license_number = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="State contractor license number – rendered in trust badges",
+    )
+
+    # Brand theme & logos
+    logo = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Company logo (PNG or SVG recommended)",
+    )
+    favicon = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Browser tab icon (square, 32×32 or 64×64)",
+    )
+    primary_color = models.CharField(
+        max_length=7,
+        default="#0A3161",
+        help_text="Hex code for primary brand color (e.g. #0A3161)",
+    )
+    accent_color = models.CharField(
+        max_length=7,
+        default="#B31942",
+        help_text="Hex code for action buttons and accents (e.g. #B31942)",
+    )
+
+    # Announcement banner
+    banner_enabled = models.BooleanField(
+        default=False,
+        help_text="Show announcement bar at the very top of the site",
+    )
+    banner_text = models.CharField(
+        max_length=255,
+        blank=True,
+        default="Free on-site estimates for all residential projects!",
+        help_text="Text shown inside the announcement bar",
+    )
+    banner_link = models.CharField(
+        max_length=255,
+        blank=True,
+        default="#lead-form",
+        help_text="URL or anchor the banner links to",
+    )
+
+    # Social & review links
+    google_review_url = models.URLField(blank=True, default="")
+    yelp_url = models.URLField(blank=True, default="")
+    facebook_url = models.URLField(blank=True, default="")
+    instagram_url = models.URLField(blank=True, default="")
+
+    # Local SEO & Schema.org defaults
+    address_locality = models.CharField(max_length=100, default="Austin", blank=True)
+    address_region = models.CharField(max_length=100, default="TX", blank=True)
+    postal_code = models.CharField(max_length=20, default="78701", blank=True)
+    country = models.CharField(max_length=10, default="US", blank=True)
+    price_range = models.CharField(max_length=10, default="$$", blank=True)
+
     content_panels = Page.content_panels + [
         MultiFieldPanel(
             [
@@ -177,6 +276,66 @@ class HomePage(HeadlessPreviewMixin, Page):
         ),
     ]
 
+    chrome_panels = [
+        InlinePanel("navigation_items", label="Navigation Links"),
+        MultiFieldPanel(
+            [
+                FieldPanel("site_name"),
+                FieldPanel("phone_number"),
+                FieldPanel("contact_email"),
+                FieldPanel("license_number"),
+            ],
+            heading="Identity & Contact",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("banner_enabled"),
+                FieldPanel("banner_text"),
+                FieldPanel("banner_link"),
+            ],
+            heading="Announcement Banner",
+        ),
+    ]
+
+    brand_panels = [
+        MultiFieldPanel(
+            [
+                FieldPanel("logo"),
+                FieldPanel("favicon"),
+                FieldPanel("primary_color"),
+                FieldPanel("accent_color"),
+            ],
+            heading="Brand Theme & Logos",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("google_review_url"),
+                FieldPanel("yelp_url"),
+                FieldPanel("facebook_url"),
+                FieldPanel("instagram_url"),
+            ],
+            heading="Social & Review Links",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("address_locality"),
+                FieldPanel("address_region"),
+                FieldPanel("postal_code"),
+                FieldPanel("country"),
+                FieldPanel("price_range"),
+            ],
+            heading="Local SEO & Schema.org",
+        ),
+    ]
+
+    edit_handler = TabbedInterface(
+        [
+            ObjectList(content_panels, heading="Page content"),
+            ObjectList(chrome_panels, heading="Header & footer"),
+            ObjectList(brand_panels, heading="Brand & contact"),
+        ]
+    )
+
     api_fields = [
         APIField("hero_kicker"),
         APIField("hero_heading"),
@@ -196,7 +355,51 @@ class HomePage(HeadlessPreviewMixin, Page):
         APIField("portfolio_empty_text"),
         APIField("lead_section_heading"),
         APIField("lead_section_description"),
+        # Site chrome (US-007)
+        APIField("site_name"),
+        APIField("tagline"),
+        APIField("phone_number"),
+        APIField("contact_email"),
+        APIField("license_number"),
+        APIField("logo_url", serializer=serializers.CharField(allow_null=True)),
+        APIField("favicon_url", serializer=serializers.CharField(allow_null=True)),
+        APIField("primary_color"),
+        APIField("accent_color"),
+        APIField("banner_enabled"),
+        APIField("banner_text"),
+        APIField("banner_link"),
+        APIField("google_review_url"),
+        APIField("yelp_url"),
+        APIField("facebook_url"),
+        APIField("instagram_url"),
+        APIField("seo", serializer=serializers.JSONField()),
+        APIField("navigation_items", serializer=ChromeNavigationField()),
     ]
+
+    # ── Computed chrome values for the API ──────────────────────────────
+
+    @property
+    def logo_url(self):
+        from core.utils import resolve_image_url
+
+        return resolve_image_url(self.logo)
+
+    @property
+    def favicon_url(self):
+        from core.utils import resolve_image_url
+
+        return resolve_image_url(self.favicon)
+
+    @property
+    def seo(self):
+        """Nest SEO fields under a ``seo`` key for the frontend contract."""
+        return {
+            "address_locality": self.address_locality,
+            "address_region": self.address_region,
+            "postal_code": self.postal_code,
+            "country": self.country,
+            "price_range": self.price_range,
+        }
 
     # ── Site integration helpers ─────────────────────────────────────────
 
@@ -280,6 +483,29 @@ class HomePage(HeadlessPreviewMixin, Page):
 
         old_root.delete()
         return home
+
+
+class HomePageNavigationItem(Orderable):
+    """A single top-navigation link — part of the site chrome on the homepage."""
+
+    page = ParentalKey(
+        HomePage,
+        on_delete=models.CASCADE,
+        related_name="navigation_items",
+    )
+    label = models.CharField(max_length=100, help_text="Link text displayed in menu")
+    url = models.CharField(
+        max_length=255,
+        help_text="Target URL or anchor (e.g. #services)",
+    )
+
+    panels = [
+        FieldPanel("label"),
+        FieldPanel("url"),
+    ]
+
+    def __str__(self):
+        return f"{self.page.title} — {self.label}"
 
 
 class HomePageFeaturedService(Orderable):
