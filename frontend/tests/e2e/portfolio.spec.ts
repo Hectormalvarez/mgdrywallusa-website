@@ -1,5 +1,4 @@
-import { test, expect } from "@playwright/test";
-import { setScenario } from "./helpers";
+import { expect, mainText, setScenario, test } from "./test-fixtures";
 
 // ===========================================================================
 // Portfolio — Rendering & Error States
@@ -172,7 +171,7 @@ test.describe("Portfolio Detail Page", () => {
     await setScenario(page, "default");
 
     await page.goto("/portfolio/nonexistent-project");
-    await expect(page.getByText(/not found/i)).toBeVisible();
+    await expect(mainText(page, /not found/i)).toBeVisible();
   });
 });
 

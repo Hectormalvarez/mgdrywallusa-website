@@ -2,9 +2,10 @@
 /**
  * Dependency-free mock of the Wagtail API for Playwright E2E tests.
  *
- * Serves /api/v1/pages/ (home + portfolio), and a control
- * endpoint (/__e2e__/scenario) so individual specs can switch the portfolio
- * dataset. Runs on http://localhost:8000 by default (override via MOCK_PORT).
+ * Serves /api/v1/pages/ (home + portfolio). The portfolio dataset is selected
+ * per request via the `X-E2E-Scenario` header — no server-global state, so
+ * parallel workers/contexts are fully isolated. Runs on http://localhost:8000
+ * by default (override via MOCK_PORT).
  */
 import { createServer } from "node:http";
 
@@ -205,7 +206,27 @@ const HOME_PAGE = {
 // State + HTTP server
 // ---------------------------------------------------------------------------
 
-let scenario = "default";
+/**
+ * Resolve the portfolio dataset per request.
+ *
+ * The scenario comes from the `X-E2E-Scenario` request header (injected by the
+ * Playwright fixture on browser→mock fetches and forwarded by the Next server
+ * components on SSR fetches). There is deliberately NO server-global state:
+ * parallel workers and concurrent contexts each carry their own scenario.
+ */
+const SCENARIO_HEADER = "x-e2e-scenario";
+
+/**
+ * @param {import("node:http").IncomingMessage} req
+ * @returns {keyof typeof SCENARIOS | "error"}
+ */
+function resolveScenario(req) {
+  const name = /** @type {string | undefined} */ (req.headers[SCENARIO_HEADER]);
+  if (name === "error" || Object.prototype.hasOwnProperty.call(SCENARIOS, name)) {
+    return /** @type {keyof typeof SCENARIOS | "error"} */ (name);
+  }
+  return "default";
+}
 
 /**
  * @param {import("node:http").ServerResponse} res
@@ -221,35 +242,21 @@ const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
 
   // CORS — client-side fetches (NEXT_PUBLIC_WAGTAIL_API_URL) hit this server.
+  // X-E2E-Scenario must be allowed: the Playwright fixture injects it onto
+  // browser→mock API requests, which triggers a CORS preflight.
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-E2E-Scenario");
   if (req.method === "OPTIONS") {
     res.writeHead(204);
     res.end();
     return;
   }
 
-  // --- Control endpoint ---
-  if (url.pathname === "/__e2e__/scenario" && req.method === "POST") {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk));
-    req.on("end", () => {
-      try {
-        const { name } = JSON.parse(body || "{}");
-        // "error" is a flag scenario (no dataset), so treat it as valid too.
-        scenario = name === "error" || Object.prototype.hasOwnProperty.call(SCENARIOS, name) ? name : "default";
-        json(res, 200, { ok: true, scenario });
-      } catch {
-        json(res, 400, { ok: false });
-      }
-    });
-    return;
-  }
-
   // --- Pages ---
   if (url.pathname === "/api/v1/pages/") {
     const type = url.searchParams.get("type");
+    const scenario = resolveScenario(req);
 
     if (type === "home.HomePage") {
       json(res, 200, { items: [HOME_PAGE] });

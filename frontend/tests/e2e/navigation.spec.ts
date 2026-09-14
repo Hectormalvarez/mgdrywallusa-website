@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "./test-fixtures";
 
 // ===========================================================================
 // Desktop Navigation — Anchor Links & Skip Link

@@ -1,5 +1,4 @@
-import { test, expect } from "@playwright/test";
-import { setScenario } from "../helpers";
+import { expect, setScenario, test } from "../test-fixtures";
 
 // ===========================================================================
 // Visual Regression — Homepage Baseline

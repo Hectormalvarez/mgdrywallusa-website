@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "./test-fixtures";
 import path from "path";
 
 const FIXTURES = path.resolve(__dirname, "fixtures");

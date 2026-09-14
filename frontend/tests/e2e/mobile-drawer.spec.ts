@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "./test-fixtures";
 
 // Force mobile viewport for all tests in this file so they pass on every project.
 test.use({ viewport: { width: 375, height: 667 } });

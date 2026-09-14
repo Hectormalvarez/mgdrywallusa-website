@@ -1,5 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
-import { setScenario } from "./helpers";
+import { expect, setScenario, test } from "./test-fixtures";
+import type { Page } from "@playwright/test";
 
 /**
  * US-004 — the visitor funnel on a phone.
@@ -11,8 +11,8 @@ import { setScenario } from "./helpers";
 
 const MOBILE = { viewport: { width: 375, height: 812 } };
 
-// The mock backend's scenario state is server-global; declare it explicitly
-// so these tests don't depend on whichever spec set a scenario last.
+// Pin the scenario explicitly — these tests always want the listing dataset,
+// independent of any other spec or worker.
 test.beforeEach(async ({ page }) => {
   await setScenario(page, "listing");
 });
