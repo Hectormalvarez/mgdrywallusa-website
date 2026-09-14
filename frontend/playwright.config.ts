@@ -8,7 +8,9 @@ export default defineConfig({
   testDir: "./tests/e2e",
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Scenario state is per-request (X-E2E-Scenario), so workers are fully
+  // isolated — parallel CI is safe.
+  workers: process.env.CI ? 4 : undefined,
 
   reporter: process.env.CI ? "github" : "list",
 
@@ -16,7 +18,8 @@ export default defineConfig({
 
   use: {
     baseURL: process.env.FRONTEND_URL ?? `http://localhost:${PORT}`,
-    trace: "on-first-retry",
+    // Keep a trace for ANY failing test, not just ones that fail on retry #1.
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
 
