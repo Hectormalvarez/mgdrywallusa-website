@@ -18,6 +18,58 @@ def test_settings_preview_js_is_injected(site):
 
 
 @pytest.mark.django_db
+def test_settings_preview_js_is_syntactically_valid(site):
+    """The injected script must parse — a malformed script dies silently.
+
+    Regression guard: the click handler was once closed with ``}};`` instead
+    of ``}});``, so the whole script failed at parse time on every admin page
+    and the Preview button never rendered. ``node --check`` is the real
+    syntax check (skipped when node is unavailable, e.g. in the dev
+    container); the delimiter balance check below runs everywhere and would
+    have caught that bug.
+    """
+    import re
+    import shutil
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    from site_settings.wagtail_hooks import settings_preview_js
+
+    script = str(settings_preview_js())
+    body = re.search(r"<script>(.*)</script>", script, re.S).group(1)
+
+    # 1. Cheap check, runs everywhere: strip string literals, then require
+    #    balanced ( ), { } and [ ] delimiters.
+    stripped = re.sub(r'"(?:[^"\\]|\\.)*"', '""', body)
+    pairs = {"(": ")", "{": "}", "[": "]"}
+    stack = []
+    for ch in stripped:
+        if ch in pairs:
+            stack.append(pairs[ch])
+        elif ch in pairs.values():
+            assert stack, f"unbalanced '{ch}' in injected script"
+            assert stack.pop() == ch, f"mismatched delimiter '{ch}' in injected script"
+    assert not stack, f"unclosed delimiters in injected script: {stack}"
+
+    # 2. Real syntax check when node is available.
+    node = shutil.which("node")
+    if node:
+        with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as f:
+            f.write(body)
+            path = Path(f.name)
+        try:
+            result = subprocess.run(
+                [node, "--check", str(path)],
+                capture_output=True,
+                text=True,
+            )
+            assert result.returncode == 0, f"invalid JS: {result.stderr.strip()}"
+        finally:
+            path.unlink(missing_ok=True)
+
+
+@pytest.mark.django_db
 def test_global_admin_css_returns_html(site):
     """The global_admin_css hook should return style HTML with the primary color."""
     from site_settings.models import SiteSettings

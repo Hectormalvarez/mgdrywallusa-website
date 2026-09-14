@@ -268,7 +268,7 @@ def settings_preview_js():
                   btn.disabled = false;
                   btn.textContent = "Preview site";
                 }});
-            }};
+            }});
 
             actions.appendChild(btn);
             actions.appendChild(status);
