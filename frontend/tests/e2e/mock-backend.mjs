@@ -194,7 +194,7 @@ const HOME_PAGE = {
     country: "US",
     price_range: "$$",
   },
-  navigation_items: [
+  nav: [
     { label: "Services", href: "#services" },
     { label: "Our Work", href: "#portfolio" },
     { label: "Contact", href: "#lead-form" },
