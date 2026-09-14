@@ -4,7 +4,7 @@
 
 ## Current focus
 
-**US-006 pipeline CLOSED (2026-09-13)** — all gates passed, including a live end-to-end smoke through the running dev stack. Next stories in queue: **US-004** (mobile walkthrough) → **US-005** (owner loop).
+**US-004 automated mobile walkthrough DONE (2026-09-13)** — funnel proven on emulated Mobile Chrome (375×812, touch); the on-device human pass is the remaining open item. Next: **US-005** (owner loop walkthrough).
 
 ## Shipped: US-001 + US-003 (sprint "Flow Sign-off #1", `tasks/sprint.md`)
 
@@ -37,9 +37,18 @@
 
 **Gates at close:** backend pytest 132 (incl. roundtrip + no-side-effect + expiry tests); jest 21 suites / 253 tests, coverage 96.79/86.98/95.03/98.7; tsc + eslint clean; live e2e smoke PASS. Also fixed a latent test bug: `process.env.X = undefined` coerces to the string "undefined" (poisoned later tests).
 
+## Shipped: US-004 (sprint "Funnel on a Phone" — automated leg)
+
+1. **`Mobile Chrome` Playwright project** added (Pixel 7 device, 375×812 viewport) — replaces the environmentally-broken WebKit project for mobile coverage.
+2. **`tests/e2e/mobile-funnel.spec.ts`** — 4 tests: no horizontal overflow on the 3 funnel pages; a tap-only walk (home → drawer → Our Work → lightbox next/close → View all → listing → detail → quote form `toBeInViewport`); tap-target heights (hamburger 44, drawer CTA 48, lightbox arrow ≥44); lead submit succeeds with a 1.2s-throttled POST.
+3. **Result: 4/4 PASS.** Two early failures were spec bugs (tapping the card text area instead of the image button; missing Project Tier select), not product bugs. Drawer panel is always in DOM off-screen (`translate-x-full`) — `getByRole` counts it; use visibility checks, not count.
+4. **Remaining for US-004 sign-off:** human on-device pass (rotate/keyboard-dismiss persistence, real-thumb tap ergonomics, WebKit/Safari in the wild).
+
+**Gates at close:** Mobile Chrome mobile-funnel 4/4; (jest/tsc/eslint unchanged from US-006 close).
+
 ## Git state
 
-- Branch `main`, **65 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
+- Branch `main`, **67 commits ahead of `origin/main`, unpushed** (push requires explicit user approval; pushing to `main` triggers production deploy).
 - Working tree clean at the US-001/US-003 close-out commit.
 
 
