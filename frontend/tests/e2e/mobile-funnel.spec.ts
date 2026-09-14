@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { setScenario } from "./helpers";
 
 /**
  * US-004 — the visitor funnel on a phone.
@@ -9,6 +10,12 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 const MOBILE = { viewport: { width: 375, height: 812 } };
+
+// The mock backend's scenario state is server-global; declare it explicitly
+// so these tests don't depend on whichever spec set a scenario last.
+test.beforeEach(async ({ page }) => {
+  await setScenario(page, "listing");
+});
 
 async function expectNoHorizontalOverflow(page: Page, label: string) {
   const overflow = await page.evaluate(

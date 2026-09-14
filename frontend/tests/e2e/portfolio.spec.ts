@@ -136,12 +136,15 @@ test.describe("Portfolio Detail Page", () => {
 
     await page.goto("/portfolio/sample-project");
 
-    await expect(page.getByRole("heading", { name: "Sample Project" })).toBeVisible();
-    await expect(page.getByText("Residential")).toBeVisible();
-    await expect(page.getByText("Level 5")).toBeVisible();
-    await expect(page.getByText("Smooth")).toBeVisible();
-    await expect(page.getByText("Finished wall")).toBeVisible();
-    await expect(page.getByText("complete")).toBeVisible();
+    // Scope to main: chrome (nav/footer) now shares text with page content
+    // (e.g. "Residential" appears in both), so unscoped getByText is ambiguous.
+    const main = page.locator("main");
+    await expect(main.getByRole("heading", { name: "Sample Project" })).toBeVisible();
+    await expect(main.getByText("Residential", { exact: true })).toBeVisible();
+    await expect(main.getByText("Level 5")).toBeVisible();
+    await expect(main.getByText("Smooth")).toBeVisible();
+    await expect(main.getByText("Finished wall")).toBeVisible();
+    await expect(main.getByText("complete")).toBeVisible();
   });
 
   test("renders back link to /portfolio", async ({ page }) => {
