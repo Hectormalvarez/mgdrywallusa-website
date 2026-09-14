@@ -2,7 +2,7 @@
 /**
  * Dependency-free mock of the Wagtail API for Playwright E2E tests.
  *
- * Serves /api/v1/settings/, /api/v1/pages/ (home + portfolio), and a control
+ * Serves /api/v1/pages/ (home + portfolio), and a control
  * endpoint (/__e2e__/scenario) so individual specs can switch the portfolio
  * dataset. Runs on http://localhost:8000 by default (override via MOCK_PORT).
  */
@@ -152,36 +152,6 @@ const SCENARIOS = {
 // Static resources
 // ---------------------------------------------------------------------------
 
-const SETTINGS = {
-  site_name: "MG Drywall USA",
-  tagline: "Professional drywall installation, repair, and finishing.",
-  phone_number: "+1-555-DRYWALL",
-  contact_email: "info@mgdrywallusa.com",
-  license_number: "TX-104928",
-  logo_url: null,
-  favicon_url: null,
-  primary_color: "#0A3161",
-  accent_color: "#B31942",
-  banner_enabled: false,
-  banner_text: "",
-  banner_link: "",
-  google_review_url: "",
-  yelp_url: "",
-  facebook_url: "",
-  instagram_url: "",
-  seo: {
-    address_locality: "Austin",
-    address_region: "TX",
-    postal_code: "78701",
-    country: "US",
-    price_range: "$$",
-  },
-  nav: [
-    { label: "Services", href: "#services" },
-    { label: "Our Work", href: "#portfolio" },
-    { label: "Contact", href: "#lead-form" },
-  ],
-};
 
 const HOME_PAGE = {
   hero_kicker: "Trusted drywall professionals",
@@ -199,6 +169,36 @@ const HOME_PAGE = {
   portfolio_empty_text: "No projects to display yet.",
   lead_section_heading: "Request a Quote",
   lead_section_description: "Tell us about your project.",
+  // Site chrome (US-007) — served from the homepage's api_fields.
+  site_name: "MG Drywall USA",
+  tagline:
+    "Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
+  phone_number: "+1-555-DRYWALL",
+  contact_email: "info@mgdrywallusa.com",
+  license_number: "",
+  logo_url: null,
+  favicon_url: null,
+  primary_color: "#0A3161",
+  accent_color: "#B31942",
+  banner_enabled: false,
+  banner_text: "",
+  banner_link: "#lead-form",
+  google_review_url: "",
+  yelp_url: "",
+  facebook_url: "",
+  instagram_url: "",
+  seo: {
+    address_locality: "Austin",
+    address_region: "TX",
+    postal_code: "78701",
+    country: "US",
+    price_range: "$$",
+  },
+  navigation_items: [
+    { label: "Services", href: "#services" },
+    { label: "Our Work", href: "#portfolio" },
+    { label: "Contact", href: "#lead-form" },
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -244,12 +244,6 @@ const server = createServer((req, res) => {
         json(res, 400, { ok: false });
       }
     });
-    return;
-  }
-
-  // --- Settings ---
-  if (url.pathname === "/api/v1/settings/") {
-    json(res, 200, SETTINGS);
     return;
   }
 

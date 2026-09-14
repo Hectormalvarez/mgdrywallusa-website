@@ -102,35 +102,3 @@ describe("POST /api/preview — redirect URL", () => {
     }
   });
 });
-
-describe("GET /api/preview — site settings preview (US-006)", () => {
-  const BASE = "http://localhost:3000/api/preview";
-
-  it("activates draft mode and sets the settings preview cookie", async () => {
-    const enable = jest.fn();
-    (draftMode as jest.Mock).mockResolvedValue({ enable });
-
-    const req = makeRequest(`${BASE}?settings_token=tok-xyz`, {
-      host: "localhost:3000",
-    });
-    const res = await GET(req);
-
-    expect(res.status).toBe(307);
-    expect(enable).toHaveBeenCalled();
-    expect(res.headers.get("location")).toBe("http://localhost:3000/");
-    const setCookie = res.headers.get("set-cookie") ?? "";
-    expect(setCookie).toContain("settings_preview_token=tok-xyz");
-  });
-
-  it("takes precedence over the page-preview token branch", async () => {
-    const req = makeRequest(
-      `${BASE}?content_type=home.homepage&token=page-tok&settings_token=settings-tok`,
-      { host: "localhost:3000" },
-    );
-    const res = await GET(req);
-
-    const setCookie = res.headers.get("set-cookie") ?? "";
-    expect(setCookie).toContain("settings_preview_token=settings-tok");
-    expect(setCookie).not.toContain("preview_token=page-tok");
-  });
-});

@@ -1,7 +1,11 @@
 /**
- * Global site settings returned by /api/v1/settings/.
+ * Site chrome (US-007) — served from the homepage's API fields.
+ *
+ * Formerly fetched from /api/v1/settings/; the visitor-facing values now
+ * live on the HomePage so they get the page editor's live preview and
+ * publish semantics. Operational-only configuration (lead alerts,
+ * auto-responder) never reaches the frontend.
  */
-
 export interface SiteSeoSettings {
   address_locality: string;
   address_region: string;

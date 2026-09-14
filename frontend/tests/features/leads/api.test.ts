@@ -5,7 +5,7 @@ import { server } from '@tests/mocks/server';
 describe('fetchSiteSettings', () => {
   it('returns fallback settings when the API errors', async () => {
     server.use(
-      http.get('*/api/v1/settings/', () => {
+      http.get('*/api/v1/pages/*', () => {
         return HttpResponse.json(
           { error: 'Internal Server Error' },
           { status: 500 },

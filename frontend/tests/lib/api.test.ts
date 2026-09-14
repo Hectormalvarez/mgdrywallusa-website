@@ -53,16 +53,17 @@ describe("@/lib/api — server-side helpers", () => {
   // fetchSiteSettings
   // ---------------------------------------------------------------------------
   describe("fetchSiteSettings", () => {
-    it("returns settings from backend on success", async () => {
+    it("returns chrome from the homepage payload on success", async () => {
       const settings = { site_name: "Live Site", nav: [] };
-      fetchSpy.mockResolvedValue(OK(settings));
+      fetchSpy.mockResolvedValue(OK({ items: [settings] }));
 
       const { fetchSiteSettings } = await import("@/lib/api");
       const result = await fetchSiteSettings();
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const [url] = fetchSpy.mock.calls[0] as [string];
-      expect(url).toContain("/settings/");
+      expect(url).toContain("type=home.HomePage");
+      expect(url).toContain("fields=site_name");
       expect(result.site_name).toBe("Live Site");
     });
 
@@ -84,19 +85,19 @@ describe("@/lib/api — server-side helpers", () => {
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const [url] = fetchSpy.mock.calls[0] as [string];
-      expect(url).toContain("/settings-preview/tok-123/");
+      expect(url).toContain("/preview/tok-123/");
       expect(result.site_name).toBe("Unsaved Preview");
     });
 
     it("fetches published settings in draft mode when no token is given", async () => {
-      fetchSpy.mockResolvedValue(OK({ site_name: "Live Site", nav: [] }));
+      fetchSpy.mockResolvedValue(OK({ items: [{ site_name: "Live Site", nav: [] }] }));
 
       const { fetchSiteSettings } = await import("@/lib/api");
       const result = await fetchSiteSettings(true);
 
       const [url] = fetchSpy.mock.calls[0] as [string];
-      expect(url).toContain("/settings/");
-      expect(url).not.toContain("settings-preview");
+      expect(url).toContain("type=home.HomePage");
+      expect(url).not.toContain("/preview/");
       expect(result.site_name).toBe("Live Site");
     });
 

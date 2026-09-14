@@ -150,36 +150,71 @@ const SITE_SETTINGS_FALLBACK: SiteSettingsData = {
 };
 
 /**
- * Fetch global site settings from the Wagtail backend.
+ * Fetch the site chrome (US-007) — identity, branding, banner, contact,
+ * social and SEO data — from the Wagtail backend.
+ *
+ * Since US-007 the visitor-facing chrome lives on the homepage (the site
+ * root page): published renders read the homepage's API fields, and draft
+ * previews read the page-preview payload, which serializes the same
+ * `api_fields` for the unsaved revision. This gives chrome the page
+ * editor's live preview and publish semantics.
  *
  * Returns a hard-coded fallback when the backend is unreachable so that
  * the layout (Header / Footer / metadata) can still render during local
- * development or if the API is temporarily down.
- *
- * Draft-aware (US-006): pass `draft: true` with a preview token to fetch the
- * transient unsaved-settings payload instead of the published values. An
- * expired or invalid token falls back to the hard-coded defaults — a broken
- * preview never breaks the render. Cookie/draft-mode detection lives in the
- * server-only wrapper (`@/lib/settings.server`) so this module stays
- * importable from client components.
+ * development or if the API is temporarily down. An expired or invalid
+ * preview token falls back the same way — a broken preview never breaks
+ * the render. Cookie/draft-mode detection lives in the server-only
+ * wrapper (`@/lib/settings.server`) so this module stays importable from
+ * client components.
  *
  * Wrapped with `react.cache` so multiple callers in the same server request
  * (e.g. `generateMetadata` + `RootLayout`) share a single fetch.
  */
+const CHROME_FIELDS = [
+  "site_name",
+  "tagline",
+  "phone_number",
+  "contact_email",
+  "license_number",
+  "logo_url",
+  "favicon_url",
+  "primary_color",
+  "accent_color",
+  "banner_enabled",
+  "banner_text",
+  "banner_link",
+  "google_review_url",
+  "yelp_url",
+  "facebook_url",
+  "instagram_url",
+  "seo",
+  "navigation_items",
+].join(",");
+
 export const fetchSiteSettings = cache(
   async (draft = false, token?: string): Promise<SiteSettingsData> => {
     try {
-      let url = `${WAGTAIL_API_BASE}/settings/`;
       if (draft && token) {
-        url = `${WAGTAIL_API_BASE}/settings-preview/${token}/`;
+        // Draft preview: the page-preview endpoint serializes the homepage's
+        // api_fields — chrome included — for the unsaved revision.
+        const res = await fetch(`${WAGTAIL_API_BASE}/preview/${token}/`, {
+          cache: "no-store",
+          headers: INTERNAL_FETCH_HEADERS,
+        });
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return (await res.json()) as SiteSettingsData;
       }
 
-      const res = await fetch(url, {
-        cache: "no-store",
-        headers: INTERNAL_FETCH_HEADERS,
-      });
+      // Published: chrome fields from the homepage listing.
+      const res = await fetch(
+        `${WAGTAIL_API_BASE}/pages/?type=home.HomePage&fields=${CHROME_FIELDS}`,
+        { cache: "no-store", headers: INTERNAL_FETCH_HEADERS },
+      );
       if (!res.ok) throw new Error(`Status ${res.status}`);
-      return (await res.json()) as SiteSettingsData;
+      const body = (await res.json()) as WagtailPagesResponse;
+      const home = body.items?.[0];
+      if (!home) throw new Error("No homepage found");
+      return home as unknown as SiteSettingsData;
     } catch (error) {
       // Only log in development — in production / CI the fallback is expected.
       if (process.env.NODE_ENV !== "production") {
