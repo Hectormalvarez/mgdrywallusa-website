@@ -79,6 +79,7 @@ Smoke against the real dev backend (Django test client, admin-authenticated):
 ## Sync state (2026-09-14)
 
 - **All work pushed to `origin/main`; CI fully green; Release workflow deployed successfully.**
+- **Settings-preview button bug fixed (`95ff083`)**: the US-006 "Preview site" button never rendered — the injected script's click handler was closed with `}};` (missing the `)` closing `addEventListener`), so the script failed at parse time on every admin page. Verified end-to-end in real Chromium: button renders next to Save, click → 200 → preview URL opened, zero page errors. New regression test syntax-checks the injected script (`node --check` in CI; pure-Python delimiter-balance check everywhere) — proven to fail on the old code. Diagnosis tools kept: `/tmp/dump_scripts.py` extracts rendered admin scripts; login for admin browser tests uses username `t`, not email.
 - **First CI run failed; triaged via `gh` and fixed** (commits `065d7e3`, `c25ec98`):
   1. `mobile-funnel.spec.ts` ran under Desktop Chrome in CI and its `.tap()` calls need `hasTouch` — fixed with `testIgnore: [/mobile-funnel/]` on the Desktop Chrome project (spec is untouched and passes on Mobile Chrome + Mobile Safari).
   2. Stale visual baselines — refreshed **from the CI run's uploaded artifact** (`playwright-report` → `homepage-actual.png` per project), the one environment where mock data renders correctly. Added the missing `Mobile-Chrome.png` baseline. **Never regenerate locally** (sandbox renders an empty portfolio section).
