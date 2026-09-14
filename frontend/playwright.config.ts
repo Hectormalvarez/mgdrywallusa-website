@@ -31,6 +31,15 @@ export default defineConfig({
       },
     },
     {
+      // US-004: the funnel must work on a phone. Chromium-based emulation
+      // (WebKit is unreliable in CI sandboxes) at a narrow iPhone-class width.
+      name: "Mobile Chrome",
+      use: {
+        ...devices["Pixel 7"],
+        viewport: { width: 375, height: 812 },
+      },
+    },
+    {
       name: "Mobile Safari",
       use: devices["iPhone 15"],
     },
