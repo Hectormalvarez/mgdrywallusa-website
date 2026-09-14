@@ -85,3 +85,24 @@ Smoke against the real dev backend (Django test client, admin-authenticated):
   2. Stale visual baselines — refreshed **from the CI run's uploaded artifact** (`playwright-report` → `homepage-actual.png` per project), the one environment where mock data renders correctly. Added the missing `Mobile-Chrome.png` baseline. **Never regenerate locally** (sandbox renders an empty portfolio section).
 - Key lesson: WebKit **works in CI** — "Mobile Safari broken" is local-sandbox-only. Verify failures against CI before treating them as product bugs.
 - Baseline refresh procedure for future visual changes: push, download the failed run's artifact, copy `homepage-actual.png` per project into `__screenshots__/visual/homepage.spec.ts/homepage/`.
+
+## Shipped: US-007 — site chrome on the homepage (2026-09-14)
+
+1. **Decision (ADR 0001):** visitor-facing chrome (nav, banner, identity,
+   branding, social, SEO) moved from SiteSettings onto HomePage as page
+   fields with a tabbed editor — giving the owner the page editor's real
+   live preview and publish/revision semantics. Operational settings (lead
+   alerts, auto-responder) stay in SiteSettings.
+2. **Data migration** home.0012 copies existing settings onto the homepage
+   (idempotent, runs once); site_settings.0004/0005 trim chrome fields and
+   drop NavigationItem + SettingsPreview tables.
+3. **API contract unchanged:** homepage exposes chrome fields + `nav`
+   ({label, href}) + nested `seo`; frontend type untouched, only its source
+   moved. Two contract-mismatch bugs found and fixed live (payload key
+   `navigation_items` vs frontend `nav` — fixed backend-side AND in mocks).
+4. **US-006 machinery removed** (SettingsPreview model, admin button, token
+   endpoints, settings_token cookie branch). One preview token now rules
+   both page content and chrome.
+5. **Verified live:** draft homepage renders smoke chrome (+1-999-SMOKE)
+   while the live site stays unchanged; homepage 200; backend 120 pytest,
+   frontend 251 jest, e2e navigation 11/11.
