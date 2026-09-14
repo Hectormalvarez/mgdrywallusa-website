@@ -1,71 +1,18 @@
-import uuid
-from datetime import timedelta
-
 from django.db import models
-from django.utils import timezone
-from modelcluster.fields import ParentalKey
-from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
+from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
-from wagtail.models import Orderable
 
 
 @register_setting(icon="cog-full")
-class SiteSettings(BaseSiteSetting, ClusterableModel):
-    # ── General & Identity ─────────────────────────────────────────────
-    site_name = models.CharField(
-        max_length=255,
-        default="MG Drywall USA",
-        help_text="Business name used across headers, footers, and SEO metadata",
-    )
-    tagline = models.TextField(
-        blank=True,
-        default="Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
-        help_text="Primary business tagline displayed in the footer",
-    )
-    phone_number = models.CharField(
-        max_length=50,
-        default="+1-555-DRYWALL",
-        help_text="Primary public contact phone number",
-    )
-    contact_email = models.EmailField(
-        default="info@mgdrywallusa.com",
-        help_text="Primary public contact email address",
-    )
-    license_number = models.CharField(
-        max_length=100,
-        blank=True,
-        default="",
-        help_text="State contractor license number – rendered in trust badges",
-    )
+class SiteSettings(BaseSiteSetting):
+    """Operational-only site configuration (US-007).
 
-    # ── Brand Theme & Logos ────────────────────────────────────────────
-    logo = models.ForeignKey(
-        "wagtailimages.Image",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="+",
-        help_text="Company logo (PNG or SVG recommended)",
-    )
-    favicon = models.ForeignKey(
-        "wagtailimages.Image",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="+",
-        help_text="Browser tab icon (square, 32×32 or 64×64)",
-    )
-    primary_color = models.CharField(
-        max_length=7,
-        default="#0A3161",
-        help_text="Hex code for primary brand color (e.g. #0A3161)",
-    )
-    accent_color = models.CharField(
-        max_length=7,
-        default="#B31942",
-        help_text="Hex code for action buttons and accents (e.g. #B31942)",
-    )
+    Visitor-facing site chrome — identity, branding, navigation, banner,
+    social links, and local SEO — lives on the site's HomePage, where it
+    gets draft state, the page editor's live preview, and publish/revision
+    semantics. Only back-office configuration that never renders on the
+    public site remains here.
+    """
 
     # ── Lead Alerts & Auto-Responder ───────────────────────────────────
     notification_emails = models.CharField(
@@ -88,64 +35,7 @@ class SiteSettings(BaseSiteSetting, ClusterableModel):
         help_text="Email body sent to homeowners. Placeholders: {name}, {project_tier}, {phone}",
     )
 
-    # ── Promotional / Announcement Banner ──────────────────────────────
-    banner_enabled = models.BooleanField(
-        default=False,
-        help_text="Show announcement bar at the very top of the site",
-    )
-    banner_text = models.CharField(
-        max_length=255,
-        blank=True,
-        default="Free on-site estimates for all residential projects!",
-        help_text="Text shown inside the announcement bar",
-    )
-    banner_link = models.CharField(
-        max_length=255,
-        blank=True,
-        default="#lead-form",
-        help_text="URL or anchor the banner links to",
-    )
-
-    # ── Social & Review Links ──────────────────────────────────────────
-    google_review_url = models.URLField(
-        blank=True,
-        default="",
-        help_text="Direct link to leave a Google Review",
-    )
-    yelp_url = models.URLField(blank=True, default="")
-    facebook_url = models.URLField(blank=True, default="")
-    instagram_url = models.URLField(blank=True, default="")
-
-    # ── Local SEO & Schema.org defaults ────────────────────────────────
-    address_locality = models.CharField(max_length=100, default="Austin", blank=True)
-    address_region = models.CharField(max_length=100, default="TX", blank=True)
-    postal_code = models.CharField(max_length=20, default="78701", blank=True)
-    country = models.CharField(max_length=10, default="US", blank=True)
-    price_range = models.CharField(max_length=10, default="$$", blank=True)
-
-    class Meta:
-        db_table = "home_sitesettings"  # Preserve existing production table
-
     panels = [
-        MultiFieldPanel(
-            [
-                FieldPanel("site_name"),
-                FieldPanel("tagline"),
-                FieldPanel("phone_number"),
-                FieldPanel("contact_email"),
-                FieldPanel("license_number"),
-            ],
-            heading="General Information",
-        ),
-        MultiFieldPanel(
-            [
-                FieldPanel("logo"),
-                FieldPanel("favicon"),
-                FieldPanel("primary_color"),
-                FieldPanel("accent_color"),
-            ],
-            heading="Brand Theme & Logos",
-        ),
         MultiFieldPanel(
             [
                 FieldPanel("notification_emails"),
@@ -154,108 +44,10 @@ class SiteSettings(BaseSiteSetting, ClusterableModel):
             ],
             heading="Lead Alerts & Auto-Responder",
         ),
-        MultiFieldPanel(
-            [
-                FieldPanel("banner_enabled"),
-                FieldPanel("banner_text"),
-                FieldPanel("banner_link"),
-            ],
-            heading="Announcement Banner",
-        ),
-        MultiFieldPanel(
-            [
-                FieldPanel("google_review_url"),
-                FieldPanel("yelp_url"),
-                FieldPanel("facebook_url"),
-                FieldPanel("instagram_url"),
-            ],
-            heading="Social & Review Links",
-        ),
-        InlinePanel("navigation_items", label="Navigation Links"),
-        MultiFieldPanel(
-            [
-                FieldPanel("address_locality"),
-                FieldPanel("address_region"),
-                FieldPanel("postal_code"),
-                FieldPanel("country"),
-                FieldPanel("price_range"),
-            ],
-            heading="Local SEO & Schema.org",
-        ),
     ]
 
-    def __str__(self):
-        return self.site_name
-
-
-class NavigationItem(Orderable):
-    setting = ParentalKey(
-        SiteSettings,
-        on_delete=models.CASCADE,
-        related_name="navigation_items",
-    )
-    label = models.CharField(max_length=100, help_text="Link text displayed in menu")
-    url = models.CharField(max_length=255, help_text="Target URL or anchor (e.g. #portfolio)")
-
     class Meta:
-        db_table = "home_navigationitem"  # Preserve existing production table
-        ordering = ["sort_order"]
-
-    panels = [
-        FieldPanel("label"),
-        FieldPanel("url"),
-    ]
+        db_table = "home_sitesettings"  # Preserve existing production table
 
     def __str__(self):
-        return self.label
-
-
-class SettingsPreview(models.Model):
-    """Transient payload powering the Site Settings live preview (US-006).
-
-    Stores the serialized *unsaved* settings form values behind an unguessable
-    token so the frontend can render the site with the editor's draft values.
-    Rows are pruned on every create — nothing here is ever applied to the
-    live SiteSettings, so previewing has no side effects.
-    """
-
-    token = models.CharField(max_length=64, unique=True, editable=False)
-    site = models.ForeignKey(
-        "wagtailcore.Site",
-        on_delete=models.CASCADE,
-        related_name="settings_previews",
-    )
-    payload = models.JSONField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    TTL_HOURS = 24
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    @classmethod
-    def store(cls, site, payload):
-        """Prune expired previews, then persist a new token-gated payload."""
-        cutoff = timezone.now() - timedelta(hours=cls.TTL_HOURS)
-        cls.objects.filter(created_at__lt=cutoff).delete()
-        obj = cls.objects.create(
-            token=uuid.uuid4().hex,
-            site=site,
-            payload=payload,
-        )
-        return obj
-
-    @classmethod
-    def get_valid(cls, token):
-        """Return the preview for a token, or None when unknown/expired."""
-        try:
-            preview = cls.objects.get(token=token)
-        except cls.DoesNotExist:
-            return None
-        cutoff = timezone.now() - timedelta(hours=cls.TTL_HOURS)
-        if preview.created_at < cutoff:
-            return None
-        return preview
-
-    def __str__(self):
-        return f"Settings preview {self.token[:8]}…"
+        return "Site operations settings"

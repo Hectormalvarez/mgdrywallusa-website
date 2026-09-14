@@ -13,18 +13,15 @@ def global_admin_css():
     """Inject owner-configured brand colors into Wagtail admin.
 
     Overrides CSS custom properties for the sidebar, header, and primary
-    action color.  Falls back to the hardcoded default when SiteSettings
-    is unavailable.
+    action color.  Reads the chrome from the site's HomePage (US-007);
+    falls back to the hardcoded default when it is unavailable.
     """
-    from wagtail.models import Site
-
-    from site_settings.models import SiteSettings
+    from home.models import HomePage
 
     primary = "#0A3161"
-    site = Site.objects.filter(is_default_site=True).first()
-    if site:
-        settings = SiteSettings.for_site(site)
-        primary = getattr(settings, "primary_color", primary) or primary
+    home = HomePage.get_home_for_site()
+    if home is not None:
+        primary = getattr(home, "primary_color", primary) or primary
 
     return format_html(
         """
@@ -61,17 +58,15 @@ def add_operations_panel(request, panels):
     with direct action buttons for each content type.
     """
     from wagtail.admin.ui.components import Component
-    from wagtail.models import Site
 
-    from site_settings.models import SiteSettings
+    from home.models import HomePage
 
     primary = "#0A3161"
     site_name = "MG Drywall USA"
-    site = Site.objects.filter(is_default_site=True).first()
-    if site:
-        s = SiteSettings.for_site(site)
-        primary = getattr(s, "primary_color", primary) or primary
-        site_name = getattr(s, "site_name", site_name) or site_name
+    home = HomePage.get_home_for_site()
+    if home is not None:
+        primary = getattr(home, "primary_color", primary) or primary
+        site_name = getattr(home, "site_name", site_name) or site_name
 
     class OperationsPanel(Component):
         order = 10
@@ -186,119 +181,6 @@ def register_edit_homepage_menu_item():
     else:
         url = reverse("wagtailadmin_home")
     return MenuItem("Create Home", url, icon_name="pencil", order=100)
-
-
-# ---------------------------------------------------------------------------
-# 4. Site Settings live preview (US-006)
-# ---------------------------------------------------------------------------
-
-
-@hooks.register("insert_global_admin_js")
-def settings_preview_js():
-    """Add a 'Preview site' button to the Site Settings edit form.
-
-    Serializes the form's current *unsaved* values, POSTs them to the
-    admin preview endpoint, and opens the returned draft-mode URL. A
-    failed preview shows an inline message and leaves the form untouched.
-    """
-    return format_html(
-        """
-        <script>
-        (function () {{
-          "use strict";
-          function init() {{
-            var form = document.querySelector(
-              '#w-editor-form[action*="/admin/settings/"]'
-            );
-            if (!form || form.dataset.previewButtonAdded) return;
-            form.dataset.previewButtonAdded = "true";
-
-            var actions = form.querySelector(
-              "footer.footer .actions, footer.footer .footer__container"
-            );
-            if (!actions) return;
-
-            var status = document.createElement("span");
-            status.setAttribute("role", "status");
-            status.className = "settings-preview-status";
-            status.style.cssText = "font-size:0.85rem;margin:0 0.75rem;";
-            status.hidden = true;
-
-            var btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "button button-secondary";
-            btn.textContent = "Preview site";
-            btn.addEventListener("click", function () {{
-              btn.disabled = true;
-              btn.textContent = "Preparing preview…";
-              status.hidden = true;
-
-              var csrf = form.querySelector('[name="csrfmiddlewaretoken"]');
-              fetch("/admin/settings-preview/", {{
-                method: "POST",
-                body: new FormData(form),
-                headers: csrf ? {{ "X-CSRFToken": csrf.value }} : {{}},
-                credentials: "same-origin",
-              }})
-                .then(function (res) {{
-                  return res.json().then(function (data) {{
-                    return {{ ok: res.ok, data: data }};
-                  }});
-                }})
-                .then(function (result) {{
-                  if (result.ok && result.data.url) {{
-                    status.style.color = "";
-                    status.textContent =
-                      "Preview opened in a new tab — nothing has been published.";
-                    window.open(result.data.url, "_blank");
-                  }} else {{
-                    status.style.color = "#b00020";
-                    status.textContent =
-                      "Preview could not be generated. Check the form for errors and try again — your edits are safe.";
-                  }}
-                  status.hidden = false;
-                }})
-                .catch(function () {{
-                  status.style.color = "#b00020";
-                  status.textContent =
-                    "Preview could not be generated. Your edits are safe — please try again.";
-                  status.hidden = false;
-                }})
-                .finally(function () {{
-                  btn.disabled = false;
-                  btn.textContent = "Preview site";
-                }});
-            }});
-
-            actions.appendChild(btn);
-            actions.appendChild(status);
-          }}
-
-          if (document.readyState === "loading") {{
-            document.addEventListener("DOMContentLoaded", init);
-          }} else {{
-            init();
-          }}
-        }})();
-        </script>
-        """
-    )
-
-
-@hooks.register("register_admin_urls")
-def settings_preview_admin_urls():
-    """Expose the admin-only endpoint that stores unsaved settings previews."""
-    from django.urls import path
-
-    from site_settings.views import SettingsPreviewCreateView
-
-    return [
-        path(
-            "settings-preview/",
-            SettingsPreviewCreateView.as_view(),
-            name="settings-preview-create",
-        )
-    ]
 
 
 @hooks.register("register_admin_menu_item")
