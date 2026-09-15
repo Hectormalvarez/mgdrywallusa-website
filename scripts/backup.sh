@@ -41,12 +41,22 @@ docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T db \
 ok "Database dump: $(wc -c < "$STAGING/db.dump") bytes"
 
 # ── Step 2: Media volume archive ──────────────────────────────────
+# Stream the tar through stdout instead of bind-mounting $STAGING into
+# the helper container: when this script runs inside the webhook
+# container (docker-out-of-docker), a bind-mount source path is resolved
+# on the HOST filesystem where the container-internal staging dir does
+# not exist — the archive silently landed on the host and the deploy
+# aborted. Streaming works regardless of filesystem context.
 info "Archiving media volume..."
 docker run --rm \
   -v "$MEDIA_VOLUME":/data:ro \
-  -v "$STAGING":/backup \
-  alpine tar czf /backup/media_data.tar.gz -C /data . 2>/dev/null
-ok "Media archive: $(wc -c < "$STAGING/media_data.tar.gz") bytes"
+  alpine tar cz -C /data . > "$STAGING/media_data.tar.gz" 2>/dev/null \
+  || echo "warning: media volume archive failed — continuing without media in this backup" >&2
+MEDIA_SIZE=$(wc -c < "$STAGING/media_data.tar.gz")
+info "Media archive: ${MEDIA_SIZE} bytes"
+if [ "$MEDIA_SIZE" -eq 0 ]; then
+  echo "warning: media archive is empty — backup will contain the database only" >&2
+fi
 
 # ── Step 3: Bundle ────────────────────────────────────────────────
 info "Creating backup archive..."

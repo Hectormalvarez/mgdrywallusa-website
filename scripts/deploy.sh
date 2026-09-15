@@ -33,9 +33,15 @@ for svc in $IMAGE_SERVICES; do
 done
 ok "Previous images captured: $PREV_IMAGE_TAGS"
 
-# ── Step 2: Pre-deploy backup ─────────────────────────────────────
+# ── Step 2: Pre-deploy backup (best-effort) ───────────────────────
+# A backup failure must never block a deploy: an unavailable volume or
+# helper image would otherwise halt releases indefinitely (this exact
+# failure mode blocked all deploys silently for a week). The backup is
+# still attempted on every deploy and failures are loud.
 info "Running pre-deploy backup..."
-"$SCRIPT_DIR/backup.sh"
+if ! "$SCRIPT_DIR/backup.sh"; then
+  info "Backup failed — continuing deploy (backup is best-effort)"
+fi
 
 # ── Step 3: Pull latest git references ────────────────────────────
 info "Fetching latest changes..."
