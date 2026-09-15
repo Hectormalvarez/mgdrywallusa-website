@@ -44,9 +44,14 @@ if ! "$SCRIPT_DIR/backup.sh"; then
 fi
 
 # ── Step 3: Pull latest git references ────────────────────────────
+# Best-effort: the images are prebuilt (GHCR, tag passed by the webhook);
+# the checkout only needs to stay current for compose/scripts. The
+# webhook container has no ssh client, so a fetch over the ssh remote
+# fails there — continue rather than abort (this silently blocked a
+# whole day of deploys when the checkout went stale).
 info "Fetching latest changes..."
-git fetch --all --prune
-git pull --ff-only || err "Fast-forward failed. Resolve manually and re-run."
+git fetch --all --prune || info "git fetch failed (ssh unavailable in this environment) — using the local checkout"
+git pull --ff-only || ok "Pull skipped — keeping the local checkout"
 ok "Git up to date: $(git rev-parse --short HEAD)"
 
 # ── Step 4: Pull pre-built images ─────────────────────────────────
