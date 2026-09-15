@@ -42,7 +42,12 @@ services:
         - "CMD"
         - "python"
         - "-c"
-        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/settings/')"
+        # X-Forwarded-Proto is required: without it Django's
+        # SECURE_SSL_REDIRECT 301s the plain-HTTP container request, and
+        # urllib's redirect to https://127.0.0.1:8000 hangs until timeout
+        # (gunicorn does not serve TLS). Same pattern as the frontend's
+        # INTERNAL_FETCH_HEADERS.
+        - "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/api/v1/pages/', headers={'X-Forwarded-Proto': 'https'}))"
       interval: 10s
       timeout: 5s
       retries: 5

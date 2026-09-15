@@ -10,7 +10,7 @@ cd "$PROJECT_DIR"
 # ── Configuration (override via environment) ──────────────────────
 COMPOSE_PROJECT="${COMPOSE_PROJECT:-mgdrywall-prod}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
-HEALTH_URL="${HEALTH_URL:-http://nginx/api/v1/settings/}"
+HEALTH_URL="${HEALTH_URL:-http://nginx/api/v1/pages/}"
 HEALTH_RETRIES="${HEALTH_RETRIES:-15}"
 HEALTH_INTERVAL="${HEALTH_INTERVAL:-4}"
 IMAGE_SERVICES="${IMAGE_SERVICES:-frontend backend nginx}"
@@ -70,7 +70,8 @@ HEALTHY=false
 i=1
 while [ "$i" -le "$HEALTH_RETRIES" ]; do
   # Use the backend container to check the health endpoint
-  if $COMPOSE exec -T backend curl -sf -o /dev/null "$HEALTH_URL" 2>/dev/null; then
+  if $COMPOSE exec -T backend curl -sf -o /dev/null \
+    -H "X-Forwarded-Proto: https" "$HEALTH_URL" 2>/dev/null; then
     HEALTHY=true
     break
   fi
