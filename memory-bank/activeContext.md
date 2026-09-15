@@ -4,7 +4,7 @@
 
 ## Current focus
 
-**US-008 Edge Caching DONE (2026-09-15) — branch `feat/edge-caching`, 13 commits, NOT merged/deployed.** All pipeline gates passed (UX → PO → SDM → Architect → Human → Developer → QA → Code Review APPROVED → CLOSED). What shipped, per ADR-0002:
+**US-008 Edge Caching SHIPPED & DEPLOYED (2026-09-15) — merged to `main` (cbde8df), live on prod, all public routes `cf-cache-status: HIT`.** All pipeline gates passed (UX → PO → SDM → Architect → Human → Developer → QA → Code Review APPROVED → CLOSED). What shipped, per ADR-0002:
 
 - **Cacheability:** `frontend/src/proxy.ts` (Next 16 proxy convention — NOT `middleware.ts`, which is deprecated) sets `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only. Config-level `headers()` CANNOT override Next's dynamic `no-cache` — proxy response headers can (verified in prod build).
 - **Invalidation:** `wagtail.contrib.frontend_cache` + `CloudflareBackend` (env-driven `WAGTAILFRONTENDCACHE`); `portfolio/signals.py` PurgeBatch purges `/` + `/portfolio` on item publish/unpublish/delete, never raises. `seed` syncs the default Site hostname to `FRONTEND_URL` (purge URLs derive from it).
@@ -14,11 +14,10 @@
 
 **Critical live discovery:** Cloudflare BYPASSES HTML when `Vary` contains anything but `Accept-Encoding` — Next sends `Vary: rsc, …` on every dynamic page. Fixed in `nginx.conf` (`proxy_hide_header Vary` + own `Vary: Accept-Encoding`); RSC payloads can't leak from the HTML cache (rule excludes `RSC: 1` requests). **This was likely the real reason the hit rate was 3.3% even with the manual dashboard rules.**
 
-**Next steps (in order):**
-1. Merge/push `feat/edge-caching` → CI → webhook deploy (user-owned; `make prod-deploy` flow).
-2. Post-deploy: re-run `scripts/cf-cache-stats.sh` (AC4 proof) + `curl -sI https://mgdrywallusa.taylormadetech.net/` expecting `cf-cache-status: HIT` on second request.
-3. Consider deleting the 3 manual dashboard cache rules (now redundant with the scripted one + origin headers) — optional cleanup.
-4. Backlog (recorded in sprint file): origin API cache keyed by `page.cache_key`; Next `sitemap.ts` from the Wagtail API.
+**Next steps:**
+1. In a few days, re-run `scripts/cf-cache-stats.sh` for the hit-rate proof (was 3.3%).
+2. Backlog (in sprint file): origin API cache keyed by `page.cache_key`; Next `sitemap.ts` from the Wagtail API.
+3. **CD reliability (new):** webhook-driven deploys are async — "Release success" ≠ deployed. Check `docker logs mgdrywall-prod-webhook-1` on usrv-01 (ssh usrv-01.lan) for `error occurred` after each deploy until confidence builds. Server repo remote is https now (webhook container has no ssh).
 
 ## Environment lessons (this sprint)
 
