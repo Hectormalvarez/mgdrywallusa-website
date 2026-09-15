@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
  *
  * Pages are dynamically rendered, and Next.js stamps its own
  * `Cache-Control: no-cache, must-revalidate` on dynamic responses —
- * config-level `headers()` cannot override it. Middleware response
+ * config-level `headers()` cannot override it. Proxy response
  * headers ARE applied last, so this is the supported way to make the
  * edge (Cloudflare) cache HTML.
  *

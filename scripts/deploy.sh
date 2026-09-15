@@ -114,7 +114,7 @@ info "Pruning dangling images..."
 docker image prune -f >/dev/null 2>&1
 ok "Deploy complete: $(git rev-parse --short HEAD)"
 
-# ── Step 8: Cloudflare cache purge ───────────────────────────────
+# ── Step 9: Cloudflare cache purge ───────────────────────────────
 # US-008 (ADR-0002): a new deploy may ship new bundles/markup. Purge the
 # zone's edge cache so visitors never receive HTML from the previous
 # deployment. Best-effort — a purge failure is logged, never blocks the

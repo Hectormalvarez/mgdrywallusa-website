@@ -17,14 +17,21 @@
 #                        caching them would poison the edge for everyone)
 #
 # Usage:
-#   scripts/cf-cache-rule.sh <zone-id> <api-token> host1 [host2 ...]
+#   CLOUDFLARE_ZONE_ID=... CLOUDFLARE_API_TOKEN=... \
+#     scripts/cf-cache-rule.sh host1 [host2 ...]
+#
+# Credentials are read from the environment (or .env via the caller) —
+# never passed as argv, which is world-readable via /proc while running.
 #
 # Idempotent: the ruleset is fetched, an existing rule with the same
 # description is replaced, otherwise the rule is added.
 set -euo pipefail
 
-[ $# -ge 3 ] || { echo "usage: $0 <zone-id> <api-token> host1 [host2 ...]" >&2; exit 2; }
-ZONE_ID="$1"; TOKEN="$2"; shift 2
+[ $# -ge 1 ] || { echo "usage: $0 host1 [host2 ...]" >&2; exit 2; }
+ZONE_ID="${CLOUDFLARE_ZONE_ID:-}"
+TOKEN="${CLOUDFLARE_API_TOKEN:-}"
+[ -n "$ZONE_ID" ] || { echo "✗ CLOUDFLARE_ZONE_ID not set (env or .env)" >&2; exit 1; }
+[ -n "$TOKEN" ] || { echo "✗ CLOUDFLARE_API_TOKEN not set (env or .env)" >&2; exit 1; }
 
 RULE_DESC="mgdrywall-edge-caching (US-008, managed by cf-cache-rule.sh)"
 API="https://api.cloudflare.com/client/v4"
