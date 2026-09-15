@@ -54,6 +54,25 @@
 - Pre-existing (not this sprint): `frontend/.next.rootbak/` (old build backup, 2026-08-14) is missing from eslint `ignores` — `npm run lint` reports ~243 errors from it alone. One-line fix candidate: add it to the ignores list.
 - Dev smoke: `/` 200, `/portfolio` 200, `/api/preview` 401 (no token — unchanged), `/admin/` 302 (unchanged).
 
+## QA Assessment Report (2026-09-15, gate 6)
+
+**Environment:** dev stack (docker, :8101) + host prod build + live CF zone. Prod not deployed yet — post-deploy items marked.
+
+| AC | Check performed | Verdict |
+|---|---|---|
+| AC1 cacheable public pages | Prod standalone build (host, Node): `/` → 200 `public, s-maxage=300, stale-while-revalidate=86400`; `/portfolio` → same; `/portfolio/<slug>` → same; `/random` → 404 `private, no-cache` (untouched). CF zone: Cache Rule applied (prod+dev hosts, respect-origin, cookie/RSC/api/admin bypasses) — verified via ruleset API; nginx `Vary: Accept-Encoding` fix verified on dev stack | **PASS** (edge HIT proof pending deploy) |
+| AC2 instant publish freshness | Live publish on dev: `PUBLISH-OK`, **0** "Couldn't purge" log lines (purge succeeded with real token); negative test (invalid token): CF "Authentication error" logged ×2, **publish still succeeded** (`published ok`) — purge failure cannot block publishing | **PASS** |
+| AC3 admin/preview/form privacy | `/api/preview` 401 (no draft cookie), `/admin/` 302 — unchanged; middleware only matches `/`, `/portfolio*`; CF rule bypasses `preview_token`/`__prerender_bypass` cookies and `/api/*`; lead POST uncacheable by method/path exclusion | **PASS** |
+| AC4 measurable stats | `cf-cache-stats.sh` ran live: baseline **3.3%** (96,495 req / 3,225 cached, 30d) recorded in this file. Post-deploy re-run = the improvement proof | **PASS** (method); post-deploy re-run pending |
+| AC5 backend-down renders | Interactive drill: stopped backend container → homepage **200 in 10.0s** with full content (fallback render, `Get a Free Quote` present); container restarted, stack healthy | **PASS** (note: 10s TTFB on cache-miss with dead backend; edge cache makes this path rare in prod) |
+| AC6 deploy purge | `deploy.sh` purge step appended post-health-check, best-effort; `purge_cache` call verified **HTTP 200** with the scoped token; skips cleanly when `.env.prod` lacks the vars | **PASS** (live trigger pending first deploy) |
+
+**Regressions:** jest 22 suites / **258 passed**; tsc clean; e2e navigation **11/11** (Desktop Chrome, 13.7s); e2e run logged **zero** Next deprecation warnings after the `middleware → proxy` rename (Next 16 convention adopted in commit `45af5b1`).
+
+**QA incident (environmental, fixed during gate):** e2e initially hung/failed with `EACCES unlink .next/build/package.json` — root-owned `.next` files left by the in-container prod build (docker exec runs as root). Bisect: reverting my frontend files did NOT fix it; `chown`-ing `.next` fixed it; re-run passed 2/2 then 11/11. **Not a code bug.** Rule for the future: never run `next build` inside the dev container without `chown -R $(id -u):$(id -g) frontend/.next` afterwards, or build on the host.
+
+**QA verdict: PASS — proceed to Code Review.**
+
 ## T4 live findings (2026-09-15, prod zone)
 
 1. **Pre-existing manual Cache Rules found** (created 2026-09-05 in the dashboard, not in the codebase): "Cache Public HTML" (prod, edge_ttl override-origin default 300s), "Bypass Sessions and Draft Mode", "Bypass Dynamic and Admin Routes". My earlier "no cache rules" script reading was an auth failure misreported as empty — corrected. The sprint script's ruleset reading now works with the Cache-Rules permission.
