@@ -1,5 +1,5 @@
 /**
- * Unit tests for src/middleware.ts — edge-cache headers (US-008, ADR-0002).
+ * Unit tests for src/proxy.ts — edge-cache headers (US-008, ADR-0002).
  *
  * Only the three public HTML routes may carry the edge cache header.
  * /api/*, /_next/*, and anything else must stay untouched so draft
@@ -14,7 +14,7 @@ function makeRequest(path: string) {
   } as never;
 }
 
-describe("middleware — edge cache headers (US-008)", () => {
+describe("proxy — edge cache headers (US-008)", () => {
   let setHeader: jest.Mock;
   let response: { headers: { set: jest.Mock } };
 
@@ -29,8 +29,8 @@ describe("middleware — edge cache headers (US-008)", () => {
   afterEach(() => jest.resetModules());
 
   async function run(path: string) {
-    const { middleware } = await import("@/middleware");
-    return middleware(makeRequest(path));
+    const { proxy } = await import("@/proxy");
+    return proxy(makeRequest(path));
   }
 
   it.each(["/", "/portfolio", "/portfolio/some-project"])(

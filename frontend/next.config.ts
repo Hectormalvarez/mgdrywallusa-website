@@ -41,9 +41,9 @@ const nextConfig: NextConfig = {
   images: {
     qualities: [75, 80],
   },
-  // Edge-cache headers (US-008, ADR-0002) live in src/middleware.ts —
+  // Edge-cache headers (US-008, ADR-0002) live in src/proxy.ts —
   // config-level `headers()` cannot override the Cache-Control Next
-  // stamps on dynamically rendered pages; middleware response headers
+  // stamps on dynamically rendered pages; proxy response headers
   // are applied last and can.
 };
 
