@@ -1,17 +1,31 @@
 # Sprint — Edge Caching (US-008)
 
 **Story:** US-008 — The site is fast on every visit, and edits show up instantly (`docs/stories/US-008-edge-caching.md`)
-**Pipeline:** UX ✓ (audit: `templates/ux-audit.md`) · PO ✓ · Human gate ✓ (2026-09-15 — purge in-scope, purge-everything v1, T1 expanded to discovery+baseline) · SDM ✓ · Architect ✓ (ADR-0002) · Human gate ✓ · **Developer ⬜** · QA ⬜ · Code Review ⬜
+**Pipeline:** UX ✓ (audit: `templates/ux-audit.md`) · PO ✓ · Human gate ✓ (2026-09-15 — purge in-scope, purge-everything v1, T1 expanded to discovery+baseline) · SDM ✓ · Architect ✓ (ADR-0002, **revised 2026-09-15**: Wagtail `frontend_cache` invalidation, CF-edge caching) · Human gate ✓ · **Developer ⬜** · QA ⬜ · Code Review ⬜
+
+## Design (final, per ADR-0002 revision)
+
+- **Caching layer = Cloudflare edge.** Pages stay dynamic; `next.config.ts` adds
+  `Cache-Control: public, s-maxage=300, stale-while-revalidate=86400` on public
+  HTML only. `api.ts` + draft machinery untouched (ISR rejected: homepage is
+  dynamic by construction via draft cookies; CI builds have no backend).
+- **Invalidation = `wagtail.contrib.frontend_cache`** (first-party):
+  `CloudflareBackend` auto-purges page URLs on publish/unpublish/delete; a
+  `PurgeBatch` handler purges `/` + `/portfolio` when a PortfolioItem changes.
+  No custom `/api/revalidate` endpoint, no shared secret.
+- **Deploys:** `manage.py purge` (full purge, best-effort) after health check.
+- **Guard:** CF Cache Rule bypasses requests with the `preview_token` cookie
+  (draft previews never cached) and bypasses `/admin/*`, `/api/*`.
 
 ## Tasks
 
 | ID | Task | AC | Depends on | Status |
 |---|---|---|---|---|
-| T1 | Cloudflare discovery + baseline — `scripts/cf-cache-stats.sh`: GraphQL cache-status breakdown, zone-settings audit, security-event volume; documents free-plan dataset limits; **baseline run before any caching change** | AC4 | none | ⬜ |
-| T2 | Make published pages cacheable — remove `force-dynamic` ×3; guard `e2eScenarioHeaders` (prod no-op without `headers()`); `next: { revalidate: 300 }` on published fetches only; no custom HTML Cache-Control (Next owns it); fix `/media/`+`/static/` headers in `nginx/nginx.conf` → `public, max-age=86400` | AC1, AC5 | none | ⬜ |
-| T3 | Publish → revalidate + edge purge — Wagtail `page_published`/`page_unpublished` signals → protected Next.js `/api/revalidate` (shared secret, 2s timeout, fire-and-forget) → `revalidatePath` ×3 + CF purge-everything; purge failure logs, never blocks publish | AC2 | T2 | ⬜ |
-| T4 | Edge config + deploy purge — CF Cache Rule shaped by T1 findings (cache HTML respecting origin headers; bypass `/admin/*`, `/api/*`, preview) via scripted API call or documented click-path; best-effort purge appended to `scripts/deploy.sh` after health check | AC1, AC6 | T2 (T3 first) | ⬜ |
-| T5 | Tests + full gate — Jest/MSW fetch/header tests, backend pytest for signals/webhook, `make check`; post-change CF stats re-run vs T1 baseline | AC4 | T1–T4 | ⬜ |
+| T1 | Cloudflare discovery + baseline — `scripts/cf-cache-stats.sh`: GraphQL cache-status breakdown, zone-settings audit, security-event volume; documents free-plan dataset limits; **baseline run before any caching change** | AC4 | none | ✓ committed |
+| T2 | Cacheability headers — `next.config.ts` `headers()`: `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only; nginx `/media/`+`/static/` → single `public, max-age=86400` (drop contradictory `immutable`+`expires`) | AC1, AC5 | none | ⬜ |
+| T3 | Wagtail publish purge — `wagtail.contrib.frontend_cache` in `INSTALLED_APPS`; `WAGTAILFRONTENDCACHE` CloudflareBackend from env; `PurgeBatch` signal handler for PortfolioItem → purge `/` + `/portfolio`; **verify prod Site hostname == public domain** (purge URLs derive from it); backend pytest | AC2 | T2 | ⬜ |
+| T4 | Edge config + deploy purge — CF Cache Rule shaped by T1 findings (respect origin headers; bypass `/admin/*`, `/api/*`, `preview_token` cookie) via scripted API call or documented click-path; `manage.py purge` appended to `scripts/deploy.sh` after health check | AC1, AC6 | T2 (T3 first) | ⬜ |
+| T5 | Tests + full gate — Jest header tests, backend pytest for purge signals, `make check`; post-change CF stats re-run vs T1 baseline | AC4 | T1–T4 | ⬜ |
 
 ## Dependency map
 
@@ -22,7 +36,16 @@ T1 ∥ T2 → T3 → T4 → T5.
 | Risk | Mitigation |
 |---|---|
 | Stale HTML after publish if purge call fails | Bounded `s-maxage` (300s) always the fallback; purge failure logged, never blocks publish |
-| CF token over-scoped or leaked | Zone-limited tokens (Analytics:Read + Zone Settings:Read; Cache Purge), `.env` only — never echoed/committed |
+| Purge URLs wrong (Site hostname ≠ public domain) | Verified in T3 before relying on the signals; seed/bootstrap noted |
+| CF token over-scoped or leaked | Zone-limited token (Analytics:Read + Zone Settings:Read + Cache Purge), `.env` only — never echoed/committed |
 | Dev-stack headers misread as prod behavior | Verify via prod headers through the tunnel domain |
-| Caching breaks draft/preview or lead flow | Explicit no-store tests; QA walks preview interactively |
-| Deploys serving stale HTML | Best-effort purge in `deploy.sh` after health check (AC6) |
+| Caching breaks draft/preview or lead flow | Preview-cookie bypass in the Cache Rule; `/api/` + admin never cached; QA walks preview interactively |
+| Deploys serving stale HTML | `manage.py purge` after health check (AC6) |
+
+## Backlog (recorded, not in this sprint)
+
+- **Origin API cache keyed by `page.cache_key`** — Django-side caching of
+  `/api/v1/pages/` payloads that auto-invalidates on publish. Only if the T1
+  baseline shows origin load matters after edge caching.
+- **Next `sitemap.ts` fed by the Wagtail API** — small SEO win, separate story.
+

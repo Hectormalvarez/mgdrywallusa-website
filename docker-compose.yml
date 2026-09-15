@@ -31,8 +31,9 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8101}
       WAGTAIL_PREVIEW_URL: ${WAGTAIL_PREVIEW_URL:-}
       WAGTAILADMIN_BASE_URL: ${WAGTAILADMIN_BASE_URL:-http://localhost:8101}
-      # Shared secret for the publish → /api/revalidate webhook (US-008).
-      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
+      # Cloudflare purge credentials for wagtail.contrib.frontend_cache (US-008).
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
       WATCHFILES_FORCE_POLLING: "true"
     depends_on:
       db:
@@ -61,11 +62,6 @@ services:
       ALLOWED_DEV_ORIGINS: ${ALLOWED_DEV_ORIGINS:-}
       # Origin used by the Wagtail preview redirect route.
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8101}
-      # Shared secret guarding POST /api/revalidate (US-008).
-      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
-      # Cloudflare purge credentials used by /api/revalidate (US-008).
-      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
-      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
     depends_on:
       backend:
         condition: service_healthy
