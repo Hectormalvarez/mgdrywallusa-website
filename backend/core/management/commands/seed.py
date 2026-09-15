@@ -1,3 +1,6 @@
+from urllib.parse import urlparse
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from wagtail.models import Site
 
@@ -10,10 +13,38 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self._ensure_home_page()
+        self._ensure_default_site_hostname()
         self._seed_homepage_navigation()
         self._seed_operational_settings()
         self._seed_services()
         self.stdout.write(self.style.SUCCESS("Seed defaults verified successfully."))
+
+    def _ensure_default_site_hostname(self):
+        """Align the default Site record's hostname with FRONTEND_URL.
+
+        US-008 (ADR-0002): Cloudflare purge URLs are derived from the Site
+        record's root_url. If the site record still says `localhost` while
+        the deployment's FRONTEND_URL points at the public domain, every
+        publish-purge would target the wrong URL. Only acts when
+        FRONTEND_URL carries a non-local hostname; safe to re-run.
+        """
+        parsed = urlparse(settings.FRONTEND_URL)
+        hostname = parsed.hostname
+        if not hostname or hostname in ("localhost", "127.0.0.1", "0.0.0.0", "example.com"):
+            return
+
+        site = Site.objects.filter(is_default_site=True).first()
+        if site is None:
+            self.stdout.write(self.style.WARNING("No default site found -- skipping hostname sync."))
+            return
+
+        if site.hostname == hostname and site.port == (443 if parsed.scheme == "https" else 80):
+            return
+
+        site.hostname = hostname
+        site.port = 443 if parsed.scheme == "https" else 80
+        site.save()
+        self.stdout.write(self.style.SUCCESS(f"Default site hostname synced to {hostname}."))
 
     def _ensure_home_page(self):
         """Root the default site at a HomePage, replacing Wagtail's stock

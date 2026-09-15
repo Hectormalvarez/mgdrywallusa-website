@@ -53,6 +53,12 @@ INSTALLED_APPS = [
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.contrib.settings",
+    # Cache invalidation (US-008, ADR-0002): Cloudflare purge on publish.
+    # Signal handlers auto-register on app load and purge each published
+    # page's public URL on publish/unpublish/delete. Enabled only when
+    # CLOUDFLARE_API_TOKEN + CLOUDFLARE_ZONE_ID are configured (see
+    # WAGTAILFRONTENDCACHE below); without them purging is a no-op.
+    "wagtail.contrib.frontend_cache",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -193,6 +199,26 @@ WAGTAIL_HEADLESS_PREVIEW = {
     "REDIRECT_ON_PREVIEW": True,
     "ENFORCE_TRAILING_SLASH": False,
 }
+
+# --- Frontend cache invalidation (US-008, ADR-0002) ---
+# Wagtail's first-party Cloudflare purge: on page publish/unpublish/delete,
+# each page's public URL is purged from the zone. Purge URLs are built from
+# the default Site record's root_url, so that Site hostname MUST match the
+# public domain in production (the `seed` command enforces this from
+# FRONTEND_URL). Failure of a purge call is logged by Wagtail, never raised
+# — publishing is never blocked. A missed purge degrades gracefully to the
+# edge TTL set on the frontend (s-maxage=300).
+_CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
+_CLOUDFLARE_ZONE_ID = os.environ.get("CLOUDFLARE_ZONE_ID", "")
+WAGTAILFRONTENDCACHE = {}
+if _CLOUDFLARE_API_TOKEN and _CLOUDFLARE_ZONE_ID:
+    WAGTAILFRONTENDCACHE = {
+        "cloudflare": {
+            "BACKEND": "wagtail.contrib.frontend_cache.backends.CloudflareBackend",
+            "BEARER_TOKEN": _CLOUDFLARE_API_TOKEN,
+            "ZONEID": _CLOUDFLARE_ZONE_ID,
+        },
+    }
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
