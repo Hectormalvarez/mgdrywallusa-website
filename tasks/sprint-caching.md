@@ -22,6 +22,21 @@
 | ID | Task | AC | Depends on | Status |
 |---|---|---|---|---|
 | T1 | Cloudflare discovery + baseline — `scripts/cf-cache-stats.sh`: GraphQL cache-status breakdown, zone-settings audit, security-event volume; documents free-plan dataset limits; **baseline run before any caching change** | AC4 | none | ✓ committed |
+
+## T1 baseline (2026-09-15, zone taylormadetech.net, Free plan)
+
+- **30-day total: 96,495 requests · 3,225 cached · 3.3% hit rate** (worse than the reported ~5%).
+- Daily traffic 0.6k–8k requests; bandwidth peaks ~1 GB/day (media-heavy days).
+- Zone settings: `cache_level=aggressive` (static extensions already cache),
+  `browser_cache_ttl=14400` (CF overrides origin browser TTL to 4h),
+  `http3=on`, `0rtt=off`, development_mode off, **no cache rules**.
+- Free-plan GraphQL limits (verified against the live schema): `Adaptive`
+  datasets expose `cacheStatus` but no request-count sums; `1dGroups` has
+  request/byte sums but no `cacheStatus`; firewall events require paid plan.
+  Script uses `1dGroups` (requests/cachedRequests) → hit ratio = AC4 metric.
+- Post-change success criterion: 30-day hit rate materially above 3.3%
+  (expect high-80s/90s% once the Cache Rule caches HTML).
+
 | T2 | Cacheability headers — `next.config.ts` `headers()`: `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only; nginx `/media/`+`/static/` → single `public, max-age=86400` (drop contradictory `immutable`+`expires`) | AC1, AC5 | none | ⬜ |
 | T3 | Wagtail publish purge — `wagtail.contrib.frontend_cache` in `INSTALLED_APPS`; `WAGTAILFRONTENDCACHE` CloudflareBackend from env; `PurgeBatch` signal handler for PortfolioItem → purge `/` + `/portfolio`; **verify prod Site hostname == public domain** (purge URLs derive from it); backend pytest | AC2 | T2 | ⬜ |
 | T4 | Edge config + deploy purge — CF Cache Rule shaped by T1 findings (respect origin headers; bypass `/admin/*`, `/api/*`, `preview_token` cookie) via scripted API call or documented click-path; `manage.py purge` appended to `scripts/deploy.sh` after health check | AC1, AC6 | T2 (T3 first) | ⬜ |
