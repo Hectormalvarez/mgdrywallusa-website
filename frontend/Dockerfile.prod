@@ -21,5 +21,9 @@ RUN chown -R nextjs:nodejs /app
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
+# Bind all interfaces: Next standalone otherwise binds the container
+# hostname IP only, which breaks 127.0.0.1 healthchecks (compose marks the
+# container unhealthy and nginx's dependency gate blocks startup).
+ENV HOSTNAME=0.0.0.0
 CMD ["node", "server.js"]
 
