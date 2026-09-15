@@ -1,7 +1,7 @@
 # Sprint — Edge Caching (US-008)
 
 **Story:** US-008 — The site is fast on every visit, and edits show up instantly (`docs/stories/US-008-edge-caching.md`)
-**Pipeline:** UX ✓ · PO ✓ · Human gate ✓ · SDM ✓ · Architect ✓ (ADR-0002, revised) · Human gate ✓ · Developer ✓ · QA ✓ (all ACs PASS) · Code Review ✓ APPROVED · **CLOSED 2026-09-15 — pending production deploy + post-deploy hit-rate proof**
+**Pipeline:** UX ✓ · PO ✓ · Human gate ✓ · SDM ✓ · Architect ✓ (ADR-0002, revised) · Human gate ✓ · Developer ✓ · QA ✓ (all ACs PASS) · Code Review ✓ APPROVED · **CLOSED & DEPLOYED 2026-09-15 — live: all public routes `cf-cache-status: HIT`**
 
 ## Design (final, per ADR-0002 revision)
 
@@ -109,3 +109,13 @@ T1 ∥ T2 → T3 → T4 → T5.
   baseline shows origin load matters after edge caching.
 - **Next `sitemap.ts` fed by the Wagtail API** — small SEO win, separate story.
 
+
+## Deployment record (2026-09-15, usrv-01)
+
+Deploy surfaced **three pre-existing CD pipeline failures** (all fixed, all unrelated to the caching code itself — the CD path had been silently broken since ~2026-09-07; "Release success" only proves the webhook returned 200, it runs deploy.sh async):
+
+1. **`backup.sh` media archive**: bind-mounted the webhook container's internal staging dir into the helper container (resolved against the host FS → archive never landed) → `set -e` aborted every deploy. Fixed: stream the tar via stdout. Also made deploy.sh treat backup failure as best-effort.
+2. **Health checks vs SECURE_SSL_REDIRECT**: the prod-compose backend healthcheck (`/api/v1/settings/`, removed in US-007 + no X-Forwarded-Proto) and deploy.sh's health URL both 301'd/hung forever → unhealthy → rollback loop. Fixed: `/api/v1/pages/` + `X-Forwarded-Proto: https` header in both (same pattern as the frontend's INTERNAL_FETCH_HEADERS).
+3. **Next 16.3.1 standalone binds the container hostname IP only** (not 0.0.0.0): 127.0.0.1 healthcheck refused → nginx's dependency gate blocked startup → 530 outage for ~4 minutes during the deploy. Fixed: `ENV HOSTNAME=0.0.0.0` in `frontend/Dockerfile.prod`. Also: `deploy.sh` git fetch is best-effort (webhook container has no ssh; server remote switched to https).
+
+**Live proof (post-deploy):** purge → `MISS` → `HIT` → `HIT` on `/`; `/portfolio` and detail pages `200 HIT`; `Vary: Accept-Encoding` only; frontend container healthy. The 3 redundant manual dashboard cache rules were deleted (the scripted rule + origin headers supersede them). Ops note: the prod server repo remote is now https (ssh unavailable in the webhook container); long docker compose operations over ssh must run detached (nohup) or the tool timeout kills them mid-swap.
