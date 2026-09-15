@@ -113,3 +113,28 @@ ok "Health check passed"
 info "Pruning dangling images..."
 docker image prune -f >/dev/null 2>&1
 ok "Deploy complete: $(git rev-parse --short HEAD)"
+
+# ── Step 8: Cloudflare cache purge ───────────────────────────────
+# US-008 (ADR-0002): a new deploy may ship new bundles/markup. Purge the
+# zone's edge cache so visitors never receive HTML from the previous
+# deployment. Best-effort — a purge failure is logged, never blocks the
+# deploy (the frontend's bounded edge TTL caps staleness at 5 minutes).
+if [ -f "$PROJECT_DIR/.env.prod" ]; then
+  CF_PURGE_TOKEN="${CF_PURGE_TOKEN:-$(grep -E '^CLOUDFLARE_API_TOKEN=' "$PROJECT_DIR/.env.prod" | head -1 | cut -d= -f2-)}"
+  CF_PURGE_ZONE="${CF_PURGE_ZONE:-$(grep -E '^CLOUDFLARE_ZONE_ID=' "$PROJECT_DIR/.env.prod" | head -1 | cut -d= -f2-)}"
+  if [ -n "$CF_PURGE_TOKEN" ] && [ -n "$CF_PURGE_ZONE" ]; then
+    info "Purging Cloudflare edge cache..."
+    PURGE_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+      "https://api.cloudflare.com/client/v4/zones/$CF_PURGE_ZONE/purge_cache" \
+      -H "Authorization: Bearer $CF_PURGE_TOKEN" \
+      -H "Content-Type: application/json" \
+      --data '{"purge_everything":true}' || echo "curl-failed")
+    if [ "$PURGE_STATUS" = "200" ]; then
+      ok "Cloudflare edge cache purged"
+    else
+      info "Cloudflare purge failed (HTTP $PURGE_STATUS) — edge TTL expires stale pages within 5 minutes"
+    fi
+  else
+    info "CLOUDFLARE_API_TOKEN/CLOUDFLARE_ZONE_ID not set in .env.prod — skipping cache purge"
+  fi
+fi
