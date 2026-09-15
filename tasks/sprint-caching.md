@@ -54,6 +54,14 @@
 - Pre-existing (not this sprint): `frontend/.next.rootbak/` (old build backup, 2026-08-14) is missing from eslint `ignores` — `npm run lint` reports ~243 errors from it alone. One-line fix candidate: add it to the ignores list.
 - Dev smoke: `/` 200, `/portfolio` 200, `/api/preview` 401 (no token — unchanged), `/admin/` 302 (unchanged).
 
+## T4 live findings (2026-09-15, prod zone)
+
+1. **Pre-existing manual Cache Rules found** (created 2026-09-05 in the dashboard, not in the codebase): "Cache Public HTML" (prod, edge_ttl override-origin default 300s), "Bypass Sessions and Draft Mode", "Bypass Dynamic and Admin Routes". My earlier "no cache rules" script reading was an auth failure misreported as empty — corrected. The sprint script's ruleset reading now works with the Cache-Rules permission.
+2. **Root cause of HTML bypass found live**: the Next origin sends `Vary: rsc, next-router-state-tree, next-router-prefetch, …`. Cloudflare only supports `Vary: Accept-Encoding` — any other Vary value forces `cf-cache-status: BYPASS`, regardless of Cache Rules. **Fix (in `nginx.conf`)**: `proxy_hide_header Vary` + `add_header Vary "Accept-Encoding"` (safe: the Cache Rule excludes `RSC: 1` requests, so RSC payloads can never be served from the HTML cache entry). Verified on the dev stack: `Vary: Accept-Encoding` only.
+3. **Cache Rule applied via script** (`mgdrywall-edge-caching`): prod + dev hosts, respect-origin TTLs, bypasses `/api/*`, `/admin/*`, `/_next/*`, `preview_token`/`__prerender_bypass` cookies. Coexists with the manual rules (mine adds dev-host coverage, preview-cookie bypass, and SWR semantics; the manual "Cache Public HTML" rule keeps prod working with a 300s override TTL even before the origin headers deploy).
+4. Prod pre-deploy header check: origin still sends `private, no-cache, no-store` (expected — this branch is not deployed yet); after deploy the middleware sends `public, s-maxage=300, stale-while-revalidate=86400` and both caching layers line up.
+
+
 
 | T2 | Cacheability headers — `next.config.ts` `headers()`: `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only; nginx `/media/`+`/static/` → single `public, max-age=86400` (drop contradictory `immutable`+`expires`) | AC1, AC5 | none | ⬜ |
 | T3 | Wagtail publish purge — `wagtail.contrib.frontend_cache` in `INSTALLED_APPS`; `WAGTAILFRONTENDCACHE` CloudflareBackend from env; `PurgeBatch` signal handler for PortfolioItem → purge `/` + `/portfolio`; **verify prod Site hostname == public domain** (purge URLs derive from it); backend pytest | AC2 | T2 | ⬜ |
