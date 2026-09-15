@@ -37,6 +37,24 @@
 - Post-change success criterion: 30-day hit rate materially above 3.3%
   (expect high-80s/90s% once the Cache Rule caches HTML).
 
+## Tasks (final status)
+
+| ID | Task | AC | Status |
+|---|---|---|---|
+| T1 | CF discovery + baseline (script above) | AC4 | ✓ done |
+| T2 | Cacheability headers — **implemented as `frontend/src/middleware.ts`**, not `next.config.ts headers()`: Next stamps its own `Cache-Control: no-cache` on dynamic responses and config-level headers cannot override it; middleware response headers are applied last. Sets `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only. Nginx `/media/`+`/static/` → single `public, max-age=86400` | AC1, AC5 | ✓ done — **verified in a production build**: `/` and `/portfolio` emit the header; 404/other routes keep `private, no-cache` |
+| T3 | Wagtail publish purge — `wagtail.contrib.frontend_cache` + `CloudflareBackend` from env (`WAGTAILFRONTENDCACHE`); `PurgeBatch` handler in `portfolio/signals.py` purges `/` + `/portfolio` on item publish/unpublish/delete (never raises); `seed` syncs the default Site hostname to `FRONTEND_URL` | AC2 | ✓ done — **live-verified**: invalid token → CF "Authentication error" logged + publish still succeeds; valid token → silent success |
+| T4 | Edge config + deploy purge — `scripts/cf-cache-rule.sh` (idempotent ruleset PUT; bypass `/api/*`, `/admin/*`, `/_next/*`, `preview_token`/`__prerender_bypass` cookies); deploy purge = direct CF `purge_cache` (`purge_everything`) in `deploy.sh` — **Wagtail 7 has no `manage.py purge` command** (earlier assumption corrected) | AC1, AC6 | ✓ done — purge verified HTTP 200; rule script ready (apply needs token permission: Zone → Cache Rules → Edit) |
+| T5 | Tests + gates — middleware Jest suite; backend purge/seed pytest (10 new); full gate below | AC4 | ✓ done — CF stats re-run deferred to post-deploy (AC4 proof) |
+
+## Gate results (2026-09-15)
+
+- Backend: **130 pytest passed** (container, pinned env — host pyenv 3.12 degraded this session), `ruff check` + `ruff format --check` clean.
+- Frontend: **22 suites / 258 jest tests passed**, `tsc --noEmit` clean, eslint clean on all touched files.
+- Pre-existing (not this sprint): `frontend/.next.rootbak/` (old build backup, 2026-08-14) is missing from eslint `ignores` — `npm run lint` reports ~243 errors from it alone. One-line fix candidate: add it to the ignores list.
+- Dev smoke: `/` 200, `/portfolio` 200, `/api/preview` 401 (no token — unchanged), `/admin/` 302 (unchanged).
+
+
 | T2 | Cacheability headers — `next.config.ts` `headers()`: `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only; nginx `/media/`+`/static/` → single `public, max-age=86400` (drop contradictory `immutable`+`expires`) | AC1, AC5 | none | ⬜ |
 | T3 | Wagtail publish purge — `wagtail.contrib.frontend_cache` in `INSTALLED_APPS`; `WAGTAILFRONTENDCACHE` CloudflareBackend from env; `PurgeBatch` signal handler for PortfolioItem → purge `/` + `/portfolio`; **verify prod Site hostname == public domain** (purge URLs derive from it); backend pytest | AC2 | T2 | ⬜ |
 | T4 | Edge config + deploy purge — CF Cache Rule shaped by T1 findings (respect origin headers; bypass `/admin/*`, `/api/*`, `preview_token` cookie) via scripted API call or documented click-path; `manage.py purge` appended to `scripts/deploy.sh` after health check | AC1, AC6 | T2 (T3 first) | ⬜ |
