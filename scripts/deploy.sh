@@ -76,7 +76,8 @@ i=1
 while [ "$i" -le "$HEALTH_RETRIES" ]; do
   # Use the backend container to check the health endpoint
   if $COMPOSE exec -T backend curl -sf -o /dev/null \
-    -H "X-Forwarded-Proto: https" "$HEALTH_URL" 2>/dev/null; then
+    -H "X-Forwarded-Proto: https" -H "Host: $HEALTH_HOST" \
+    "$HEALTH_URL" 2>/dev/null; then
     HEALTHY=true
     break
   fi
@@ -132,6 +133,9 @@ ok "Deploy complete: $(git rev-parse --short HEAD)"
 # deployment. Best-effort — a purge failure is logged, never blocks the
 # deploy (the frontend's bounded edge TTL caps staleness at 5 minutes).
 if [ -f "$PROJECT_DIR/.env.prod" ]; then
+  # The health request must carry the public Host (Django rejects unknown
+  # hosts with 400) and the https scheme (SECURE_SSL_REDIRECT).
+  HEALTH_HOST="${HEALTH_HOST:-$(grep -E '^FRONTEND_URL=' "$PROJECT_DIR/.env.prod" | head -1 | cut -d= -f2- | sed -E 's|https?://([^/:]+).*|\1|')}"
   CF_PURGE_TOKEN="${CF_PURGE_TOKEN:-$(grep -E '^CLOUDFLARE_API_TOKEN=' "$PROJECT_DIR/.env.prod" | head -1 | cut -d= -f2-)}"
   CF_PURGE_ZONE="${CF_PURGE_ZONE:-$(grep -E '^CLOUDFLARE_ZONE_ID=' "$PROJECT_DIR/.env.prod" | head -1 | cut -d= -f2-)}"
   if [ -n "$CF_PURGE_TOKEN" ] && [ -n "$CF_PURGE_ZONE" ]; then
