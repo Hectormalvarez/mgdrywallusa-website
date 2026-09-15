@@ -12,12 +12,15 @@
 |---|---|
 | Full quality gate (before declaring done) | `make check` |
 | All tests | `make test` |
-| Backend tests | `cd backend && python -m pytest -v` (needs `.venv`; `--reuse-db`, `--create-db` after model changes) |
-| Backend lint/format | `cd backend && ruff check . && ruff format --check .` |
+| Backend tests | `cd backend && python -m pytest -v` (needs `.venv`; `--reuse-db`, `--create-db` after model changes) — **2026-09-15: host pyenv 3.12 broken; run in the container instead: `docker compose exec -T backend sh -c 'python -m pytest -q'`** |
+| Backend lint/format | `cd backend && ruff check . && ruff format --check .` (container if host toolchain broken) |
 | Frontend unit tests (coverage-gated) | `cd frontend && npm test` |
 | TypeScript check | `cd frontend && npx tsc --noEmit` |
-| E2E (dev stack up) | `cd frontend && npx playwright test` |
+| E2E (dev stack up) | `cd frontend && npx playwright test` (projects: "Desktop Chrome", "Mobile Chrome", "Mobile Safari" — no `chromium` project) |
 | Dev stack up/down/seed | `make dev-up` / `make dev-down` / `make dev-seed` |
+| Cloudflare cache stats | `scripts/cf-cache-stats.sh [--days N]` (env/`.env`: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`) |
+| Cloudflare cache rule (idempotent) | `CLOUDFLARE_*` set + `scripts/cf-cache-rule.sh host1 [host2 ...]` |
+| Frontend prod build | **On the host** (`cd frontend && npx next build`) — in-container builds leave root-owned `.next` files that break host e2e; if done in-container, `chown -R $(id -u):$(id -g) frontend/.next` after |
 
 ## Environment map (verified 2026-09-13)
 

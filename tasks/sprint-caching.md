@@ -1,7 +1,7 @@
 # Sprint — Edge Caching (US-008)
 
 **Story:** US-008 — The site is fast on every visit, and edits show up instantly (`docs/stories/US-008-edge-caching.md`)
-**Pipeline:** UX ✓ (audit: `templates/ux-audit.md`) · PO ✓ · Human gate ✓ (2026-09-15 — purge in-scope, purge-everything v1, T1 expanded to discovery+baseline) · SDM ✓ · Architect ✓ (ADR-0002, **revised 2026-09-15**: Wagtail `frontend_cache` invalidation, CF-edge caching) · Human gate ✓ · **Developer ⬜** · QA ⬜ · Code Review ⬜
+**Pipeline:** UX ✓ · PO ✓ · Human gate ✓ · SDM ✓ · Architect ✓ (ADR-0002, revised) · Human gate ✓ · Developer ✓ · QA ✓ (all ACs PASS) · Code Review ✓ APPROVED · **CLOSED 2026-09-15 — pending production deploy + post-deploy hit-rate proof**
 
 ## Design (final, per ADR-0002 revision)
 

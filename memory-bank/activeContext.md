@@ -1,10 +1,32 @@
 # Active Context — MGDrywall USA
 
-*Updated: 2026-09-13. Read this file first when resuming.*
+*Updated: 2026-09-15. Read this file first when resuming.*
 
 ## Current focus
 
-**US-004 automated mobile walkthrough DONE (2026-09-13)** — funnel proven on emulated Mobile Chrome (375×812, touch); the owner completed the on-device pass ("tested on my phone and it looks good") — US-004 Done. Next: **US-005** (owner loop walkthrough).
+**US-008 Edge Caching DONE (2026-09-15) — branch `feat/edge-caching`, 13 commits, NOT merged/deployed.** All pipeline gates passed (UX → PO → SDM → Architect → Human → Developer → QA → Code Review APPROVED → CLOSED). What shipped, per ADR-0002:
+
+- **Cacheability:** `frontend/src/proxy.ts` (Next 16 proxy convention — NOT `middleware.ts`, which is deprecated) sets `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only. Config-level `headers()` CANNOT override Next's dynamic `no-cache` — proxy response headers can (verified in prod build).
+- **Invalidation:** `wagtail.contrib.frontend_cache` + `CloudflareBackend` (env-driven `WAGTAILFRONTENDCACHE`); `portfolio/signals.py` PurgeBatch purges `/` + `/portfolio` on item publish/unpublish/delete, never raises. `seed` syncs the default Site hostname to `FRONTEND_URL` (purge URLs derive from it).
+- **Edge config:** `scripts/cf-cache-rule.sh` (idempotent; token/zone from env, NOT argv) applied live to the zone — coexists with 3 pre-existing manual dashboard rules from 2026-09-05.
+- **Deploy purge:** best-effort `purge_everything` in `deploy.sh` after health check.
+- **Baseline: 3.3% hit rate** (96,495 req / 3,225 cached, 30d). Post-deploy: re-run `scripts/cf-cache-stats.sh` for the proof.
+
+**Critical live discovery:** Cloudflare BYPASSES HTML when `Vary` contains anything but `Accept-Encoding` — Next sends `Vary: rsc, …` on every dynamic page. Fixed in `nginx.conf` (`proxy_hide_header Vary` + own `Vary: Accept-Encoding`); RSC payloads can't leak from the HTML cache (rule excludes `RSC: 1` requests). **This was likely the real reason the hit rate was 3.3% even with the manual dashboard rules.**
+
+**Next steps (in order):**
+1. Merge/push `feat/edge-caching` → CI → webhook deploy (user-owned; `make prod-deploy` flow).
+2. Post-deploy: re-run `scripts/cf-cache-stats.sh` (AC4 proof) + `curl -sI https://mgdrywallusa.taylormadetech.net/` expecting `cf-cache-status: HIT` on second request.
+3. Consider deleting the 3 manual dashboard cache rules (now redundant with the scripted one + origin headers) — optional cleanup.
+4. Backlog (recorded in sprint file): origin API cache keyed by `page.cache_key`; Next `sitemap.ts` from the Wagtail API.
+
+## Environment lessons (this sprint)
+
+- **Never run `next build` inside the dev container without `chown -R $(id -u):$(id -g) frontend/.next` afterwards** — docker exec runs as root; root-owned `.next` files break the host e2e (`EACCES unlink .next/build/package.json`). Build on the host instead.
+- Host Python toolchain degraded (pyenv 3.12 missing; 3.13 env has Django too new): run backend pytest/ruff in the container (`docker compose exec -T backend sh -c 'python -m pytest …'`).
+- Playwright projects: `--project="Desktop Chrome"` (not `chromium`); full spec runs exceed the 30s tool timeout — background with log + poll.
+
+
 
 ## Shipped: US-001 + US-003 (sprint "Flow Sign-off #1", `tasks/sprint.md`)
 

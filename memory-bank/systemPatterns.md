@@ -4,6 +4,18 @@
 
 Headless Wagtail API ← Next.js App Router (SSR) → visitor; Nginx single origin; Cloudflare Tunnel edge; webhook-automated deploys from GitHub Actions on push to `main`.
 
+
+## Edge caching pattern (US-008, ADR-0002 — closed 2026-09-15)
+
+**"Cache long at the edge (Cloudflare), invalidate on publish (Wagtail)."** Baseline was a 3.3% hit rate.
+
+- **Cacheability:** pages stay dynamic; `frontend/src/proxy.ts` (Next 16 **proxy** convention — `middleware.ts` is deprecated in Next 16) sets `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only. Config-level `headers()` cannot override Next dynamic `no-cache`; proxy response headers can.
+- **Invalidation:** `wagtail.contrib.frontend_cache` (`WAGTAILFRONTENDCACHE`, env-driven, no-op when unset) purges each page URL on publish/unpublish/delete; `portfolio/signals.py` adds a `PurgeBatch` for `/` + `/portfolio` on PortfolioItem changes. Purge failures are logged, never raised. **Purge URLs derive from the default Site root_url** — `seed._ensure_default_site_hostname` syncs it to `FRONTEND_URL`.
+- **Deploy:** `scripts/deploy.sh` purges the zone (`purge_everything`) after health check (best-effort; Wagtail 7 has **no** `manage.py purge`).
+- **CF scripts** (token/zone from env or `.env`, never argv, never logged): `scripts/cf-cache-stats.sh` (baseline 3.3%; free-plan GraphQL: `1dGroups` has counts, `Adaptive` has `cacheStatus` but no sums, firewall events paid-only) and `scripts/cf-cache-rule.sh` (idempotent ruleset PUT; bypasses `/api/*`, `/admin/*`, `/_next/*`, `preview_token`/`__prerender_bypass` cookies).
+- **CRITICAL CF quirk:** Cloudflare **bypasses** responses whose `Vary` contains anything but `Accept-Encoding`. Next sends `Vary: rsc, ...` on every dynamic page — `nginx.conf` hides it (`proxy_hide_header Vary` + own `Vary: Accept-Encoding`). Safe: the Cache Rule excludes `RSC: 1` requests. Also: CF `browser_cache_ttl` zone setting overrides origin browser-TTL headers (zone: 14400).
+- **Ops:** CF zone is `taylormadetech.net` (Free) hosting prod + dev mgdrywall hostnames + other apps — rules are hostname-scoped. Manual dashboard cache rules (2026-09-05) coexist with the scripted one; cleanup candidates post-deploy.
+- **Backlog:** origin API cache keyed by `page.cache_key`; Next `sitemap.ts` from the Wagtail API.
 ```
 Visitor → Nginx ─┬─ /            → Next.js (frontend:3000)
                  ├─ /api/preview → Next.js
