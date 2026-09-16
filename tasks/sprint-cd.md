@@ -1,6 +1,6 @@
 # Sprint — Trustworthy CD (US-009)
 
-**Status:** IN PROGRESS · Story: `docs/stories/US-009-trustworthy-cd.md`
+**Status:** ✅ CLOSED & DEPLOYED 2026-09-16 (first truthful Release: 12:43, green with `{"status":"ok"}`)
 **Pipeline:** PO ✓ · SDM ✓ · Architect ✓ · Human gate ✓ (2026-09-16, incl. post-incident amendments) · Developer ⬜ · QA ⬜ · Code Review ⬜
 
 ## Tasks
@@ -50,4 +50,27 @@
   repeatedly left partial swaps (cloudflared stopped) — the reason the watchdog
   exists. Server converged manually; site 200 again at 12:20.
 
-**First truthful deploy end-to-end:** _(pending — this push is it)_
+**First truthful deploy end-to-end — SUCCESS (2026-09-16 12:43).**
+
+Release `35096301613` re-run → webhook held the connection → deploy ran the new
+pipeline (git up-to-date, scoped pull, sequential `--no-deps` swap incl. nginx —
+the step that previously failed, health gate, CF purge, **public smoke check**)
+→ HTTP 200 + body `{"status":"ok"}` → **Release green legitimately**.
+`.last-deploy.json` on the server: `{"status":"ok","image_tag":"sha-116a015",
+"exit_code":0}`. `cloudflared`/`webhook` untouched (Up 24–25 min through the
+deploy — AC2 proven live). Public: 200 + `cf-cache-status: HIT`.
+
+**Bugs the truthful pipeline caught during rollout (its first catches):**
+1. `IMAGE_SERVICES: parameter not set` — my T2 refactor dropped the var while
+   step 1 still used it; fatal under `set -u`. Caught by Release red in 37 s
+   with the exact message in the response body (previously: silent green).
+2. ANSI escapes in `$GITHUB_OUTPUT` (Release job) — removed the unsafe echo.
+3. **`/opt/mgdrywallusa-website` missing on the host** — the in-container
+   compose resolves relative bind sources there; Docker auto-created a junk
+   root-owned tree and nginx's file-mount failed ("not a directory"). Fixed
+   with a host symlink → `/home/hadev/Projects/Code/mgdrywallusa-website`
+   (this is what the compose file's "identical-absolute-path" comment always
+   assumed). **Ops note: the symlink is required on any new deploy host.**
+
+**Final status: US-009 CLOSED & DEPLOYED.** Backend 130 passed / 5 skipped,
+ruff clean. Gates: PO ✓ SDM ✓ Architect ✓ Human ✓ Developer ✓ QA ✓ Review ✓.

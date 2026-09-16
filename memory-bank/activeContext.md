@@ -1,28 +1,27 @@
 # Active Context — MGDrywall USA
 
-*Updated: 2026-09-15. Read this file first when resuming.*
+*Updated: 2026-09-16. Read this file first when resuming.*
 
 ## Current focus
 
-**US-008 Edge Caching SHIPPED & DEPLOYED (2026-09-15) — merged to `main` (cbde8df), live on prod, all public routes `cf-cache-status: HIT`.** All pipeline gates passed (UX → PO → SDM → Architect → Human → Developer → QA → Code Review APPROVED → CLOSED). What shipped, per ADR-0002:
+**US-009 Trustworthy CD SHIPPED & DEPLOYED (2026-09-16) — first truthful Release green (12:43).** Deploys now: webhook holds the HTTP connection until the deploy finishes (`include-command-output-in-response`), bridge writes `.last-deploy.json` + status JSON, Release requires HTTP 200 **and** `"status":"ok"`. Deploy swap is sequential `up -d --no-deps` (db→backend→frontend→nginx; tunnel/webhook never churned), scoped `pull`, hardened rollback (NO auto-DB-restore), public smoke check (5 retries) gates the deploy, `.deploy-in-progress` lockfile. Health contract single-source: `scripts/health.env` + `backend/tests/core/test_health_contract.py` (5 guards, CI-enforced). Server watchdog cron (`*/15`, `scripts/watchdog.sh`, lockfile-guarded) converges missing containers.
 
-- **Cacheability:** `frontend/src/proxy.ts` (Next 16 proxy convention — NOT `middleware.ts`, which is deprecated) sets `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only. Config-level `headers()` CANNOT override Next's dynamic `no-cache` — proxy response headers can (verified in prod build).
-- **Invalidation:** `wagtail.contrib.frontend_cache` + `CloudflareBackend` (env-driven `WAGTAILFRONTENDCACHE`); `portfolio/signals.py` PurgeBatch purges `/` + `/portfolio` on item publish/unpublish/delete, never raises. `seed` syncs the default Site hostname to `FRONTEND_URL` (purge URLs derive from it).
-- **Edge config:** `scripts/cf-cache-rule.sh` (idempotent; token/zone from env, NOT argv) applied live to the zone — coexists with 3 pre-existing manual dashboard rules from 2026-09-05.
-- **Deploy purge:** best-effort `purge_everything` in `deploy.sh` after health check.
+**US-008 Edge Caching deployed 2026-09-15 — live, all public routes `cf-cache-status: HIT`.** Per ADR-0002: `frontend/src/proxy.ts` (Next 16 proxy convention — NOT deprecated `middleware.ts`) sets `public, s-maxage=300, stale-while-revalidate=86400` on `/`, `/portfolio`, `/portfolio/:slug*` only; `wagtail.contrib.frontend_cache` + CloudflareBackend purges on publish (`portfolio/signals.py` PurgeBatch); `scripts/cf-cache-rule.sh` manages the CF Cache Rule; baseline hit rate was **3.3%**.
 - **Baseline: 3.3% hit rate** (96,495 req / 3,225 cached, 30d). Post-deploy: re-run `scripts/cf-cache-stats.sh` for the proof.
 
 **Critical live discovery:** Cloudflare BYPASSES HTML when `Vary` contains anything but `Accept-Encoding` — Next sends `Vary: rsc, …` on every dynamic page. Fixed in `nginx.conf` (`proxy_hide_header Vary` + own `Vary: Accept-Encoding`); RSC payloads can't leak from the HTML cache (rule excludes `RSC: 1` requests). **This was likely the real reason the hit rate was 3.3% even with the manual dashboard rules.**
 
 **Next steps:**
 1. In a few days, re-run `scripts/cf-cache-stats.sh` for the hit-rate proof (was 3.3%).
-2. Backlog (in sprint file): origin API cache keyed by `page.cache_key`; Next `sitemap.ts` from the Wagtail API.
-3. **CD reliability (new):** webhook-driven deploys are async — "Release success" ≠ deployed. Check `docker logs mgdrywall-prod-webhook-1` on usrv-01 (ssh usrv-01.lan) for `error occurred` after each deploy until confidence builds. Server repo remote is https now (webhook container has no ssh).
+2. Backlog (in sprint files): origin API cache keyed by `page.cache_key`; Next `sitemap.ts` from the Wagtail API; P3 deploy-runner isolation (host systemd instead of the webhook container); P4 digest-pinned image tags.
 
 ## Environment lessons (this sprint)
 
+- **usrv-01 prod host REQUIRES `/opt/mgdrywallusa-website` → `/home/hadev/Projects/Code/mgdrywallusa-website` symlink** (in-container compose resolves relative bind sources to /opt; without the symlink Docker auto-creates junk dirs and nginx's file-mount fails). Missing symlinks on a new host = deploy failure.
+- `hooks.json` is read at webhook-container start — changing it needs `compose up -d --no-deps --force-recreate webhook` on the server.
+- Deploys over ssh MUST run detached (nohup); ssh timeouts kill compose mid-swap and leave partial stacks (the watchdog now converges these within 15 min).
 - **Never run `next build` inside the dev container without `chown -R $(id -u):$(id -g) frontend/.next` afterwards** — docker exec runs as root; root-owned `.next` files break the host e2e (`EACCES unlink .next/build/package.json`). Build on the host instead.
-- Host Python toolchain degraded (pyenv 3.12 missing; 3.13 env has Django too new): run backend pytest/ruff in the container (`docker compose exec -T backend sh -c 'python -m pytest …'`).
+- Host Python toolchain degraded (pyenv 3.12 missing; 3.13 env has Django too new): run backend pytest/ruff in the container (`docker compose exec -T backend sh -c 'python -m pytest …'`); repo-root-dependent tests must skip gracefully when the bare container has no repo mounted.
 - Playwright projects: `--project="Desktop Chrome"` (not `chromium`); full spec runs exceed the 30s tool timeout — background with log + poll.
 
 
