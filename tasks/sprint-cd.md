@@ -79,8 +79,9 @@ ruff clean. Gates: PO ✓ SDM ✓ Architect ✓ Human ✓ Developer ✓ QA ✓ R
 
 # Sprint — US-010 Deploy over Access-protected SSH (option D′)
 
-**Status:** IN PROGRESS · Story: `docs/stories/US-010-deploy-over-access-ssh.md`
-**Pipeline:** PO ✓ SDM ✓ Architect ✓ Human ✓ (2026-09-16, "do it") · Developer ⬜ · QA ⬜
+**Status: CLOSED & CUTOVER PROVEN (2026-09-16, 15:19).** Story: `docs/stories/US-010-deploy-over-access-ssh.md`
+**Pipeline:** PO ✓ SDM ✓ Architect ✓ Human ✓ · Developer ✓ · QA ✓ (cutover deploy is the acceptance proof) · Code review ✓ (contract test suite; 2 bugs caught pre-merge)
+**Result:** Release green in **54s**, `.last-deploy.json` = `{"status":"ok","exit_code":0,"image_tag":"sha-c03af50…"}`, containers healthy, site 200 + cf-cache-status HIT. Legacy webhook container + its tunnel ingress removed.
 
 ## Tasks
 
@@ -88,10 +89,31 @@ ruff clean. Gates: PO ✓ SDM ✓ Architect ✓ Human ✓ Developer ✓ QA ✓ R
 |---|---|---|
 | T1 | Deploy keypair generated; GHA secrets `CF_SSH_KEY` + `CF_SSH_KNOWN_HOSTS` set (host key `[localhost]:2222` format); server `authorized_keys` forced-command entry appended (existing 5 keys preserved) | ✅ |
 | T2 | Repo: `scripts/deploy-wrapper.sh` (accepts only `deploy sha-<40-hex>`), Release deploy job rewritten (pinned cloudflared 2026.9.1, `access tcp` + SSH), compose `webhook` service removed, `.last-deploy.json` moved into `deploy.sh` EXIT trap, `webhook/` + bridge deleted, `.env.sample`/ci.yml stubs cleaned, contract test wrapper-refusal guard | ✅ |
-| T3 | USER (dashboard): tunnel ingress `ssh.taylormadetech.net` → `ssh://localhost:22`; Access app (Self-hosted, Service Auth) + service token; GHA secrets `CF_ACCESS_ID`/`CF_ACCESS_SECRET` | ⬜ blocked on user |
-| T4 | Cutover: push → Release runs SSH deploy → verify green + `.last-deploy.json` + containers; then stop/rm the legacy webhook container on usrv-01 | ⬜ |
-| T5 | QA evidence + memory bank close-out | ⬜ |
+| T3 | CF side **done via API** (user only created the ZT token + pasted into `~/.cloudflare/tokens.env`): reused the existing `ssh.taylormadetech.net` ingress (dev-server tunnel — no new rule needed); Access app `ssh-usrv01` (`0e8ec0e7…`) + policy decision `non_identity` (service-auth; closes browser SSH); service token `gha-deploy` → piped straight into GHA secrets `CF_ACCESS_ID`/`CF_ACCESS_SECRET`, never displayed | ✅ |
+| T4 | Cutover: push → Release runs SSH deploy → green + `.last-deploy.json` + healthy containers + 200/HIT; legacy webhook container stopped/removed; prod tunnel ingress cleaned (`mgdrywallusa-webhook` rule deleted — 404 now) | ✅ |
+| T5 | QA evidence + memory bank close-out | ✅ |
+
+## Cutover bugs caught & fixed (all surfaced by the truthful pipeline as fast reds)
+
+1. **Dash vs bash** — contract test ran the wrapper with `/bin/sh`; `set -o pipefail` is not POSIX → wrapper now `set -eu` (caught in CI, pre-deploy).
+2. **Bootstrap gap** — forced command pointed at `deploy-wrapper.sh`, which only arrives via a deploy → one-time manual `git pull` on the server.
+3. **Root-owned artifacts** — `.git/objects`, `backups/`, `.last-deploy.json` were root-owned from the container-deploy era → `sudo chown -R hadev:hadev` (first host-native run failed at backup + trap write but **had already completed the swap** — the watchdog converged anyway; second run fully green).
+
+## Zero-Trust hardening done in the same run (user-directed)
+
+- Dev-server tunnel: `code.` (code-server) + `pgadmin.` ingress rules deleted; both hostnames → CF 404 (CNAME records still exist — see Open items).
+- Host: `code-server@hadev` systemd service stopped + disabled; `practicalsql` compose project (pgadmin + postgres containers) removed (`down`, volumes retained); pgadmin data + full DB dump backed up to `~/backups/` (2026-09-16 14:54).
+- Orphaned Access apps `code` + `pgadmin` deleted (laptop apps untouched).
+- Stale `/etc/cloudflared/config.yml` trimmed to remote-managed minimum (backup kept).
+- Personal site (`taylormadetech.net` → :9150) explicitly kept.
+
+## Open items
+
+- **Revoke the ZT API token** (`mgdrywall-zerotust-cutover`) — user dashboard step (API can't self-revoke; scope is correct as-is). Then blank `CLOUDFLARE_ZT_TOKEN` in `~/.cloudflare/tokens.env`.
+- **Delete dead DNS CNAMEs** `code.` and `pgadmin.` in the taylormadetech.net zone — zone token lacks DNS:Edit (deliberately); dashboard step or a temporary scoped token.
+- **`/opt/mgdrywallusa-website` symlink** on usrv-01 is now unnecessary (deploys run natively on the host) — removable (`sudo rm /opt/mgdrywallusa-website`); keep until comfortable.
+- Watchdog raced a live deploy once during cutover (converged correctly) — if it recurs, watchdog should check `.deploy-in-progress` before acting (it does — but the failed deploy never created the lockfile because it died pre-lock).
 
 ## Notes
-- The `/opt` symlink stays until cutover is proven, then it's optional (native host runs resolve paths directly); document removal.
-- Rollback: `docker-compose` history in git; re-enabling the old webhook = revert + ingress flip back.
+- Rollback: git history (`ff18b44` re-adds webhook path) + re-add tunnel ingress rules (recorded in this file).
+- Cloudflare credentials convention: `~/.cloudflare/tokens.env` (central, outside repo; source with `set -a; . ~/.cloudflare/tokens.env; set +a`).
