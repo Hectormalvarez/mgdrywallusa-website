@@ -61,7 +61,13 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 10
     steps:
+      # US-009: the webhook hook now holds the connection until the deploy
+      # finishes (include-command-output-in-response), so the HTTP status and
+      # response body reflect the real deploy outcome. Success requires BOTH
+      # HTTP 200 and a body containing "status":"ok" — a liveness-only 200 with
+      # an error body, or any non-200, fails the Release run.
       - name: Trigger production deploy via webhook
         id: webhook
         run: |
@@ -69,23 +75,26 @@ jobs:
             -H "Content-Type: application/json" \
             -H "X-Webhook-Token: ${{ secrets.WEBHOOK_TOKEN }}" \
             -d '{"image_tag":"sha-${{ github.event.workflow_run.head_sha }}","ref":"main"}' \
-            --max-time 300 \
+            --max-time 540 \
             --connect-timeout 30 \
-            --retry 3 \
-            --retry-delay 5 \
-            --retry-max-time 60 \
             --http1.1 \
             -4 2>&1)
-          
+
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
-          
+
           echo "response=$BODY" >> "$GITHUB_OUTPUT"
           echo "http_code=$HTTP_CODE" >> "$GITHUB_OUTPUT"
-          
+
+          echo "Webhook HTTP $HTTP_CODE — body:"
+          echo "$BODY"
+
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "Deploy failed with HTTP $HTTP_CODE"
-            echo "Full response:"
-            echo "$RESPONSE"
+            echo "::error::Deploy failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          if ! echo "$BODY" | grep -q '"status":"ok"'; then
+            echo "::error::Deploy script reported failure (see response body above)"
             exit 1
           fi

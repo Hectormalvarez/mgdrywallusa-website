@@ -3,6 +3,8 @@
     "id": "deploy",
     "execute-command": "/opt/mgdrywallusa-website/scripts/webhook-bridge.sh",
     "command-working-directory": "/opt/mgdrywallusa-website",
+    "include-command-output-in-response": true,
+    "include-command-output-in-response-on-error": true,
     "pass-arguments-to-command": [
       {
         "source": "payload",
