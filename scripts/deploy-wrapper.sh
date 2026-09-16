@@ -5,7 +5,7 @@
 #
 # GitHub Actions sends exactly:   deploy sha-<40-hex-commit>
 # Anything else is refused.
-set -euo pipefail
+set -eu
 
 CMD="${SSH_ORIGINAL_COMMAND:-}"
 TAG="${CMD#deploy }"
