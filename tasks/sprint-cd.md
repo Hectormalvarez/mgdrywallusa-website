@@ -117,3 +117,6 @@ ruff clean. Gates: PO ✓ SDM ✓ Architect ✓ Human ✓ Developer ✓ QA ✓ R
 ## Notes
 - Rollback: git history (`ff18b44` re-adds webhook path) + re-add tunnel ingress rules (recorded in this file).
 - Cloudflare credentials convention: `~/.cloudflare/tokens.env` (central, outside repo; source with `set -a; . ~/.cloudflare/tokens.env; set +a`).
+
+## Backlog — PENDING stories
+- **US-011 Cloudflare cache analytics** (`docs/stories/US-011-cloudflare-cache-analytics.md`): hourly collector persisting site-specific cache-status history (GraphQL client + snapshot model, `backend/cloudflare/`). **ADR deferred** — to be written with the future admin-dashboard story. Not started.
