@@ -12,6 +12,7 @@ COMPOSE_PROJECT="${COMPOSE_PROJECT:-mgdrywall-prod}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
 HEALTH_RETRIES="${HEALTH_RETRIES:-15}"
 HEALTH_INTERVAL="${HEALTH_INTERVAL:-4}"
+IMAGE_SERVICES="${IMAGE_SERVICES:-backend frontend nginx}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 # US-009: single source of truth for the health-check contract — shared with
