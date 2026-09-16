@@ -76,6 +76,40 @@ echo "$RESP" | jq -r '.data.viewer.zones[0].httpRequests1dGroups[]
   END{
     printf "%-12s %10s %10s %7.1f%% %15s %15s\n","TOTAL",r,c,(r>0?c*100/r:0),b,cb}'
 
+# ── 1b. Per-hostname cache-status breakdown (adaptive dataset) ─────
+# Verified working on Free plan (2026-09-16): httpRequestsAdaptiveGroups
+# accepts a clientRequestHTTPHost filter and a cacheStatus dimension,
+# giving the per-status split the 1d dataset can't provide.
+HOSTNAME="${CF_STATS_HOST:-mgdrywallusa.taylormadetech.net}"
+# Free plan caps the adaptive dataset at a 1-day range (verified 2026-09-16);
+# use 23h to stay inside the quota.
+SINCE_DT=$(date -u -d "23 hours ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-23H +%Y-%m-%dT%H:%M:%SZ)
+info "Cache-status breakdown — ${HOSTNAME} (last 24h, since ${SINCE_DT})"
+AQUERY=$(jq -n --arg z "$CLOUDFLARE_ZONE_ID" --arg s "$SINCE_DT" --arg h "$HOSTNAME" '
+  {query: "query($zone: String!, $since: Time!, $host: String!) { viewer { zones(filter: {zoneTag: $zone}) { httpRequestsAdaptiveGroups(limit: 25, filter: {datetime_geq: $since, clientRequestHTTPHost: $host}) { count dimensions { cacheStatus } } } } }",
+   variables: {zone: $z, since: $s, host: $h}}')
+ARESP=$(curl -sf "$API/graphql" -H "$AUTH" -H "$CT" --data "$AQUERY") || {
+  echo "  (✗ adaptive query failed — skipping breakdown)"
+}
+# GraphQL responses carry {data, errors} — no REST-style top-level "success".
+if [ -n "$ARESP" ] && [ "$(printf '%s' "$ARESP" | jq -r 'if .errors then "err" else "ok" end')" = "err" ]; then
+  printf '  (✗ adaptive API error: %s — skipping breakdown)\n' \
+    "$(printf '%s' "$ARESP" | jq -r '.errors[0].message // "unknown"')"
+  ARESP=""
+fi
+if [ -n "$ARESP" ]; then
+  echo "$ARESP" | jq -r '.data.viewer.zones[0].httpRequestsAdaptiveGroups[]
+    | "\(.dimensions.cacheStatus // "unknown")\t\(.count)"' \
+  | awk -F'\t' 'BEGIN{
+      printf "%-14s %8s\n","STATUS","REQUESTS"}
+    {r+=$2; order[length($1)]=$1; vals[$1]=$2;
+     printf "%-14s %8s\n",$1,$2;
+     if ($1=="hit"||$1=="revalidated"||$1=="expired") e+=$2; else if ($1!="none") m+=$2}
+    END{
+      printf "%-14s %8s\n","TOTAL",r;
+      if (m+e>0) printf "\nCacheable traffic: %d of %d served from edge cache (%.1f%%)\n", e, m+e, e*100/(m+e)}'
+fi
+
 # ── 2. Zone settings relevant to caching ───────────────────────────
 info "Zone settings (caching-relevant)"
 SETTINGS=$(curl -sf "$API/zones/$CLOUDFLARE_ZONE_ID/settings" -H "$AUTH") || {
@@ -99,6 +133,5 @@ curl -sf "$API/zones/$CLOUDFLARE_ZONE_ID/rulesets/phases/http_request_cache_sett
   || echo "  (none, or token lacks Zone Rulesets:Read — fine if no cache rules exist)"
 
 echo
-echo "Note: Free plan — GraphQL has no per-cacheStatus request breakdown and no"
-echo "firewall-events access. Visual per-status breakdown: zone → Analytics &"
-echo "Logs → Traffic in the Cloudflare dashboard."
+echo "Note: 1d daily rollups are zone-wide (all hostnames). The adaptive"
+echo "breakdown above is filtered to ${HOSTNAME} (override with CF_STATS_HOST)."
