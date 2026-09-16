@@ -74,3 +74,24 @@ deploy — AC2 proven live). Public: 200 + `cf-cache-status: HIT`.
 
 **Final status: US-009 CLOSED & DEPLOYED.** Backend 130 passed / 5 skipped,
 ruff clean. Gates: PO ✓ SDM ✓ Architect ✓ Human ✓ Developer ✓ QA ✓ Review ✓.
+
+---
+
+# Sprint — US-010 Deploy over Access-protected SSH (option D′)
+
+**Status:** IN PROGRESS · Story: `docs/stories/US-010-deploy-over-access-ssh.md`
+**Pipeline:** PO ✓ SDM ✓ Architect ✓ Human ✓ (2026-09-16, "do it") · Developer ⬜ · QA ⬜
+
+## Tasks
+
+| ID | Task | Status |
+|---|---|---|
+| T1 | Deploy keypair generated; GHA secrets `CF_SSH_KEY` + `CF_SSH_KNOWN_HOSTS` set (host key `[localhost]:2222` format); server `authorized_keys` forced-command entry appended (existing 5 keys preserved) | ✅ |
+| T2 | Repo: `scripts/deploy-wrapper.sh` (accepts only `deploy sha-<40-hex>`), Release deploy job rewritten (pinned cloudflared 2026.9.1, `access tcp` + SSH), compose `webhook` service removed, `.last-deploy.json` moved into `deploy.sh` EXIT trap, `webhook/` + bridge deleted, `.env.sample`/ci.yml stubs cleaned, contract test wrapper-refusal guard | ✅ |
+| T3 | USER (dashboard): tunnel ingress `ssh.taylormadetech.net` → `ssh://localhost:22`; Access app (Self-hosted, Service Auth) + service token; GHA secrets `CF_ACCESS_ID`/`CF_ACCESS_SECRET` | ⬜ blocked on user |
+| T4 | Cutover: push → Release runs SSH deploy → verify green + `.last-deploy.json` + containers; then stop/rm the legacy webhook container on usrv-01 | ⬜ |
+| T5 | QA evidence + memory bank close-out | ⬜ |
+
+## Notes
+- The `/opt` symlink stays until cutover is proven, then it's optional (native host runs resolve paths directly); document removal.
+- Rollback: `docker-compose` history in git; re-enabling the old webhook = revert + ingress flip back.
