@@ -76,3 +76,26 @@ def test_deploy_sh_matches_contract() -> None:
     assert "X-Forwarded-Proto" in deploy
     assert "up -d --no-deps" in deploy, "swap must never churn dependent containers"
     assert ".deploy-in-progress" in deploy, "deploy must hold the watchdog lockfile"
+
+
+def test_deploy_wrapper_refuses_everything_but_deploy() -> None:
+    """US-010: the gha-deploy SSH key is a forced command — the wrapper must
+    reject anything that is not exactly `deploy sha-<40-hex>`."""
+    import os
+    import subprocess
+
+    wrapper = _repo_root() / "scripts" / "deploy-wrapper.sh"
+    assert wrapper.exists(), "deploy wrapper is required (authorized_keys forced command)"
+    for bad in [
+        "",
+        "ls -la",
+        "deploy",
+        "deploy sha-bad",
+        "deploy sha-" + "g" * 40,
+        "deploy " + "a" * 40,
+        "deploy sha-" + "0" * 40 + "; rm -rf /",
+    ]:
+        env = {**os.environ, "SSH_ORIGINAL_COMMAND": bad}
+        result = subprocess.run([str(wrapper)], env=env, capture_output=True, text=True, timeout=10)
+        assert result.returncode != 0, f"wrapper must refuse: {bad!r}"
+        assert '"status":"error"' in result.stdout, f"wrapper must explain refusal: {bad!r}"

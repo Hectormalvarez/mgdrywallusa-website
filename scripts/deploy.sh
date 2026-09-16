@@ -47,6 +47,13 @@ touch "$LOCKFILE"
 on_exit() {
   rc=$?
   rm -f "$LOCKFILE"
+  STATUS=error
+  if [ "$rc" -eq 0 ]; then
+    STATUS=ok
+  fi
+  printf '{"status":"%s","exit_code":%s,"image_tag":"%s","finished_at":"%s"}\n' \
+    "$STATUS" "$rc" "$IMAGE_TAG" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    > "$PROJECT_DIR/.last-deploy.json"
   if [ "$rc" -ne 0 ]; then
     printf "\033[0;31m✗ deploy.sh FAILED with exit code %s — last steps above\033[0m\n" "$rc" >&2
   fi

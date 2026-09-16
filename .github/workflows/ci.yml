@@ -137,7 +137,6 @@ jobs:
         run: |
           cat > .env.prod <<'EOF'
           DB_PASSWORD=ci-stub-password
-          WEBHOOK_TOKEN=ci-stub-token
           DJANGO_SECRET_KEY=ci-stub-secret-key
           CLOUDFLARE_TUNNEL_TOKEN=ci-stub-tunnel-token
           EOF
