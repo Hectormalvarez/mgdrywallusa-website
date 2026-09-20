@@ -1,8 +1,10 @@
 # Active Context — MGDrywall USA
 
-*Updated: 2026-09-16. Read this file first when resuming.*
+*Updated: 2026-09-20. Read this file first when resuming.*
 
 ## Current focus
+
+**Status review published 2026-09-20 → `docs/reviews/2026-09-20-launch-status-and-reproducibility.md`.** Two headline conclusions: (1) **launch gate = US-002 + US-004 + US-005** (+ re-run `scripts/cf-cache-stats.sh` for the post-US-008 hit-rate proof) — the site is otherwise launch-ready; (2) **reproducibility audit done**: architecture is template-grade, but brand copy/identity is hardcoded across ~30 files in six parallel layers (model defaults, migrations, seed, frontend fallbacks ×2, portfolio copy). A template-ization sprint (Tier 1 checklist + Tier 2 brand-copy extraction, ADR-0003) is planned **after** the launch gate and **before** any custom user features. US-011 stays parked behind the template-ization sprint.
 
 **US-011 story APPROVED (2026-09-16) — pending implementation.** Cloudflare cache-analytics history collector (hourly, site-specific, idempotent; `backend/cloudflare/` candidate). **ADR deliberately deferred** until the admin-dashboard story. No code written yet.
 

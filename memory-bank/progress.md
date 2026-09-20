@@ -1,6 +1,6 @@
 # Progress — MGDrywall USA
 
-*Status: visitor flow MVP-complete pending sign-off stories US-001…US-006; 54 unpushed commits on `main`; US-001+US-003 DONE (pipeline closed 2026-09-13).*
+*Status: visitor flow MVP-complete pending launch gate (US-002 + US-004 + US-005, see `docs/reviews/2026-09-20-launch-status-and-reproducibility.md`); `main` == `origin/main` (fully pushed, live); template-ization sprint planned post-launch, before custom features.*
 
 ## What works (verified)
 
@@ -35,7 +35,7 @@
 - **Portfolio e2e requires free ports** — Playwright reuses whatever listens on configured ports; with unrelated server on 8000, use `MOCK_PORT=8010 HOST_FRONTEND_PORT=3100`.
 - **WebKit broken in sandbox** — all Mobile Safari e2e errors are environmental ("WebKit encountered an internal error").
 - **`npm run lint` noise** — ~243 errors all from stale `frontend/.next.rootbak/`.
-- **54 commits unpushed** — production deploys on push; needs explicit approval.
+- ~~**54 commits unpushed**~~ — resolved: `main` == `origin/main` as of 2026-09-20; all pushed, live.
 - ~~`mock-backend.mjs` uses *global* scenario state~~ — **fixed 2026-09-14**: per-request `X-E2E-Scenario` header (see activeContext, e2e isolation sprint); CI runs 4 parallel workers.
 
 ## Milestones
@@ -48,3 +48,4 @@
 | 2026-09-13 | Feature pipeline for US-001+US-003: SDM + Architect gates approved; US-006 (settings live preview) drafted |
 
 | 2026-09-13 | US-001+US-003 shipped & pipeline closed: sitewide quote CTA, detail CTA band, 404 escape hatches |
+| 2026-09-20 | Status review published (`docs/reviews/2026-09-20-launch-status-and-reproducibility.md`): launch gate defined (US-002/004/005); reproducibility audit → template-ization sprint planned post-launch |
