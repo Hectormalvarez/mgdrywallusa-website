@@ -56,20 +56,61 @@ secret/variable updates, deleting the old `ssh.taylormadetech.net` ingress +
 5. **Cutover:** the dashboard work (hostname + Access app + tokens) precedes
    the repo flip; one real deploy proves the new route before the old
    `ssh.taylormadetech.net` ingress and `ssh-usrv01` app are deleted.
+   **DONE 2026-09-21** — see the cutover record below.
 
-## Cutover (user-side, dashboard)
+## Cutover record (executed 2026-09-21, via CF API + targeted prod recreate)
 
-1. Project tunnel (`mgdrywall-prod`) → Public Hostname: add
-   `mgdrywall-ssh.taylormadetech.net` → `ssh://host-gateway:22`
-   (requires the `extra_hosts` change to be live in the running compose first).
-2. Zero Trust → Access → Applications → Self-hosted for that hostname,
-   Action **Service Auth**; create new service tokens.
-3. Repo settings: Variables → add `DEPLOY_SSH_HOSTNAME=mgdrywall-ssh.taylormadetech.net`;
-   Secrets → set the new `CF_ACCESS_ID` / `CF_ACCESS_SECRET`.
-4. Prove with one real deploy (push or workflow re-run).
-5. Cleanup: delete `ssh.taylormadetech.net` public hostname from the host-zone
-   tunnel and the `ssh-usrv01` Access app (folds into the open US-010
-   Zero-Trust cleanup list).
+All dashboard steps were performed through the Cloudflare API with
+`CLOUDFLARE_ZT_TOKEN` (`~/.cloudflare/tokens.env`); the prod host (`usrv-01`)
+was reached over the LAN (`ssh usrv-01.lan`), not through the edge route.
+
+| Item | Value |
+|---|---|
+| Deploy hostname | `mgdrywall-ssh.taylormadetech.net` (parallel to `mgdrywallusa…`, no nesting) |
+| DNS | CNAME → `3a2fdaeb-1cf4-4ee9-99c7-12d9d8ca62b7.cfargotunnel.com`, proxied |
+| Tunnel ingress | `mgdrywallusa-prod` now `[site → http://nginx:80, ssh → ssh://host-gateway:22, 404]` |
+| Access app | `mgdrywallusa-deploy-ssh` = `f3e80fa4-821c-4594-b358-a0b78eb04841`, policy Service Auth (`non_identity`, include `everyone` — mirrors `ssh-usrv01`) |
+| Service token | `mgdrywallusa-gha-deploy` = `6be54ea6-5b27-435c-9c2a-a83e18a46bec` |
+| GH settings | variable `DEPLOY_SSH_HOSTNAME`; secrets `CF_ACCESS_ID`/`CF_ACCESS_SECRET` rotated to the new token |
+| Prod recreate | one-time `docker compose up -d --no-deps cloudflared` (extra_hosts applied; other containers untouched) |
+| Proof run | Release `35668628234` — **success**, deploy job 38 s, log shows `DEPLOY_SSH_HOSTNAME: mgdrywall-ssh.taylormadetech.net` |
+| Proof facts | `.last-deploy.json` = `ok/exit 0/sha-06421ba…`; all three images `sha-06421ba…`; site `200` / `cf-cache-status: HIT` |
+
+**Rollback snapshot:** pre-cutover tunnel config, Access app list, service token
+list, DNS records and the cloudflared container spec were captured under
+`/tmp/us012-rollback/` (dev box, ephemeral).
+
+**Not deleted, on purpose:** `ssh.taylormadetech.net` + `ssh-usrv01` stay. The
+host route is **shared**: `authorized_keys` entry 7 is another project's deploy
+key (`gha-tmtn-deploy` → `tmtn_website/scripts/deploy…`), so deleting the route
+or the Access app would break that project's CD. This project simply no longer
+depends on it — enclosure achieved. Deleting remains an optional later
+decision for the user.
+
+## Lessons (2026-09-21)
+
+1. **Deploys never recreate `cloudflared`.** `scripts/deploy.sh` swaps only
+   `db/backend/frontend/nginx` (`IMAGE_SERVICES`) and recreates with
+   `--no-deps` per service (US-009 lesson at `deploy.sh:134-145`) — so a
+   **config-only change to the cloudflared service (like `extra_hosts`) is
+   never applied by a deploy**. It needs a deliberate one-time
+   `docker compose up -d --no-deps cloudflared`. Anyone cloning this stack for
+   a new client hits the same trap; consider a guarded recreate path in a
+   future story.
+2. **Keep the prod checkout clean.** `deploy.sh` updates the host via
+   `git pull --ff-only` (line 116) and treats failure as non-fatal. Copying
+   files into the host checkout leaves it dirty → the pull is *silently
+   skipped* while the deploy still succeeds. Prefer shipping files by push;
+   if a file must be copied out-of-band, verify with
+   `git diff --stat origin/main -- <file>` and restore with
+   `git checkout -- <file>` afterwards.
+3. **Edge posture is unchanged (parity verified).** A no-token client still
+   reaches the SSH banner on both the old and new route — the Access policy
+   service-auth shape (`non_identity` + `include: everyone`) does not by
+   itself enforce token presence for TCP/SSH apps. The real gates remain the
+   **SSH key** and, for CI, the **forced command**. Tightening the policy
+   (service-token-scoped include) is a candidate hardening story.
+
 
 ## Audit trail
 

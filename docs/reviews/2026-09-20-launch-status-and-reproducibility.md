@@ -73,3 +73,24 @@ Full audit of every layer for project-specific coupling (brand strings, hostname
 2. **Template-ization sprint**: Tier 2 first; Tier 1 as its scripted checklist output (e.g. `docs/rebrand-checklist.md` or a `make rebrand NAME=…` scaffolding command). Record the decisions as ADR-0003.
 3. **Then** user-facing custom features, on a codebase where "new client" = clone + env + seed + checklist.
 4. **US-011** stays parked behind the template-ization sprint.
+
+---
+
+## Update 2026-09-21 — CD coupling resolved (US-012)
+
+Tier 1 item 4 from the audit is done: `release.yml` no longer hardcodes a
+host-zone tunnel hostname. Deploys now travel over the **project's own
+tunnel** (`mgdrywall-ssh.taylormadetech.net` → `ssh://host-gateway:22`),
+gated by a project-scoped Access app + service token, with the hostname read
+from the repo variable `DEPLOY_SSH_HOSTNAME`. Verified live (Release
+`35668628234`, deploy job 38 s, `.last-deploy.json` ok, images `sha-06421ba`).
+
+Two lessons worth folding into the template-ization checklist (also recorded
+in `docs/stories/US-012-cd-route-enclosure.md`):
+
+- **Any new client needs the one-time `docker compose up -d --no-deps
+  cloudflared`** because deploys never recreate the tunnel service — a
+  config-only change to it is otherwise invisible.
+- **The prod checkout must stay clean**: `git pull --ff-only` is non-fatal in
+  `deploy.sh`, so a dirty host checkout silently skips the update.
+
