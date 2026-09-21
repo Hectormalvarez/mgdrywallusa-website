@@ -123,6 +123,11 @@ services:
     image: cloudflare/cloudflared:latest
     command: tunnel run
     restart: unless-stopped
+    # US-012: the tunnel may route the deploy SSH ingress (see docs/stories/
+    # US-012-cd-route-enclosure.md) to the host sshd — on Linux, `host-gateway`
+    # is only resolvable with this extra_host.
+    extra_hosts:
+      - "host-gateway:host-gateway"
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:

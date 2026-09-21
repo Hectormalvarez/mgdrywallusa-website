@@ -65,10 +65,12 @@ jobs:
     steps:
       # US-010 (P3): the deploy runs natively on the host over an SSH session
       # that is only reachable through Cloudflare Access (service-token auth at
-      # the edge) via the existing outbound-only tunnel — no open ports. The
-      # server-side authorized_keys entry carries a forced command, so the key
-      # can run ONLY scripts/deploy-wrapper.sh. The job's exit code IS the
-      # deploy outcome: truthfulness with zero protocol.
+      # the edge) via an outbound-only tunnel — no open ports. US-012 moved the
+      # edge route from the host-zone tunnel to the PROJECT's own tunnel: the
+      # hostname is a repo variable (repo Settings → Actions → Variables),
+      # never hardcoded. The server-side authorized_keys entry carries a forced
+      # command, so the key can run ONLY scripts/deploy-wrapper.sh. The job's
+      # exit code IS the deploy outcome: truthfulness with zero protocol.
       - name: Install pinned cloudflared
         run: |
           curl -fsSL -o cloudflared \
@@ -76,9 +78,15 @@ jobs:
           chmod +x cloudflared
 
       - name: Open SSH tunnel through Cloudflare Access
+        env:
+          DEPLOY_SSH_HOSTNAME: ${{ vars.DEPLOY_SSH_HOSTNAME }}
         run: |
+          if [ -z "$DEPLOY_SSH_HOSTNAME" ]; then
+            echo "::error::vars.DEPLOY_SSH_HOSTNAME is unset — set it in repo Settings → Actions → Variables (US-012)"
+            exit 1
+          fi
           ./cloudflared access tcp \
-            --hostname ssh.taylormadetech.net \
+            --hostname "$DEPLOY_SSH_HOSTNAME" \
             --url localhost:2222 \
             --service-token-id "${{ secrets.CF_ACCESS_ID }}" \
             --service-token-secret "${{ secrets.CF_ACCESS_SECRET }}" &

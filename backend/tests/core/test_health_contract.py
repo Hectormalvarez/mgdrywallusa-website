@@ -99,3 +99,26 @@ def test_deploy_wrapper_refuses_everything_but_deploy() -> None:
         result = subprocess.run([str(wrapper)], env=env, capture_output=True, text=True, timeout=10)
         assert result.returncode != 0, f"wrapper must refuse: {bad!r}"
         assert '"status":"error"' in result.stdout, f"wrapper must explain refusal: {bad!r}"
+
+
+def test_compose_cloudflared_resolves_host_gateway() -> None:
+    """US-012: the project tunnel may route the deploy SSH ingress to the host
+    sshd — on Linux, `host-gateway` only resolves with an extra_host set."""
+    compose = _read("docker-compose.prod.yml")
+    assert "host-gateway:host-gateway" in compose, (
+        "docker-compose.prod.yml cloudflared must add extra_hosts "
+        '"host-gateway:host-gateway" (deploy SSH ingress target)'
+    )
+
+
+def test_release_deploy_hostname_is_var_driven() -> None:
+    """US-012: the deploy edge route lives on the PROJECT's own tunnel; the
+    hostname is a repo variable — a hardcoded zone hostname is a regression."""
+    release = _read(".github/workflows/release.yml")
+    assert "vars.DEPLOY_SSH_HOSTNAME" in release, (
+        "release.yml must read the deploy SSH hostname from vars.DEPLOY_SSH_HOSTNAME"
+    )
+    assert "ssh.taylormadetech.net" not in release, "release.yml must not hardcode a host-zone tunnel hostname (US-012)"
+    assert "DEPLOY_SSH_HOSTNAME is unset" in release, (
+        "release.yml must fail fast when the deploy hostname variable is unset"
+    )
