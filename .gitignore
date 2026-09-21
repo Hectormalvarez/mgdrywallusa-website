@@ -29,3 +29,6 @@ staticfiles/
 
 # Backup archives
 backups/
+
+# Deploy artifacts (written by scripts/deploy.sh on the host)
+.last-deploy.json
