@@ -89,14 +89,19 @@ decision for the user.
 
 ## Lessons (2026-09-21)
 
-1. **Deploys never recreate `cloudflared`.** `scripts/deploy.sh` swaps only
-   `db/backend/frontend/nginx` (`IMAGE_SERVICES`) and recreates with
-   `--no-deps` per service (US-009 lesson at `deploy.sh:134-145`) — so a
-   **config-only change to the cloudflared service (like `extra_hosts`) is
-   never applied by a deploy**. It needs a deliberate one-time
-   `docker compose up -d --no-deps cloudflared`. Anyone cloning this stack for
-   a new client hits the same trap; consider a guarded recreate path in a
-   future story.
+1. **Deploys never recreate `cloudflared`** — and until this the watchdog
+   silently did. `scripts/deploy.sh` swaps only `db/backend/frontend/nginx`
+   (`--no-deps` each: the US-009 lesson). But the cron watchdog (`*/15`) ran a
+   **blanket `compose up -d`**, which reconciles config drift — so a
+   config-only change to cloudflared (like `extra_hosts`) landed within
+   ≤15 minutes, at an arbitrary tick, with no signal, through the same
+   "recreate a running container" mechanism that caused the 2026-09-15 outage.
+   **Resolved 2026-09-26:** the watchdog converges *start-only*
+   (`up -d --no-recreate`, and only while a service is not running), and
+   `deploy.sh` Step 7b compares `compose config --hash <svc>` with the running
+   container's `com.docker.compose.config-hash` label and **warns** with the
+   exact remediation command. Config changes are now deliberate and visible —
+   machine-checked in `backend/tests/core/test_health_contract.py`.
 2. **Keep the prod checkout clean.** `deploy.sh` updates the host via
    `git pull --ff-only` (line 116) and treats failure as non-fatal. Copying
    files into the host checkout leaves it dirty → the pull is *silently
@@ -104,12 +109,48 @@ decision for the user.
    if a file must be copied out-of-band, verify with
    `git diff --stat origin/main -- <file>` and restore with
    `git checkout -- <file>` afterwards.
-3. **Edge posture is unchanged (parity verified).** A no-token client still
-   reaches the SSH banner on both the old and new route — the Access policy
-   service-auth shape (`non_identity` + `include: everyone`) does not by
-   itself enforce token presence for TCP/SSH apps. The real gates remain the
-   **SSH key** and, for CI, the **forced command**. Tightening the policy
-   (service-token-scoped include) is a candidate hardening story.
+3. **Edge posture: `include: everyone` is a documented misconfiguration.**
+   As shipped, a no-token client reached the SSH banner on both the old and
+   new route. Cloudflare lists "Include everyone" under *Common Access
+   misconfigurations — anyone will be able to access your application*. The
+   real gates were (and remain) the **SSH key** and, for CI, the **forced
+   command**, but anonymous reach to port 22 was needless exposure.
+   **Fixed 2026-09-26** — see the hardening batch below.
+
+## Follow-up hardening batch (2026-09-26)
+
+**Access policy tightened.** `gha-deploy-service-auth` (policy
+`513ad104-4445-4b92-a326-c3cb2d20df41`) no longer uses `include: everyone`; it
+is scoped to the service token itself:
+
+```json
+{"decision": "non_identity",
+ "include": [{"service_token": {"token_id": "6be54ea6-5b27-435c-9c2a-a83e18a46bec"}}]}
+```
+
+Verified: an anonymous client is now refused at the edge (`websocket: bad
+handshake`), while the untouched `ssh.taylormadetech.net` route still answers
+with the SSH banner (control). CI's continued access is proven by the deploy
+that followed this change.
+
+**Cleanup executed:** deleted the orphan `mgdrywallusa-webhook` CNAME (404, no
+ingress, no Access app), deleted the dead `WEBHOOK_URL` / `WEBHOOK_TOKEN`
+GitHub secrets (zero references in any workflow/script/code), removed the
+stale webhook section from `.env.sample`, and reworded the retired-webhook
+narrative in `deploy.sh`.
+
+**Watchdog + drift visibility shipped:** `scripts/watchdog.sh` now converges
+start-only; `deploy.sh` Step 7b reports config drift on never-recreated
+services (`DRIFT_CHECK_SERVICES`, default `cloudflared`) as a warning with the
+exact remediation command, and emits a GitHub annotation in CI.
+
+**Left alone on purpose:** the shared `ssh-usrv01` app (the `tmtn_website`
+deploy key lives on that route — tightening it would need both tokens) and the
+orphaned `dev-laptop-webserver` Access app (not this project's).
+
+**Deferred:** revoking `CLOUDFLARE_ZT_TOKEN` — still in use while Cloudflare is
+optimized across all sites.
+
 
 
 ## Audit trail

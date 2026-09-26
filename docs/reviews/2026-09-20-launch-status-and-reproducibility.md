@@ -85,12 +85,22 @@ gated by a project-scoped Access app + service token, with the hostname read
 from the repo variable `DEPLOY_SSH_HOSTNAME`. Verified live (Release
 `35668628234`, deploy job 38 s, `.last-deploy.json` ok, images `sha-06421ba`).
 
-Two lessons worth folding into the template-ization checklist (also recorded
-in `docs/stories/US-012-cd-route-enclosure.md`):
+**Hardened 2026-09-26:** the app's policy was `include: everyone` — which
+Cloudflare documents as a *misconfiguration that lets anyone in*. It is now
+scoped to the service token (`include: [{service_token: {token_id: …}}]`);
+anonymous clients are refused at the edge (verified), CI still deploys.
 
-- **Any new client needs the one-time `docker compose up -d --no-deps
-  cloudflared`** because deploys never recreate the tunnel service — a
-  config-only change to it is otherwise invisible.
+Template-ization lessons (also in `docs/stories/US-012-cd-route-enclosure.md`):
+
+- **Cloudflared config changes are a deliberate step.** `deploy.sh` never
+  recreates the tunnel service; the cron watchdog used to apply such changes
+  silently within ≤15 minutes via a blanket `compose up -d` (the US-009
+  outage class). Now: watchdog converges **start-only**, and `deploy.sh`
+  Step 7b **warns** with the exact remediation command when a never-recreated
+  service drifts from the compose file.
 - **The prod checkout must stay clean**: `git pull --ff-only` is non-fatal in
   `deploy.sh`, so a dirty host checkout silently skips the update.
+- **Never delete the host-level `ssh.` route in a clone-based project**: it
+  may be shared with other projects' deploy keys (as it is here).
+
 
