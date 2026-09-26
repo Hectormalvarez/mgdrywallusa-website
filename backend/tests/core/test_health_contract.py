@@ -122,3 +122,31 @@ def test_release_deploy_hostname_is_var_driven() -> None:
     assert "DEPLOY_SSH_HOSTNAME is unset" in release, (
         "release.yml must fail fast when the deploy hostname variable is unset"
     )
+
+
+def test_watchdog_starts_only_and_never_recreates() -> None:
+    """US-012: the watchdog must not recreate running containers. A blanket
+    `compose up -d` silently applied config drift (tunnel/compose edits) at an
+    arbitrary 15-minute tick — the US-009 outage class. Start-only converge."""
+    watchdog = _read("scripts/watchdog.sh")
+    assert "--no-recreate" in watchdog, "watchdog must converge with `up -d --no-recreate`"
+    assert "ps -q" in watchdog, "watchdog must check whether a service is running first"
+    for line in watchdog.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            continue
+        assert not stripped.endswith("up -d >/dev/null 2>&1"), (
+            "watchdog must not run a blanket `up -d` (recreates running containers)"
+        )
+
+
+def test_deploy_reports_config_drift_for_never_recreated_services() -> None:
+    """US-012: deploy.sh never recreates cloudflared, so a config-only change
+    to it would otherwise apply silently (or never). The drift report must
+    exist, name the service, and print the exact command to apply it."""
+    deploy = _read("scripts/deploy.sh")
+    assert "config --hash" in deploy, "deploy.sh must compare rendered config hashes"
+    assert "com.docker.compose.config-hash" in deploy, "deploy.sh must read the running container's compose hash"
+    assert "DRIFT_CHECK_SERVICES" in deploy, "the drift-check scope must be configurable"
+    assert "up -d --no-deps $svc" in deploy, "the drift report must print the exact remediation command"
+    assert "warn " in deploy, "drift must be reported as a warning, not swallowed"

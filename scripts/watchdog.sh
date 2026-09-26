@@ -6,8 +6,13 @@
 #
 # Defense-in-depth against the 2026-09-16 outage class: any container that
 # is missing or stopped (deploy kill, manual accident, anything) is brought
-# back by an idempotent `compose up -d`. It is a no-op while the stack is
-# healthy and while a deploy is in progress (lockfile).
+# back. US-012 narrowed this from a blanket `compose up -d` — which also
+# *recreated* running containers whose config had changed, silently applying
+# tunnel/compose edits at an arbitrary 15-minute tick — to a start-only
+# converge (`up -d --no-recreate`, and only while a service is not running).
+# Config changes are now applied deliberately by an operator and reported by
+# deploy.sh Step 7b. No-op while the stack is healthy and while a deploy is
+# in progress (lockfile).
 set -euo pipefail
 
 DIR="/home/hadev/Projects/Code/mgdrywallusa-website"
@@ -19,4 +24,15 @@ if [ -f "$LOCKFILE" ]; then
 fi
 
 cd "$DIR"
-docker compose -p mgdrywall-prod -f docker-compose.prod.yml --env-file .env.prod up -d >/dev/null 2>&1
+
+COMPOSE="docker compose -p mgdrywall-prod -f docker-compose.prod.yml --env-file .env.prod"
+SERVICES="db backend frontend nginx cloudflared"
+
+# Start-only converge: bring back anything that is not running; never touch a
+# running container (recreating on config drift is what US-012 removed from
+# this path — it is reported by deploy.sh Step 7b instead).
+for svc in $SERVICES; do
+  if [ -z "$($COMPOSE ps -q "$svc" 2>/dev/null | head -1 || true)" ]; then
+    $COMPOSE up -d --no-recreate "$svc" >/dev/null 2>&1 || true
+  fi
+done

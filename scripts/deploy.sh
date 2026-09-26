@@ -14,6 +14,9 @@ HEALTH_RETRIES="${HEALTH_RETRIES:-15}"
 HEALTH_INTERVAL="${HEALTH_INTERVAL:-4}"
 IMAGE_SERVICES="${IMAGE_SERVICES:-backend frontend nginx}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
+# US-012: services this script never recreates, therefore never reconciles
+# on its own — Step 7b reports config drift on them instead of hiding it.
+DRIFT_CHECK_SERVICES="${DRIFT_CHECK_SERVICES:-cloudflared}"
 
 # US-009: single source of truth for the health-check contract — shared with
 # the compose healthchecks via backend/tests/core/test_health_contract.py,
@@ -33,6 +36,12 @@ HEALTH_URL="${HEALTH_URL:-http://nginx${HEALTHCHECK_PATH:-/api/v1/pages/}}"
 # ── Helpers ────────────────────────────────────────────────────────
 info()  { printf "\033[0;36m▶ %s\033[0m\n" "$1"; }
 ok()    { printf "\033[0;32m✓ %s\033[0m\n" "$1"; }
+warn()  {
+  printf "\033[0;33m! %s\033[0m\n" "$1" >&2
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    printf '::warning::%s\n' "$1"
+  fi
+}
 err()   { printf "\033[0;31m✗ %s\033[0m\n" "$1" >&2; exit 1; }
 
 COMPOSE="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILE --env-file .env.prod"
@@ -106,11 +115,12 @@ if ! "$SCRIPT_DIR/backup.sh"; then
 fi
 
 # ── Step 3: Pull latest git references ────────────────────────────
-# Best-effort: the images are prebuilt (GHCR, tag passed by the webhook);
-# the checkout only needs to stay current for compose/scripts. The
-# webhook container has no ssh client, so a fetch over the ssh remote
-# fails there — continue rather than abort (this silently blocked a
-# whole day of deploys when the checkout went stale).
+# Best-effort: the images are prebuilt (GHCR, tag passed by the Release
+# workflow); the checkout only needs to stay current for compose/scripts.
+# Failures are tolerated because this runs unattended — but mind the hazard
+# (US-012): `git pull --ff-only` refuses while the checkout is dirty, so an
+# out-of-band file edit makes this step silently skip. Keep the checkout
+# clean and verify with `git status` after any manual file copy.
 info "Fetching latest changes..."
 git fetch --all --prune || info "git fetch failed (ssh unavailable in this environment) — using the local checkout"
 git pull --ff-only || ok "Pull skipped — keeping the local checkout"
@@ -131,13 +141,13 @@ $COMPOSE run --rm backend python manage.py migrate --noinput
 ok "Migrations applied"
 
 # ── Step 6: Swap containers (sequential, no dependent churn) ──────
-# US-009 (AC2): on 2026-09-15 a blanket `up -d` recreated the tunnel and
-# the webhook container that was executing this deploy (image drift via
-# the pull step + compose's recreation of linked containers), killing the
-# deploy mid-swap and leaving the site down for 16 hours. `up -d
-# --no-deps` per service, in dependency order, guarantees compose never
-# touches anything beyond the named service. cloudflared/webhook are
-# converged by the watchdog, never churned by app deploys.
+# US-009 (AC2): on 2026-09-15 a blanket `up -d` recreated the tunnel
+# mid-swap, killing the deploy and leaving the site down for 16 hours.
+# `up -d --no-deps` per service, in dependency order, guarantees compose
+# never touches anything beyond the named service. cloudflared is
+# deliberately NOT swapped here (US-012): its config is applied by a
+# deliberate operator action or by the watchdog's start-only converge,
+# and any drift is reported in Step 7b.
 info "Starting updated containers (sequential --no-deps)..."
 $COMPOSE up -d --no-deps db
 $COMPOSE up -d --no-deps backend
@@ -169,6 +179,33 @@ if [ "$HEALTHY" = "false" ]; then
 fi
 
 ok "Health check passed"
+
+# ── Step 7b: Report container config drift (US-012 lesson) ────────
+# Services in DRIFT_CHECK_SERVICES are never recreated by this script
+# (Step 6), so a config-only change to them — extra_hosts, logging, image —
+# does NOT apply during a deploy. Comparing the rendered config hash with
+# the running container's compose label turns that silent gap into a visible
+# warning with the exact command to apply it. Report-only by design: applying
+# it means recreating a container this script deliberately leaves alone.
+for svc in $DRIFT_CHECK_SERVICES; do
+  cid="$($COMPOSE ps -q "$svc" 2>/dev/null | head -1 || true)"
+  if [ -z "$cid" ]; then
+    continue
+  fi
+  RUNNING_HASH="$(docker inspect "$cid" \
+    --format '{{index .Config.Labels "com.docker.compose.config-hash"}}' 2>/dev/null || true)"
+  DESIRED_HASH="$($COMPOSE config --hash "$svc" 2>/dev/null | awk '{print $NF}' || true)"
+  if [ -z "$RUNNING_HASH" ] || [ -z "$DESIRED_HASH" ]; then
+    info "Config drift check skipped for '$svc' (compose/config-hash unavailable)"
+    continue
+  fi
+  if [ "$RUNNING_HASH" != "$DESIRED_HASH" ]; then
+    warn "config drift on '$svc' — the running container does not match $COMPOSE_FILE"
+    warn "apply it deliberately: docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILE --env-file .env.prod up -d --no-deps $svc"
+  else
+    ok "Container config in sync: $svc"
+  fi
+done
 
 # ── Step 8: Cleanup ───────────────────────────────────────────────
 info "Pruning dangling images..."
