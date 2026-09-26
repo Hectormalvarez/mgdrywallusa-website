@@ -148,5 +148,8 @@ def test_deploy_reports_config_drift_for_never_recreated_services() -> None:
     assert "config --hash" in deploy, "deploy.sh must compare rendered config hashes"
     assert "com.docker.compose.config-hash" in deploy, "deploy.sh must read the running container's compose hash"
     assert "DRIFT_CHECK_SERVICES" in deploy, "the drift-check scope must be configurable"
+    assert "Config drift check skipped" in deploy, (
+        "the drift check must announce a skip instead of silently no-opping (US-012: invisibility is the bug)"
+    )
     assert "up -d --no-deps $svc" in deploy, "the drift report must print the exact remediation command"
     assert "warn " in deploy, "drift must be reported as a warning, not swallowed"

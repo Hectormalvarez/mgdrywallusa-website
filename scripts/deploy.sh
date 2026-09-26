@@ -190,6 +190,9 @@ ok "Health check passed"
 for svc in $DRIFT_CHECK_SERVICES; do
   cid="$($COMPOSE ps -q "$svc" 2>/dev/null | head -1 || true)"
   if [ -z "$cid" ]; then
+    # Never skip silently: an absent/stopped container is a state worth seeing
+    # (the watchdog will start it, but the drift question is then unanswered).
+    info "Config drift check skipped for '$svc' (not running)"
     continue
   fi
   RUNNING_HASH="$(docker inspect "$cid" \
