@@ -117,6 +117,14 @@ decision for the user.
    command**, but anonymous reach to port 22 was needless exposure.
    **Fixed 2026-09-26** — see the hardening batch below.
 
+4. **A script change takes effect on the *next* deploy.** `deploy.sh` updates
+   the host checkout in Step 3 while it is itself running; the shell keeps
+   executing the already-open (old) file, so the revision that executes is the
+   one from *before* the pull. Verify new deploy-time logic by looking for its
+   output in the following deploy's log — the first run after a change proves
+   nothing about the change itself (this is how the Step 7b gap was spotted:
+   its output was missing from the deploy that shipped it).
+
 ## Follow-up hardening batch (2026-09-26)
 
 **Access policy tightened.** `gha-deploy-service-auth` (policy
