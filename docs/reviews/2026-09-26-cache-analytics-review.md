@@ -6,9 +6,12 @@ proof"). Read-only: no configuration, code, or production change was made.
 
 ## Method
 
-- Datasets: `httpRequestsAdaptiveGroups` (per-host + per-`cacheStatus`; this plan
-  allows **max 1 day per query**), `httpRequests1dGroups` (zone-wide daily
-  rollups), REST zone settings, and the `http_request_cache_settings` ruleset.
+- Datasets: `httpRequestsAdaptiveGroups` (per-host + per-`cacheStatus` + per-`date`),
+  `httpRequests1dGroups` (zone-wide daily rollups), REST zone settings, and the
+  `http_request_cache_settings` ruleset. **Corrected 2026-09-27:** one query accepts
+  up to **4w2d (30 days)**, so this review's per-day loop was built on a "max 1 day
+  per query" belief that turned out to be wrong and is now redundant (collapse is
+  US-011 Phase 1 — see ADR-0003).
 - Host under review: `mgdrywallusa.taylormadetech.net` (dev/ssh/webhook hosts
   noted separately). 16 full UTC days at 1-day windows, filtered per host.
 - Reproduction: `scripts/cf-cache-stats.sh --days 7`, plus a per-day loop:
@@ -87,11 +90,13 @@ Evidence (three independent signals):
 2. **Zero** `updating`/`stale` responses in 16 days / ~1,100 requests.
 3. The docs above.
 
-*Dataset note:* after the fix, the single `UPDATING` response was not yet visible
-in the analytics dataset at verification time (it is a 1-2 request event and the
-dataset aggregates with lag), so the HTTP response headers are the authoritative
-evidence here. `scripts/cf-cache-stats.sh` now has a dedicated `stale` column for
-watching this over time.
+*Dataset note:* at verification time the single `UPDATING` response had not yet
+appeared in the analytics dataset (a 1–2 request event, and the dataset aggregates
+with lag), so the HTTP response headers were the authoritative evidence. It has
+since landed: `scripts/cf-cache-stats.sh --days 1` for 2026-09-27 reports
+**`stale = 1`** — the first `updating`/`stale` responses on record for this host,
+i.e. independent confirmation from Cloudflare's own data that stale-serving happens
+in production.
 
 Consequence: every revisit more than 5 minutes apart pays a full origin round trip
 (SSR + 2 Django fetches). The SWR directive currently buys nothing.
@@ -130,11 +135,13 @@ zone serves 672–1,124/day for `taylormadetech.net`. Two consequences:
 
 - **US-011's premise is wrong.** It states Cloudflare's per-host dataset "only
   retains ~1 day on the Free plan". Actual retention: **31 days** — the API
-  rejects older data with `"cannot request data older than 4w3d"`. The real
-  constraint is **max 1 day per query**. Completeness at the retention edge was
-  cross-checked: per-host adaptive totals 30 days back sum to 1669 requests vs
-  `httpRequests1dGroups` 1661 for the same UTC day. So US-011's benefit is
-  *history beyond 31 days*, not beyond 1 day.
+  rejects older data with `"cannot request data older than 4w3d"`. *Corrected
+  2026-09-27:* the real constraint is a **max range of 4w2d (30 days) per query**,
+  not the "max 1 day per query" recorded here on 2026-09-26 — a 31-day range is
+  rejected with `cannot request a time range wider than 4w2d`. Completeness at the
+  retention edge was cross-checked: per-host adaptive totals 30 days back sum to
+  1669 requests vs `httpRequests1dGroups` 1661 for the same UTC day. So US-011's
+  benefit is *history beyond 31 days*, not beyond 1 day.
 - **US-011's "74.4% of cacheable traffic" is inflated**: it counted `expired` as
   served-from-edge. Per CF, `EXPIRED` waited for the origin (`Age` absent).
   Corrected 09-16 figure: (57 hit + 5 revalidated) / 117 = **53%**. The same

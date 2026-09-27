@@ -12,10 +12,15 @@
 # zone-wide hit rate says nothing about this one (measured 2026-09-26: this
 # site 1-61 req/day vs taylormadetech.net 672-1124 req/day).
 #
-# Plan constraints (verified 2026-09-26 against this zone's schema):
-#   - adaptive dataset: max range = 1 day per query, so the site report loops
-#     N x 1-day windows for `--days N` (N API calls). Retention is 31 days
-#     ("cannot request data older than 4w3d") — N is clamped to 31.
+# Plan constraints (verified 2026-09-26; range limit CORRECTED 2026-09-27):
+#   - adaptive dataset: one query accepts up to 4w2d (30 days) — a 31-day range
+#     is rejected ("cannot request a time range wider than 4w2d"). So the loop
+#     below (N x 1-day windows for `--days N`) is now REDUNDANT: a single query
+#     with `dimensions { date, cacheStatus }` covers the whole window. Collapsing
+#     it is part of US-011 Phase 1 (see ADR-0003); this script keeps looping
+#     until then. The "1 day per query" claim previously in this header was wrong.
+#   - retention is ~31 days ("cannot request data older than 4w3d") — N is
+#     clamped to 31, so the oldest day sits right at the retention edge.
 #   - the adaptive dataset is complete at these volumes, not sampled: per-host
 #     totals for a 30-day-old day = 1669 vs the 1d rollup's 1667 that day.
 #   - firewallEventsAdaptiveGroups requires a paid plan — skipped.
@@ -190,8 +195,9 @@ echo
 echo "Reading notes:"
 echo "  1. Section 1 holds the site's own numbers. Section 2 is zone-wide and"
 echo "     this zone serves several sites, so its HIT% is NOT this site's rate."
-echo "  2. Retention is ${MAX_DAYS} days on this plan, and the adaptive dataset"
-echo "     allows 1 day per query — hence ${DAYS} queries in section 1."
+echo "  2. Retention is ${MAX_DAYS} days on this plan. The adaptive dataset allows a"
+echo "     single 30-day query window, so section 1's ${DAYS} per-day queries are"
+echo "     redundant — US-011 Phase 1 collapses them into one call (ADR-0003)."
 echo "  3. A per-cacheStatus visual breakdown also exists in the dashboard:"
 echo "     dash.cloudflare.com → zone → Analytics & Logs → Traffic."
 
