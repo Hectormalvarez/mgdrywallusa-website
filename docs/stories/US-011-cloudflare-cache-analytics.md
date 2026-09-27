@@ -1,6 +1,6 @@
 # US-011 — Cloudflare cache analytics: recorded history
 
-**Status:** APPROVED · Story created 2026-09-16 · Implementation not started · **ADR: deferred** (to be written with the future dashboard story)
+**Status:** APPROVED · Story created 2026-09-16 · Implementation not started · **ADR: deferred** (to be written with the future dashboard story) · Background corrected 2026-09-26 (retention is 31 days, not ~1; the 74.4% figure is 53%)
 **Follows:** US-008 (edge caching, live in prod) · discovery session 2026-09-16 (adaptive GraphQL supports per-host + per-cacheStatus on Free plan; 1-day range quota)
 
 ---
@@ -13,9 +13,24 @@
 
 ## Background (from US-008 + 2026-09-16 findings)
 
-- Baseline hit rate (zone-wide, 30d at capture): **3.3%**.
-- Live verification: HTML now caches at the edge; first 24h of site-specific data shows **74.4% of cacheable traffic served from edge cache** (`hit` 57 + `expired` 25 + `revalidated` 5 of 117 cacheable requests).
-- Today that visibility lives in `scripts/cf-cache-stats.sh`, run by hand, printing to stdout. Nothing is recorded over time; Cloudflare's own per-host dataset only retains ~1 day on the Free plan.
+- Baseline hit rate (zone-wide, 30d at capture): **3.3%** — a zone-wide number,
+  so it mixes the other sites sharing this zone and is **not** a metric for this
+  site (2026-09-26 review: this site 1–61 req/day vs `taylormadetech.net`
+  672–1124 req/day).
+- Live verification: HTML caches at the edge; site-specific data for
+  2026-09-16 was **53% of cacheable traffic served from the edge**
+  (`hit` 57 + `revalidated` 5 of 117 cacheable requests).
+  *Corrected 2026-09-26:* the earlier 74.4% counted `expired` (25 requests) as
+  cache-served, but Cloudflare defines `EXPIRED` as the request having waited
+  for the origin (`Age` header absent on those responses) — see
+  `docs/reviews/2026-09-26-cache-analytics-review.md` (F6).
+- Today that visibility lives in `scripts/cf-cache-stats.sh`, run by hand.
+  Since 2026-09-26 its headline is **per-host with corrected math**
+  (served-from-edge = `hit` + `revalidated`, with `expired` reported
+  separately), looping one query per day because this plan allows a 1-day range
+  per query. Nothing is recorded over time: the per-host dataset retains
+  **31 days** (`cannot request data older than 4w3d`, verified 2026-09-26),
+  not the ~1 day this story assumed.
 
 ## Acceptance criteria
 
@@ -42,5 +57,6 @@
 
 ## Notes
 
-- Free-plan dataset constraints (verified 2026-09-16, see `scripts/cf-cache-stats.sh`): `httpRequestsAdaptiveGroups` accepts `clientRequestHTTPHost` filter + `cacheStatus` dimension; range quota = 1 day per query; 1d rollups are zone-wide only.
+- Dataset constraints (verified 2026-09-16, **corrected 2026-09-26**): `httpRequestsAdaptiveGroups` accepts a `clientRequestHTTPHost` filter + `cacheStatus` dimension and is **complete rather than sampled** at this site's volumes (per-host totals for a 30-day-old day = 1669 vs the 1d rollup's 1667). Range quota = **1 day per query**; **retention = 31 days**, not ~1 day. `httpRequests1dGroups` has **no host filter and no hostname dimension** on this plan, so the zone-wide rollup cannot be narrowed to this site.
+- **Re-evaluated 2026-09-26** (`docs/reviews/2026-09-26-cache-analytics-review.md`): the collector's justification shifts — it preserves history **beyond 31 days**, not beyond ~1 day. The ACs stand, but the story loses urgency and stays parked behind the launch gate and the template-ization sprint.
 - The bash script remains the ops tool; the collector is the future source of truth.
