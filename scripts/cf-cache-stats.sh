@@ -1,17 +1,40 @@
 #!/bin/sh
-# cf-cache-stats.sh — Cloudflare discovery + baseline report (US-008 T1).
+# cf-cache-stats.sh — Cloudflare cache report for ONE site in a shared zone.
 #
-# Pulls three read-only datasets for one zone and prints a summary:
-#   1. Cache hit/miss breakdown (GraphQL httpRequests1dGroups — daily rollups)
-#   2. Zone settings relevant to caching (REST /zones/:id/settings)
+# Sections, in reading order:
+#   1. Per-host cache-status breakdown for the site   <- the HEADLINE
+#   2. Zone-wide daily rollup (ALL hostnames — NOT a site metric)
+#   3. Zone settings + Cache Rules relevant to caching
 #
-# Free-plan notes (verified against this zone's schema, 2026-09-15):
-#   - httpRequestsAdaptiveGroups exposes cacheStatus but has NO request-count
-#     sum fields on Free, so per-status breakdown isn't possible via GraphQL.
-#   - httpRequests1dGroups has requests/cachedRequests/bytes — used here.
-#   - firewallEventsAdaptiveGroups requires a paid plan — skipped with a note.
-#   - For a per-cacheStatus visual breakdown use the dashboard:
-#     dash.cloudflare.com → zone → Analytics & Logs → Traffic.
+# Why per-host is the headline: `httpRequests1dGroups` (the zone rollup)
+# cannot be filtered or grouped by hostname — only the adaptive dataset
+# exposes `clientRequestHTTPHost`. This zone also serves other sites, so its
+# zone-wide hit rate says nothing about this one (measured 2026-09-26: this
+# site 1-61 req/day vs taylormadetech.net 672-1124 req/day).
+#
+# Plan constraints (verified 2026-09-26 against this zone's schema):
+#   - adaptive dataset: max range = 1 day per query, so the site report loops
+#     N x 1-day windows for `--days N` (N API calls). Retention is 31 days
+#     ("cannot request data older than 4w3d") — N is clamped to 31.
+#   - the adaptive dataset is complete at these volumes, not sampled: per-host
+#     totals for a 30-day-old day = 1669 vs the 1d rollup's 1667 that day.
+#   - firewallEventsAdaptiveGroups requires a paid plan — skipped.
+#
+# Cache-status classification (Cloudflare docs, 2026-09-26):
+#   hit, revalidated    -> served from the edge cache
+#   expired             -> was cached, TTL had passed, and the request WAITED
+#                          for the origin (no Age header on such responses) —
+#                          this is NOT a cache-served request
+#   miss                -> not cached; fetched from origin and stored
+#   none/bypass/dynamic -> no cache status / not eligible for cache
+#   updating, stale     -> served stale while revalidating in the background
+#                          (stale-while-revalidate engaged). Never observed
+#                          while the origin sent `s-maxage` (which implies
+#                          proxy-revalidate and forces EXPIRED); expected
+#                          after the 2026-09-26 directive fix.
+# `expired` must never be counted as served-from-edge: an earlier version of
+# this script did, inflating the headline (docs/reviews/2026-09-26-cache-
+# analytics-review.md, F6).
 #
 # Required environment (also read from .env in the project root if set):
 #   CLOUDFLARE_API_TOKEN — zone-scoped token: Zone.Analytics:Read,
@@ -19,13 +42,17 @@
 #                          consumers of the same token)
 #   CLOUDFLARE_ZONE_ID   — the zone ID
 #
-# Usage: scripts/cf-cache-stats.sh [--days N]   (default 30)
+# Usage: scripts/cf-cache-stats.sh [--days N]     (default 30, max 31)
+#        CF_STATS_HOST=other.host to switch site (default below)
 #
 # Token is never echoed; all requests are read-only.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+HOSTNAME="${CF_STATS_HOST:-mgdrywallusa.taylormadetech.net}"
+MAX_DAYS=31
 
 DAYS=30
 while [ $# -gt 0 ]; do
@@ -34,6 +61,10 @@ while [ $# -gt 0 ]; do
     *) echo "Unknown arg: $1" >&2; exit 2 ;;
   esac
 done
+if [ "$DAYS" -gt "$MAX_DAYS" ]; then
+  echo "→ --days $DAYS exceeds the ${MAX_DAYS}-day retention; using ${MAX_DAYS}." >&2
+  DAYS="$MAX_DAYS"
+fi
 
 # ── Credentials ────────────────────────────────────────────────────
 # Read ONLY the two CF vars from .env (never echo the file or values).
@@ -51,15 +82,68 @@ API="https://api.cloudflare.com/client/v4"
 AUTH="Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
 CT="Content-Type: application/json"
 
-# Date window (UTC dates; GraphQL 1dGroups uses Date, not DateTime)
-SINCE=$(date -u -d "$DAYS days ago" +%Y-%m-%d 2>/dev/null || date -u -v-"$DAYS"d +%Y-%m-%d)
-UNTIL=$(date -u +%Y-%m-%d)
-
 info() { printf "\n\033[0;36m▶ %s\033[0m\n" "$1"; }
 
-# ── 1. Cache hit/miss breakdown (daily) ────────────────────────────
-info "Cache breakdown, daily (UTC ${SINCE} → ${UNTIL})"
-QUERY=$(jq -n --arg z "$CLOUDFLARE_ZONE_ID" --arg s "$SINCE" --arg u "$UNTIL" '
+# ── 1. Per-host cache status — THE HEADLINE ────────────────────────
+info "Cache status — ${HOSTNAME} (site only, last ${DAYS} day(s))"
+
+ROWS=""
+WINDOWS_FAILED=0
+i=0
+while [ "$i" -lt "$DAYS" ]; do
+  SINCE=$(date -u -d "$i days ago" +%Y-%m-%dT00:00:00Z 2>/dev/null || date -u -v-"${i}"d +%Y-%m-%dT00:00:00Z)
+  UNTIL=$(date -u -d "$i days ago 1 day" +%Y-%m-%dT00:00:00Z 2>/dev/null || date -u -v-"$((i - 1))"d +%Y-%m-%dT00:00:00Z)
+  DAY=$(date -u -d "$i days ago" +%Y-%m-%d 2>/dev/null || date -u -v-"${i}"d +%Y-%m-%d)
+  AQ=$(jq -n --arg z "$CLOUDFLARE_ZONE_ID" --arg s "$SINCE" --arg e "$UNTIL" --arg h "$HOSTNAME" '
+    {query: "query($zone: String!, $s: Time!, $e: Time!, $h: String!) { viewer { zones(filter: {zoneTag: $zone}) { httpRequestsAdaptiveGroups(limit: 200, filter: {datetime_geq: $s, datetime_lt: $e, clientRequestHTTPHost: $h}) { count dimensions { cacheStatus } } } } }",
+     variables: {zone: $z, s: $s, e: $e, h: $h}}')
+  ARESP=$(curl -sf "$API/graphql" -H "$AUTH" -H "$CT" --data "$AQ") || { WINDOWS_FAILED=$((WINDOWS_FAILED + 1)); i=$((i + 1)); continue; }
+  PART=$(printf '%s' "$ARESP" | jq -r --arg d "$DAY" \
+    '.data.viewer.zones[0].httpRequestsAdaptiveGroups[]? | "\($d)\t\(.dimensions.cacheStatus)\t\(.count)"')
+  if [ -n "$PART" ]; then
+    ROWS=$(printf '%s\n%s' "$ROWS" "$PART")
+  fi
+  i=$((i + 1))
+done
+
+printf '%s\n' "$ROWS" | awk -F'\t' '
+  function flush() {
+    if (cur != "") {
+      cacheable = hit + reval + expired + miss
+      printf "%-12s %6d %8d %8d %7d %6d %8d %10d   %6.1f%%\n", \
+        cur, hit, reval, expired, miss, none, other, cacheable, \
+        (cacheable > 0 ? (hit + reval) * 100 / cacheable : 0)
+      th += hit; tr += reval; te += expired; tm += miss; tn += none; to += other
+    }
+  }
+  { if ($1 != cur) { flush(); cur = $1; hit = reval = expired = miss = none = other = 0 }
+    if ($2 == "hit") hit += $3
+    else if ($2 == "revalidated") reval += $3
+    else if ($2 == "expired") expired += $3
+    else if ($2 == "miss") miss += $3
+    else if ($2 == "none") none += $3
+    else other += $3 }
+  END { flush()
+    cacheable = th + tr + te + tm
+    printf "%-12s %6d %8d %8d %7d %6d %8d %10d   %6.1f%%\n", "TOTAL", th, tr, te, tm, tn, to, cacheable, \
+      (cacheable > 0 ? (th + tr) * 100 / cacheable : 0) }
+' | awk 'BEGIN { printf "%-12s %6s %8s %8s %7s %6s %8s %10s   %s\n", "DATE", "hit", "revalid", "expired", "miss", "none", "othr", "CACHEABLE", "SERVED-FROM-EDGE" } 1'
+
+echo "  served-from-edge = hit + revalidated. 'expired' means the object was in"
+echo "  cache but past its TTL, so the request waited for the origin — not a hit."
+echo "  'othr' = bypass + dynamic (not eligible). Watch for 'updating'/'stale':"
+echo "  those are the statuses that prove stale-while-revalidate is working."
+[ "$WINDOWS_FAILED" -eq 0 ] || echo "  ⚠ ${WINDOWS_FAILED} day-window(s) could not be fetched — totals cover the rest."
+
+# ── 2. Zone-wide daily rollup (context, NOT a site metric) ─────────
+# The 1d dataset exposes no hostname dimension or filter on this plan, so this
+# is every hostname in the zone — including other sites. Shown for context
+# only: do NOT read the hit% below as this site's hit rate.
+ZONE_SINCE=$(date -u -d "$DAYS days ago" +%Y-%m-%d 2>/dev/null || date -u -v-"${DAYS}"d +%Y-%m-%d)
+ZONE_UNTIL=$(date -u +%Y-%m-%d)
+info "Zone-wide daily rollup (ALL hostnames; context only) UTC ${ZONE_SINCE} → ${ZONE_UNTIL}"
+
+QUERY=$(jq -n --arg z "$CLOUDFLARE_ZONE_ID" --arg s "$ZONE_SINCE" --arg u "$ZONE_UNTIL" '
   {query: "query($zone: String!, $since: Date!, $until: Date!) { viewer { zones(filter: {zoneTag: $zone}) { httpRequests1dGroups(limit: 60, filter: {date_geq: $since, date_lt: $until}, orderBy: [date_ASC]) { dimensions { date } sum { requests cachedRequests cachedBytes bytes } } } } }",
    variables: {zone: $z, since: $s, until: $u}}')
 RESP=$(curl -sf "$API/graphql" -H "$AUTH" -H "$CT" --data "$QUERY") || {
@@ -76,41 +160,7 @@ echo "$RESP" | jq -r '.data.viewer.zones[0].httpRequests1dGroups[]
   END{
     printf "%-12s %10s %10s %7.1f%% %15s %15s\n","TOTAL",r,c,(r>0?c*100/r:0),b,cb}'
 
-# ── 1b. Per-hostname cache-status breakdown (adaptive dataset) ─────
-# Verified working on Free plan (2026-09-16): httpRequestsAdaptiveGroups
-# accepts a clientRequestHTTPHost filter and a cacheStatus dimension,
-# giving the per-status split the 1d dataset can't provide.
-HOSTNAME="${CF_STATS_HOST:-mgdrywallusa.taylormadetech.net}"
-# Free plan caps the adaptive dataset at a 1-day range (verified 2026-09-16);
-# use 23h to stay inside the quota.
-SINCE_DT=$(date -u -d "23 hours ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-23H +%Y-%m-%dT%H:%M:%SZ)
-info "Cache-status breakdown — ${HOSTNAME} (last 24h, since ${SINCE_DT})"
-AQUERY=$(jq -n --arg z "$CLOUDFLARE_ZONE_ID" --arg s "$SINCE_DT" --arg h "$HOSTNAME" '
-  {query: "query($zone: String!, $since: Time!, $host: String!) { viewer { zones(filter: {zoneTag: $zone}) { httpRequestsAdaptiveGroups(limit: 25, filter: {datetime_geq: $since, clientRequestHTTPHost: $host}) { count dimensions { cacheStatus } } } } }",
-   variables: {zone: $z, since: $s, host: $h}}')
-ARESP=$(curl -sf "$API/graphql" -H "$AUTH" -H "$CT" --data "$AQUERY") || {
-  echo "  (✗ adaptive query failed — skipping breakdown)"
-}
-# GraphQL responses carry {data, errors} — no REST-style top-level "success".
-if [ -n "$ARESP" ] && [ "$(printf '%s' "$ARESP" | jq -r 'if .errors then "err" else "ok" end')" = "err" ]; then
-  printf '  (✗ adaptive API error: %s — skipping breakdown)\n' \
-    "$(printf '%s' "$ARESP" | jq -r '.errors[0].message // "unknown"')"
-  ARESP=""
-fi
-if [ -n "$ARESP" ]; then
-  echo "$ARESP" | jq -r '.data.viewer.zones[0].httpRequestsAdaptiveGroups[]
-    | "\(.dimensions.cacheStatus // "unknown")\t\(.count)"' \
-  | awk -F'\t' 'BEGIN{
-      printf "%-14s %8s\n","STATUS","REQUESTS"}
-    {r+=$2; order[length($1)]=$1; vals[$1]=$2;
-     printf "%-14s %8s\n",$1,$2;
-     if ($1=="hit"||$1=="revalidated"||$1=="expired") e+=$2; else if ($1!="none") m+=$2}
-    END{
-      printf "%-14s %8s\n","TOTAL",r;
-      if (m+e>0) printf "\nCacheable traffic: %d of %d served from edge cache (%.1f%%)\n", e, m+e, e*100/(m+e)}'
-fi
-
-# ── 2. Zone settings relevant to caching ───────────────────────────
+# ── 3. Zone settings relevant to caching ───────────────────────────
 info "Zone settings (caching-relevant)"
 SETTINGS=$(curl -sf "$API/zones/$CLOUDFLARE_ZONE_ID/settings" -H "$AUTH") || {
   echo "  (✗ token lacks Zone Settings:Read — skipping)"
@@ -125,13 +175,20 @@ if [ -n "$SETTINGS" ]; then
     {printf "%-24s %s\n",$1,$2}'
 fi
 
-info "Cache rules (entrypoint ruleset)"
+info "Cache rules (first match wins, per setting)"
 curl -sf "$API/zones/$CLOUDFLARE_ZONE_ID/rulesets/phases/http_request_cache_settings/entrypoint" -H "$AUTH" \
-  | jq -r '.result.rules[]? | "\(.description // "(unnamed)")\t\(.expression)"' \
-  | awk -F'\t' 'BEGIN{printf "%-40s %s\n","RULE","EXPRESSION"}
-    {printf "%-40s %s\n",substr($1,1,40),substr($2,1,80)}' \
+  | jq -r '.result.rules[]? | "\(.description // "(unnamed)")\t\(.enabled)\t\(.expression)"' \
+  | awk -F'\t' 'BEGIN{printf "%-44s %-5s %s\n","RULE","ON","EXPRESSION"}
+    {printf "%-44s %-5s %s\n",substr($1,1,44),$2,substr($3,1,88)}' \
   || echo "  (none, or token lacks Zone Rulesets:Read — fine if no cache rules exist)"
 
 echo
-echo "Note: 1d daily rollups are zone-wide (all hostnames). The adaptive"
-echo "breakdown above is filtered to ${HOSTNAME} (override with CF_STATS_HOST)."
+echo "Reading notes:"
+echo "  1. Section 1 holds the site's own numbers. Section 2 is zone-wide and"
+echo "     this zone serves several sites, so its HIT% is NOT this site's rate."
+echo "  2. Retention is ${MAX_DAYS} days on this plan, and the adaptive dataset"
+echo "     allows 1 day per query — hence ${DAYS} queries in section 1."
+echo "  3. A per-cacheStatus visual breakdown also exists in the dashboard:"
+echo "     dash.cloudflare.com → zone → Analytics & Logs → Traffic."
+
+
