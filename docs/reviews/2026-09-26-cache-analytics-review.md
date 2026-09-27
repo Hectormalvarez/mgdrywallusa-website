@@ -151,6 +151,26 @@ zone serves 672–1,124/day for `taylormadetech.net`. Two consequences:
 - Bot-challenge traffic is a visible share of the low-volume mix
   (`/cdn-cgi/challenge-platform/…`, `/cdn-cgi/rum`).
 
+## Pending Cloudflare dashboard actions (API token lacks these scopes)
+
+1. **Host-scoped Always-Use-HTTPS redirect** — `http://` returns 200 with no
+   redirect (F7). The zone-level `always_use_https` toggle would affect every
+   host in this shared zone, so scope it to this site with a Redirect Rule:
+   - Dashboard: zone → Rules → Redirect Rules → Create rule
+   - Name: `mgdrywall-https-redirect`
+   - When incoming requests match:
+     `(http.host eq "mgdrywallusa.taylormadetech.net" or http.host eq "mgdrywallusa-dev.taylormadetech.net") and not ssl`
+   - Then: Static redirect to expression
+     `concat("https://", http.host, http.request.uri.path)`, status `301`,
+     **preserve query string** enabled.
+   - The `mgdrywall-ssh` deploy hostname is deliberately excluded (it is a
+     TCP/Access app, not HTTP).
+   - API attempt failed with `request is not authorized` — the token has no
+     Dynamic Redirect permission.
+2. **Smart Tiered Cache** — currently `off` (F7). Zone-level, so it affects the
+   other sites here: enable deliberately (Caching → Tiered Cache → Smart Tiered
+   Cache) and confirm the other sites' origins still behave.
+
 ## Verdict
 
 HTML caching is **verifiably working** (F1) — that is the proof the launch gate
