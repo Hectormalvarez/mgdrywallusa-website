@@ -10,7 +10,7 @@ Purge URLs are derived from the default Wagtail Site's root_url, which
 must match the public domain in production (enforced by the `seed`
 command). Purge failures are logged by Wagtail's backends and never
 propagate — publishing is never blocked; the frontend's bounded edge
-TTL (s-maxage=300) is the fallback.
+TTL (300s, pinned by the Cloudflare Cache Rule) is the fallback.
 """
 
 import logging
@@ -40,8 +40,8 @@ def purge_index_pages(**_kwargs) -> None:
     """Purge the pages that embed portfolio items (home + listing).
 
     Never raises: a failed purge is logged and degrades gracefully to the
-    frontend's bounded edge TTL (s-maxage=300). Publishing must not be
-    blocked by cache invalidation.
+    frontend's bounded edge TTL (300s, pinned by the Cloudflare Cache
+    Rule). Publishing must not be blocked by cache invalidation.
     """
     root_url = _default_site_root_url()
     if not root_url:
@@ -55,7 +55,8 @@ def purge_index_pages(**_kwargs) -> None:
     except Exception:
         logger.exception(
             "frontend_cache purge failed for portfolio index pages — "
-            "the edge TTL (s-maxage=300) will expire the stale entries"
+            "the edge TTL (300s, pinned by the Cache Rule) will expire "
+            "the stale entries"
         )
 
 

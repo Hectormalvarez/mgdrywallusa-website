@@ -207,7 +207,7 @@ WAGTAIL_HEADLESS_PREVIEW = {
 # public domain in production (the `seed` command enforces this from
 # FRONTEND_URL). Failure of a purge call is logged by Wagtail, never raised
 # — publishing is never blocked. A missed purge degrades gracefully to the
-# edge TTL set on the frontend (s-maxage=300).
+# 300s edge TTL pinned by the Cloudflare Cache Rule (scripts/cf-cache-rule.sh).
 _CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
 _CLOUDFLARE_ZONE_ID = os.environ.get("CLOUDFLARE_ZONE_ID", "")
 WAGTAILFRONTENDCACHE = {}

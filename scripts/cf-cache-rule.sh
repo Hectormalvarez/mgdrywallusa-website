@@ -3,9 +3,17 @@
 # (US-008 T4, ADR-0002).
 #
 # Creates/updates ONE rule in the http_request_cache_settings entrypoint
-# ruleset that makes the site's HTML eligible for edge caching, letting
-# origin Cache-Control headers (set by frontend/src/middleware.ts:
-# s-maxage=300, stale-while-revalidate) govern the edge TTL.
+# ruleset that makes the site's HTML eligible for edge caching, pinned to an
+# explicit 300s edge TTL.
+#
+# TTL split (revised 2026-09-26, cache-analytics review F3): the edge TTL is
+# OVERRIDDEN here instead of being read from the origin, because Cloudflare
+# treats `s-maxage` as implying `proxy-revalidate` (RFC 9111 §4.2.4) and then
+# refuses to serve stale — which made the origin's `stale-while-revalidate`
+# inert (every post-TTL request returned EXPIRED). Cloudflare's documented
+# pattern for wanting separate browser and edge TTLs is origin `max-age` plus
+# `stale-while-revalidate` (see frontend/src/proxy.ts) with the edge TTL
+# pinned by this rule.
 #
 # The rule NEVER caches:
 #   - /api/*            (lead form POSTs, Wagtail API, preview endpoints)
@@ -51,7 +59,7 @@ RULE_BODY=$(jq -n --arg expr "$EXPRESSION" --arg desc "$RULE_DESC" '
     action: "set_cache_settings",
     action_parameters: {
       cache: true,
-      edge_ttl: { mode: "respect_origin" },
+      edge_ttl: { mode: "override_origin", default: 300 },
       browser_ttl: { mode: "respect_origin" },
       cache_key: {
         ignore_query_strings_order: true

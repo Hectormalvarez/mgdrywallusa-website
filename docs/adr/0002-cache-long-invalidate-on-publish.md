@@ -5,6 +5,17 @@ Revised: 2026-09-15 — invalidation moved from a custom Next.js webhook to
 Wagtail's first-party `wagtail.contrib.frontend_cache`; caching layer
 settled as Cloudflare edge (Next.js ISR rejected, see Context).
 
+Revised: 2026-09-26 — the directive set silently disabled stale-serving.
+`s-maxage` implies `proxy-revalidate` (RFC 9111 §4.2.4), so Cloudflare
+refused to serve stale: every request past the TTL returned
+`cf-cache-status: EXPIRED` (blocking origin fetch) and
+`stale-while-revalidate` never engaged. Corrected to origin `max-age=0`
+plus `stale-while-revalidate=86400`, with the edge TTL pinned at 300s by
+the Cache Rule (`edge_ttl` override_origin) — Cloudflare's documented
+pattern for separate browser and edge TTLs. Evidence:
+`docs/reviews/2026-09-26-cache-analytics-review.md` (F3); regression-guarded
+by `frontend/tests/src/proxy.test.ts`.
+
 ## Context
 
 Cloudflare's cache hit rate is ~5%. Every HTML response is uncacheable
@@ -40,11 +51,13 @@ is what Cloudflare caches.)
 
 **Cache long at the edge (Cloudflare), invalidate on publish (Wagtail):**
 
-1. Pages stay dynamically rendered. `next.config.ts` sets
-   `Cache-Control: public, s-maxage=300, stale-while-revalidate=86400`
-   on public HTML routes only. `frontend/src/lib/api.ts` and the
-   draft/preview machinery are **untouched** (draft/preview, `/admin/`,
-   and `/api/` remain uncacheable).
+1. Pages stay dynamically rendered. `frontend/src/proxy.ts` sets
+   `Cache-Control: public, max-age=0, stale-while-revalidate=86400`
+   on public HTML routes only, and the Cache Rule pins the edge TTL to
+   300s (`edge_ttl` override_origin — the edge TTL is deliberately NOT
+   read from the origin; see the 2026-09-26 revision). `frontend/src/lib/api.ts`
+   and the draft/preview machinery are **untouched** (draft/preview,
+   `/admin/`, and `/api/` remain uncacheable).
 2. `wagtail.contrib.frontend_cache` + `CloudflareBackend`
    (`WAGTAILFRONTENDCACHE`, token/zone from env) auto-purges a page's
    public URL on publish/unpublish/delete.
@@ -57,8 +70,12 @@ is what Cloudflare caches.)
    requests carrying the `preview_token` cookie** (draft previews must
    never be cached at the edge), and bypasses `/admin/*`, `/api/*`.
 
-The 300s `s-maxage` is the **failure-mode fallback**: a missed or failed
-purge degrades to 5-minute staleness instead of stale-forever.
+The 300s edge TTL is the **failure-mode fallback**: a missed or failed
+purge degrades to 5-minute staleness instead of stale-forever. Past that
+window, `stale-while-revalidate` lets the edge keep serving the stale copy
+while revalidating in the background (asynchronous revalidation), so no
+visitor waits for a full SSR render; only requests arriving inside the
+revalidation window can see pre-publish content.
 
 **Rejected earlier revision (recorded for history):** a custom Next.js
 `/api/revalidate` endpoint with a shared `REVALIDATE_SECRET`, triggered
@@ -85,8 +102,11 @@ unnecessary — fewer moving parts, no shared secret, battle-tested code.
 - (+) Purge machinery is Wagtail-maintained: any future page type gets
   publish-purge behavior for free.
 - (−) Two purge layers (per-page signals + batch/index) can fail
-  independently; the bounded TTL caps the damage at 5 minutes. Purge
-  failures are logged, never block publishing.
+  independently; the bounded 300s edge TTL caps the damage at 5 minutes,
+  after which stale-serving plus background revalidation takes over (so a
+  missed purge can surface pre-publish content to requests arriving inside
+  the revalidation window). Purge failures are logged, never block
+  publishing.
 - (−) Purge URL correctness depends on the Wagtail **Site record's
   hostname matching the public domain** — verified during rollout and
   documented in the sprint.
