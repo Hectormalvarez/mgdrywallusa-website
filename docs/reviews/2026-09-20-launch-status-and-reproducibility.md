@@ -48,18 +48,19 @@ Full audit of every layer for project-specific coupling (brand strings, hostname
 2. DB name/user defaults: `docker-compose.yml` + `docker-compose.prod.yml`, `.env.sample`, `ci.yml`, `core/settings_test.py`, `scripts/backup.sh`/`restore.sh`.
 3. `WAGTAIL_SITE_NAME` (`core/settings.py:157`), watchdog `DIR` (fully hardcoded — worst offender, zero parameterization), `bootstrap-host.sh` `APP_DIR=/opt/mgdrywallusa-website`, Makefile `DEPLOY_DIR` + `dev-health` URL, `cf-cache-rule.sh` `RULE_DESC`, `cf-cache-stats.sh` default host.
 4. `release.yml`: `ssh.taylormadetech.net`, `hadev@localhost`, port `2222` → move into GitHub `vars:`/`secrets:`.
+5. **Host state that never reaches git (found 2026-09-27):** `bootstrap-host.sh` installs Docker, sets up swap, and creates `/opt/mgdrywallusa-website` — but installs **no cron entries**. So the watchdog's `*/15` line (and, once US-011 Phase 1 lands, the collector's daily line) are manual, undocumented host setup: a clone that skips them silently has no watchdog and no analytics. Install both idempotently from `bootstrap-host.sh` (its swap block is the pattern to copy) and document them in the README alongside the `/opt` symlink requirement.
 
 **Tier 2 — extract brand copy out of code (~2–3 days; the right fix)**
 
-5. **Brand copy is frozen into 8 migrations (29 hits) and model defaults** — `home/models.py` has `+1-555-DRYWALL`, `info@mgdrywallusa.com`, trade copy as field defaults; same in `site_settings/models.py` (auto-responder) and `WAGTAIL_SITE_NAME`. Replace with neutral placeholders; regenerate/squash migrations so the migration history stops carrying the brand.
-6. `core/management/commands/seed.py` hardcodes 3 drywall services + notification email/subject → make env- or YAML-driven, or mark seed content as "replace-me demo".
-7. **Frontend fallback duplication**: the same brand defaults exist verbatim in `lib/api.ts` (`SITE_SETTINGS_FALLBACK` incl. Austin/TX 78701 address), `HeroSection.tsx:37–42`, and `ServicesSection.tsx:10–30`. Collapse into a single `defaults.ts` module. Also: make the `DrywallContractor` JSON-LD type (`app/layout.tsx:66`) a SiteSettings field (e.g. `business_schema_type`); rename `hero-drywall.png` → `hero.png`; un-hardcode the `portfolio/page.tsx:15` meta description.
-8. Parameterize `watchdog.sh` (reuse the deploy env conventions); document the `/opt` symlink requirement in the README (it currently lives only in memory-bank).
+6. **Brand copy is frozen into 8 migrations (29 hits) and model defaults** — `home/models.py` has `+1-555-DRYWALL`, `info@mgdrywallusa.com`, trade copy as field defaults; same in `site_settings/models.py` (auto-responder) and `WAGTAIL_SITE_NAME`. Replace with neutral placeholders; regenerate/squash migrations so the migration history stops carrying the brand.
+7. `core/management/commands/seed.py` hardcodes 3 drywall services + notification email/subject → make env- or YAML-driven, or mark seed content as "replace-me demo".
+8. **Frontend fallback duplication**: the same brand defaults exist verbatim in `lib/api.ts` (`SITE_SETTINGS_FALLBACK` incl. Austin/TX 78701 address), `HeroSection.tsx:37–42`, and `ServicesSection.tsx:10–30`. Collapse into a single `defaults.ts` module. Also: make the `DrywallContractor` JSON-LD type (`app/layout.tsx:66`) a SiteSettings field (e.g. `business_schema_type`); rename `hero-drywall.png` → `hero.png`; un-hardcode the `portfolio/page.tsx:15` meta description.
+9. Parameterize `watchdog.sh` (reuse the deploy env conventions); document the `/opt` symlink requirement in the README (it currently lives only in memory-bank).
 
 **Tier 3 — judgment calls**
 
-9. `seed_portfolio`'s 6 LA sample projects (Santa Monica, Venice, Malibu…) — keep as clearly-labeled demo data or gate behind `--demo`.
-10. Trade-specific icon vocabulary; hardcoded prod preview host in `tests/core/test_smoke.py:57`.
+10. `seed_portfolio`'s 6 LA sample projects (Santa Monica, Venice, Malibu…) — keep as clearly-labeled demo data or gate behind `--demo`.
+11. Trade-specific icon vocabulary; hardcoded prod preview host in `tests/core/test_smoke.py:57`.
 
 **Key structural finding:** the same business copy lives in six parallel layers — Django model defaults, migrations, `seed.py`, `SITE_SETTINGS_FALLBACK` (`api.ts`), `HeroSection`/`ServicesSection` prop defaults, and portfolio page copy. Changing a client's tagline today means touching all six or living with drift. Tier 2 collapses this to: CMS data + one `defaults.ts` + env.
 
@@ -72,7 +73,7 @@ Full audit of every layer for project-specific coupling (brand strings, hostname
 1. **Launch gate**: US-002, US-004, US-005 (+ CF cache-stats proof). No template work during this — don't mix concerns.
 2. **Template-ization sprint**: Tier 2 first; Tier 1 as its scripted checklist output (e.g. `docs/rebrand-checklist.md` or a `make rebrand NAME=…` scaffolding command). Record the decisions as **ADR-0004** — this was planned as "ADR-0003", but that number was taken on 2026-09-27 by the cache-stats storage ADR (`docs/adr/0003-store-cloudflare-cache-stats-in-postgres.md`).
 3. **Then** user-facing custom features, on a codebase where "new client" = clone + env + seed + checklist.
-4. **US-011** stays parked behind the template-ization sprint.
+4. **US-011** (cache analytics): design locked 2026-09-27 with ADR-0003 and queued **after the launch gate**, running the complete flow (see the story). **Its ordering against the template-ization sprint is still open** — the collector is brand-independent, but the admin report adds a UI surface, so building it after Tier 2 would avoid reworking UI on code that is about to move.
 
 ---
 
