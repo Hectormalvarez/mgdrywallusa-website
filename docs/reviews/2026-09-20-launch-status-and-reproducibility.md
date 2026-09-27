@@ -70,7 +70,7 @@ Full audit of every layer for project-specific coupling (brand strings, hostname
 **Launch first, then template-ize, then custom features.** Custom features built *before* the Tier-2 extraction will add more brand-coupled code and make the extraction more expensive later.
 
 1. **Launch gate**: US-002, US-004, US-005 (+ CF cache-stats proof). No template work during this — don't mix concerns.
-2. **Template-ization sprint**: Tier 2 first; Tier 1 as its scripted checklist output (e.g. `docs/rebrand-checklist.md` or a `make rebrand NAME=…` scaffolding command). Record the decisions as ADR-0003.
+2. **Template-ization sprint**: Tier 2 first; Tier 1 as its scripted checklist output (e.g. `docs/rebrand-checklist.md` or a `make rebrand NAME=…` scaffolding command). Record the decisions as **ADR-0004** — this was planned as "ADR-0003", but that number was taken on 2026-09-27 by the cache-stats storage ADR (`docs/adr/0003-store-cloudflare-cache-stats-in-postgres.md`).
 3. **Then** user-facing custom features, on a codebase where "new client" = clone + env + seed + checklist.
 4. **US-011** stays parked behind the template-ization sprint.
 
