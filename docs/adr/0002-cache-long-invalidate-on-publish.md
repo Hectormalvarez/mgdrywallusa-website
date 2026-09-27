@@ -14,7 +14,10 @@ plus `stale-while-revalidate=86400`, with the edge TTL pinned at 300s by
 the Cache Rule (`edge_ttl` override_origin) — Cloudflare's documented
 pattern for separate browser and edge TTLs. Evidence:
 `docs/reviews/2026-09-26-cache-analytics-review.md` (F3); regression-guarded
-by `frontend/tests/src/proxy.test.ts`.
+by `frontend/tests/src/proxy.test.ts`. Verified in production after the deploy
+(2026-09-27): a post-TTL request returned `cf-cache-status: UPDATING` with
+`Age: 375` (stale served while revalidating in the background), then `HIT` with
+`Age: 14` — the same request previously returned `EXPIRED` with no `Age`.
 
 ## Context
 

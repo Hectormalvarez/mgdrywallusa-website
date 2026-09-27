@@ -87,6 +87,12 @@ Evidence (three independent signals):
 2. **Zero** `updating`/`stale` responses in 16 days / ~1,100 requests.
 3. The docs above.
 
+*Dataset note:* after the fix, the single `UPDATING` response was not yet visible
+in the analytics dataset at verification time (it is a 1-2 request event and the
+dataset aggregates with lag), so the HTTP response headers are the authoritative
+evidence here. `scripts/cf-cache-stats.sh` now has a dedicated `stale` column for
+watching this over time.
+
 Consequence: every revisit more than 5 minutes apart pays a full origin round trip
 (SSR + 2 Django fetches). The SWR directive currently buys nothing.
 
@@ -150,6 +156,13 @@ zone serves 672–1,124/day for `taylormadetech.net`. Two consequences:
   (already how it is built). Important input for the template-ization work.
 - Bot-challenge traffic is a visible share of the low-volume mix
   (`/cdn-cgi/challenge-platform/…`, `/cdn-cgi/rum`).
+- **The `mgdrywallusa-dev` route is stale/broken** (found 2026-09-26 while
+  verifying the rule): its CNAME points at a *different* tunnel
+  (`e9a033d8…`, not the project tunnel `3a2fdaeb…`), the project tunnel has no
+  ingress entry for it, the `mgdrywall-dev` compose project is not running on
+  the host, and the hostname answers **502**. The US-008 cache rule still
+  covers it (harmless). Decide: retire the record and drop it from the rule,
+  or rebuild dev on the project tunnel.
 
 ## Pending Cloudflare dashboard actions (API token lacks these scopes)
 
