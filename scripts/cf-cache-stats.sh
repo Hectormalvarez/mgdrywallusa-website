@@ -110,29 +110,33 @@ printf '%s\n' "$ROWS" | awk -F'\t' '
   function flush() {
     if (cur != "") {
       cacheable = hit + reval + expired + miss
-      printf "%-12s %6d %8d %8d %7d %6d %8d %10d   %6.1f%%\n", \
-        cur, hit, reval, expired, miss, none, other, cacheable, \
+      printf "%-12s %6d %8d %8d %7d %6d %7d %6d %10d   %6.1f%%\n", \
+        cur, hit, reval, expired, miss, none, stale, other, cacheable, \
         (cacheable > 0 ? (hit + reval) * 100 / cacheable : 0)
-      th += hit; tr += reval; te += expired; tm += miss; tn += none; to += other
+      th += hit; tr += reval; te += expired; tm += miss; tn += none
+      ts += stale; to += other
     }
   }
-  { if ($1 != cur) { flush(); cur = $1; hit = reval = expired = miss = none = other = 0 }
+  { if ($1 != cur) { flush(); cur = $1; hit = reval = expired = miss = none = stale = other = 0 }
     if ($2 == "hit") hit += $3
     else if ($2 == "revalidated") reval += $3
     else if ($2 == "expired") expired += $3
     else if ($2 == "miss") miss += $3
     else if ($2 == "none") none += $3
+    else if ($2 == "updating" || $2 == "stale") stale += $3
     else other += $3 }
   END { flush()
     cacheable = th + tr + te + tm
-    printf "%-12s %6d %8d %8d %7d %6d %8d %10d   %6.1f%%\n", "TOTAL", th, tr, te, tm, tn, to, cacheable, \
+    printf "%-12s %6d %8d %8d %7d %6d %7d %6d %10d   %6.1f%%\n", "TOTAL", th, tr, te, tm, tn, ts, to, cacheable, \
       (cacheable > 0 ? (th + tr) * 100 / cacheable : 0) }
-' | awk 'BEGIN { printf "%-12s %6s %8s %8s %7s %6s %8s %10s   %s\n", "DATE", "hit", "revalid", "expired", "miss", "none", "othr", "CACHEABLE", "SERVED-FROM-EDGE" } 1'
+' | awk 'BEGIN { printf "%-12s %6s %8s %8s %7s %6s %7s %6s %10s   %s\n", "DATE", "hit", "revalid", "expired", "miss", "none", "stale", "othr", "CACHEABLE", "SERVED-FROM-EDGE" } 1'
 
 echo "  served-from-edge = hit + revalidated. 'expired' means the object was in"
 echo "  cache but past its TTL, so the request waited for the origin — not a hit."
-echo "  'othr' = bypass + dynamic (not eligible). Watch for 'updating'/'stale':"
-echo "  those are the statuses that prove stale-while-revalidate is working."
+echo "  'stale' = updating + stale: the edge served the old copy while revalidating"
+echo "  in the background. Only the first request after a TTL expiry lands here,"
+echo "  so a quiet day shows 0 — an empty column is not evidence of a problem."
+echo "  'othr' = bypass + dynamic (not eligible for cache)."
 [ "$WINDOWS_FAILED" -eq 0 ] || echo "  ⚠ ${WINDOWS_FAILED} day-window(s) could not be fetched — totals cover the rest."
 
 # ── 2. Zone-wide daily rollup (context, NOT a site metric) ─────────
