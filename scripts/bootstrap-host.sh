@@ -67,12 +67,33 @@ else
 fi
 
 # ── Create application directory ──────────────────────────────────
-APP_DIR=/opt/mgdrywallusa-website
+# Where the repo checkout lives on the host. Override with APP_DIR for a
+# different project name; the deploy docs expect the checkout (or a symlink
+# to it) at this path — scripts/deploy.sh and the cron entries assume it.
+APP_DIR="${APP_DIR:-/opt/mgdrywallusa-website}"
 if [ ! -d "$APP_DIR" ]; then
   mkdir -p "$APP_DIR"
   ok "Created $APP_DIR"
 else
   ok "$APP_DIR already exists"
+fi
+
+# ── Watchdog cron (US-009) ─────────────────────────────────────────
+# Installs the 15-minute converge loop idempotently (swap-block pattern:
+# skip when already present). The US-011 cache-stats collector gets its own
+# cron line when that ships — deliberately NOT added here yet.
+if command -v crontab >/dev/null 2>&1; then
+  WATCHDOG_LINE="*/15 * * * * $APP_DIR/scripts/watchdog.sh >> /tmp/mgdrywall-watchdog.log 2>&1"
+  EXISTING_CRON=$(crontab -l 2>/dev/null || true)
+  if echo "$EXISTING_CRON" | grep -qF "scripts/watchdog.sh"; then
+    ok "Watchdog cron entry already installed."
+  else
+    echo "$EXISTING_CRON" | { cat; echo "$WATCHDOG_LINE"; } | crontab -
+    ok "Watchdog cron entry installed: $WATCHDOG_LINE"
+  fi
+else
+  warn "crontab not found — install the watchdog cron manually:"
+  warn "  */15 * * * * $APP_DIR/scripts/watchdog.sh >> /tmp/mgdrywall-watchdog.log 2>&1"
 fi
 
 ok "Host bootstrap complete."

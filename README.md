@@ -160,6 +160,23 @@ Never reuse one token across both files — a single tunnel with two connectors 
 | `make prod-verify` | Health check production endpoints (inside compose network) |
 | `make env-check` | Validate .env.prod before deploying |
 
+### Production Host Setup
+
+The deploy host expects two things that never reach git — both are installed
+idempotently by `scripts/bootstrap-host.sh` (run as root on a fresh host):
+
+1. **Checkout path:** the repo lives at (or is symlinked from) `/opt/mgdrywallusa-website`
+   (override with `APP_DIR=...`). `scripts/deploy.sh` and the cron entries assume this path.
+2. **Watchdog cron:** a `*/15` crontab line running `scripts/watchdog.sh`
+   (the US-009 converge loop; config drift is *reported*, never auto-applied — see US-012).
+   `bootstrap-host.sh` installs it via `crontab` and skips if already present.
+
+Manual equivalent, when `crontab` is unavailable:
+
+```
+*/15 * * * * /opt/mgdrywallusa-website/scripts/watchdog.sh >> /tmp/mgdrywall-watchdog.log 2>&1
+```
+
 ### Webhook Deployments
 
 Production deploys are triggered automatically via the GitHub Actions **Release** workflow:
