@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSiteUrl } from "@/lib/site-url";
 import { getSiteSettings } from "@/lib/settings.server";
+import { HERO_IMAGE_FALLBACK } from "@/lib/defaults";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: settings.tagline,
       images: [
         {
-          url: "/images/hero-drywall.png",
+          url: HERO_IMAGE_FALLBACK,
           width: 1200,
           height: 630,
           alt: `${settings.site_name} – Professional Drywall Services`,
@@ -44,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: settings.site_name,
       description: settings.tagline,
-      images: ["/images/hero-drywall.png"],
+      images: [HERO_IMAGE_FALLBACK],
     },
   };
 }

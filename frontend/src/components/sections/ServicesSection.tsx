@@ -1,3 +1,4 @@
+import { DEFAULT_SERVICES, SERVICES_HEADING_FALLBACK, SERVICES_SUBHEADING_FALLBACK } from "@/lib/defaults";
 import type { ServiceItem } from "@/types/home";
 
 interface ServicesSectionProps {
@@ -6,29 +7,6 @@ interface ServicesSectionProps {
   services?: ServiceItem[];
 }
 
-const DEFAULT_SERVICES: ServiceItem[] = [
-  {
-    name: "Level 5 Finishing",
-    slug: "level-5-finishing",
-    short_description:
-      "Flawless, glass-smooth surfaces for high-end residential interiors and architectural accent walls.",
-    icon: "paint",
-  },
-  {
-    name: "Drywall Repair & Patching",
-    slug: "drywall-repair-patching",
-    short_description:
-      "Seamless water damage repairs, stress crack fixes, and texture-matching for ceilings and walls.",
-    icon: "patch",
-  },
-  {
-    name: "ADU & Renovation Framing",
-    slug: "adu-renovation-framing",
-    short_description:
-      "Full-service drywall hanging and finishing for garage conversions, room additions, and basements.",
-    icon: "wall",
-  },
-];
 
 function ServiceIcon({ name }: { name: string }) {
   switch (name.toLowerCase()) {
@@ -61,8 +39,8 @@ function ServiceIcon({ name }: { name: string }) {
 }
 
 export default function ServicesSection({
-  heading = "Our Services",
-  subheading = "Specialized drywall installation, repair, and finishing solutions tailored to residential and commercial needs.",
+  heading = SERVICES_HEADING_FALLBACK,
+  subheading = SERVICES_SUBHEADING_FALLBACK,
   services,
 }: ServicesSectionProps) {
   const items = services && services.length > 0 ? services : DEFAULT_SERVICES;

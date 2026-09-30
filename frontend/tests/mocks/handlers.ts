@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import type { PortfolioApiResponse } from '@/lib/api';
+import { SITE_SETTINGS_FALLBACK } from '@/lib/defaults';
 
 const defaultPortfolioResponse: PortfolioApiResponse = {
   meta: { total_count: 2 },
@@ -68,35 +69,10 @@ export const handlers = [
       return HttpResponse.json({
         items: [
           {
-            site_name: 'MG Drywall USA',
-            tagline:
-              'Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.',
-            phone_number: '+1-555-DRYWALL',
-            contact_email: 'info@mgdrywallusa.com',
-            license_number: '',
-            logo_url: null,
-            favicon_url: null,
-            primary_color: '#0A3161',
-            accent_color: '#B31942',
-            banner_enabled: false,
-            banner_text: '',
-            banner_link: '#lead-form',
-            google_review_url: '',
-            yelp_url: '',
-            facebook_url: '',
-            instagram_url: '',
-            seo: {
-              address_locality: 'Austin',
-              address_region: 'TX',
-              postal_code: '78701',
-              country: 'US',
-              price_range: '$$',
-            },
-            navigation_items: [
-              { label: 'Services', href: '#services' },
-              { label: 'Our Work', href: '#portfolio' },
-              { label: 'Contact', href: '#lead-form' },
-            ],
+            ...SITE_SETTINGS_FALLBACK,
+            // navigation_items is the Wagtail response key (normalized to
+            // `nav` by the client); mocks mirror the raw API shape.
+            navigation_items: SITE_SETTINGS_FALLBACK.nav,
           },
         ],
       });

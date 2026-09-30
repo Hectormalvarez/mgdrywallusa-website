@@ -5,6 +5,7 @@
 import { cache } from "react";
 import type { HomePageData, WagtailPagesResponse } from "@/types/home";
 import type { SiteSettingsData } from "@/types/settings";
+import { SITE_SETTINGS_FALLBACK } from "@/lib/defaults";
 import type {
   PortfolioItem,
   PortfolioApiResponse,
@@ -119,38 +120,7 @@ export async function fetchPortfolioItemsServer(
 const WAGTAIL_API_BASE =
   process.env.WAGTAIL_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
-/** Fallback settings used when the backend is unreachable. */
-const SITE_SETTINGS_FALLBACK: SiteSettingsData = {
-  site_name: "MG Drywall USA",
-  tagline:
-    "Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
-  phone_number: "+1-555-DRYWALL",
-  contact_email: "info@mgdrywallusa.com",
-  license_number: "",
-  logo_url: null,
-  favicon_url: null,
-  primary_color: "#0A3161",
-  accent_color: "#B31942",
-  banner_enabled: false,
-  banner_text: "",
-  banner_link: "#lead-form",
-  google_review_url: "",
-  yelp_url: "",
-  facebook_url: "",
-  instagram_url: "",
-  seo: {
-    address_locality: "Austin",
-    address_region: "TX",
-    postal_code: "78701",
-    country: "US",
-    price_range: "$$",
-  },
-  nav: [
-    { label: "Services", href: "#services" },
-    { label: "Our Work", href: "#portfolio" },
-    { label: "Contact", href: "#lead-form" },
-  ],
-};
+/** Fallback settings come from `@/lib/defaults` (ADR-0004 single source). */
 
 /**
  * Fetch the site chrome (US-007) — identity, branding, banner, contact,

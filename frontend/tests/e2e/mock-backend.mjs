@@ -171,6 +171,9 @@ const HOME_PAGE = {
   lead_section_heading: "Request a Quote",
   lead_section_description: "Tell us about your project.",
   // Site chrome (US-007) — served from the homepage's api_fields.
+  // NOTE (ADR-0004): single source of truth for these fallbacks is
+  // frontend/src/lib/defaults.ts. This file is plain Node ESM and cannot
+  // import TS — keep the values in sync (tracked in docs/rebrand-checklist.md).
   site_name: "MG Drywall USA",
   tagline:
     "Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",

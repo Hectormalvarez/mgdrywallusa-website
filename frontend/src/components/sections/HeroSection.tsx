@@ -1,6 +1,7 @@
 import Image from "next/image";
 import DOMPurify from "isomorphic-dompurify";
 import { Button } from "@/components/ui/Button";
+import { HERO_FALLBACK, HERO_IMAGE_FALLBACK } from "@/lib/defaults";
 import type { HomePageData } from "@/types/home";
 
 /**
@@ -23,27 +24,7 @@ export type HeroSectionProps = Partial<
   >
 >;
 
-const FALLBACK: Required<
-  Pick<
-    HomePageData,
-    | "hero_kicker"
-    | "hero_heading"
-    | "hero_subheading"
-    | "cta_primary_label"
-    | "cta_primary_url"
-    | "cta_secondary_label"
-    | "cta_secondary_url"
-  >
-> = {
-  hero_kicker: "Trusted drywall professionals",
-  hero_heading: "MG Drywall USA",
-  hero_subheading:
-    "Professional drywall installation, repair, and finishing for residential and commercial projects.",
-  cta_primary_label: "Get a Free Quote",
-  cta_primary_url: "#lead-form",
-  cta_secondary_label: "View Our Work",
-  cta_secondary_url: "#portfolio",
-};
+const FALLBACK = HERO_FALLBACK;
 
 export default function HeroSection(props: HeroSectionProps) {
   const kicker = props.hero_kicker || FALLBACK.hero_kicker;
@@ -54,7 +35,7 @@ export default function HeroSection(props: HeroSectionProps) {
   const secondaryLabel = props.cta_secondary_label || FALLBACK.cta_secondary_label;
   const secondaryUrl = props.cta_secondary_url || FALLBACK.cta_secondary_url;
 
-  const heroImageSrc = props.hero_image?.url ?? "/images/hero-drywall.png";
+  const heroImageSrc = props.hero_image?.url ?? HERO_IMAGE_FALLBACK;
 
   const sanitizedSubheading = DOMPurify.sanitize(subheading, {
     ALLOWED_TAGS: ["br", "strong", "em", "a", "span"],
