@@ -1,21 +1,33 @@
-# Sprint — Flow Sign-off #1: Sitewide Conversion & Orientation
+# Sprint — Gate-Clear + Template-ization (ADR-0004)
 
-**Stories:** US-001 (Reach the business from anywhere) + US-003 (Never stuck off the main site) — shipped together, same surface.  
-**Pipeline:** PO ✓ · SDM ✓ · Architect ✓ · Human gate ✓ · Developer ✓ (8 commits) · QA ✓ (all ACs PASS) · Code Review ✓ APPROVED · CLOSED 2026-09-13
+**Stories:** US-005 (Owner can run the site — close the launch gate) + Template-ization Tier 2 (ADR-0004)  
+**Pipeline:** PO ✓ · SDM ✓ (amended F1–F6) · Architect ✓ (Adjust verdict, V1–V6 folded in) · Human gate ✓ (approved 2026-09-29: plan, rootbak deletion, bundle-push policy, walkthrough) · Developer — · QA —  
+**Push policy:** the 6 stray docs commits bundle with the first sprint push.
 
 ## Tasks
 
 | ID | Task | Story | Status |
 |---|---|---|---|
-| T0 | Sprint file + story status updates | both | ✓ |
-| T1 | Desktop header "Get a Free Quote" CTA (hidden < md; drawer owns mobile) | US-001 AC1–2 | ✓ |
-| T2 | Detail-page CTA band after the article (found + not-found variants) | US-001 AC1–3 | ✓ |
-| T2b | `scroll-mt-16` on `#lead-form` so anchor landings clear the sticky header | US-001 AC2 | ✓ |
-| T3 | Home link beside "← Back to Portfolio" (both detail variants) | US-003 AC1 | ✓ |
-| T4 | Global 404: portfolio path beside "Go back home" | US-003 AC2 | ✓ |
-| T5 | E2E additions + full gate (jest --coverage, tsc, eslint, playwright free ports) | both | ✓ |
+| T1 | US-005 prep: `make dev-up` + pre-flight + walkthrough script for the owner | US-005 | ☐ |
+| T2 | US-005 owner walkthrough (user, critical path): homepage draft→preview→publish; portfolio publish/unpublish; settings "Preview site" button | US-005 | ☐ |
+| T3 | Record results, close US-005, declare launch | US-005 | ☐ |
+| T4 | ADR-0004 + review-doc pointer (records additive-migration decision, squash rejected) | Tmpl | ☐ |
+| T5 | Frontend `src/lib/defaults.ts` extraction (api.ts fallback, HeroSection FALLBACK, ServicesSection DEFAULT_SERVICES); client-safe; mocks/handlers import from it | Tmpl Tier2 | ☐ |
+| T6 | Backend neutral defaults (home/models.py, site_settings/models.py, wagtail_hooks.py:65) + additive AlterField migrations only | Tmpl Tier2 | ☐ |
+| T7 | Env-driven seed (services, notification email, auto-responder demo string); no new dependencies | Tmpl Tier2 | ☐ |
+| T8 | `business_schema_type` cross-stack: HomePage SEO tab + APIField + TS type + `fields=` + layout.tsx; empty → current JSON-LD default; tests both sides | Tmpl Tier2 | ☐ |
+| T9 | Hero rename (`hero-drywall.png`→`hero.png`, 3 refs) + portfolio meta description; isolated commit; baselines only from CI artifact | Tmpl Tier2 | ☐ |
+| T10 | watchdog.sh DIR env-driven (default: script dir); bootstrap-host.sh idempotent watchdog cron; README docs; US-011 cron line deferred | Tmpl Tier1 | ☐ |
+| T11 | `docs/rebrand-checklist.md` + safe parameterizations (WAGTAIL_SITE_NAME, cf-script defaults, Makefile strings); checklist includes wagtail_hooks site_name | Tmpl Tier1 | ☐ |
+| T12 | Memory bank update + close-out | housekeeping | ☐ |
 
 ## QA gate
 
-- Verify every AC in both story files; scroll-margin behaviour eyeballed (banner-enabled case).
-- Then Code Review gate → close-out.
+- Every commit: relevant tests then `make check` before declaring done.
+- Model changes: `pytest --create-db` on first run after migrations land.
+- T9: baselines refreshed **only** from the CI artifact — never local regen.
+
+## Exit criteria
+
+US-005 closed → launch declared · Tier-2 extraction merged, all gates green · rebrand checklist exists · backlog reflects all deferrals · memory bank updated.
+
