@@ -15,7 +15,7 @@ import type { SiteSettingsData } from "@/types/settings";
  */
 
 /** Hero/OG image used when no CMS image is set. */
-export const HERO_IMAGE_FALLBACK = "/images/hero-drywall.png";
+export const HERO_IMAGE_FALLBACK = "/images/hero.png";
 
 /** Site chrome fallback used when the backend is unreachable (`fetchSiteSettings`). */
 export const SITE_SETTINGS_FALLBACK: SiteSettingsData = {

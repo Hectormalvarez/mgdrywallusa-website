@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import PortfolioSection from "@/components/sections/PortfolioSection";
 import { fetchPortfolioItemsServer } from "@/lib/api";
 import { e2eScenarioHeaders } from "@/lib/e2e-headers";
+import { getSiteSettings } from "@/lib/settings.server";
 
 export const dynamic = "force-dynamic";
 
@@ -9,11 +10,14 @@ const PORTFOLIO_API_URL =
   process.env.NEXT_PUBLIC_WAGTAIL_API_URL ??
   "/api/v1/pages/?type=portfolio.PortfolioItem&fields=*";
 
-export const metadata: Metadata = {
-  title: "Our Work",
-  description:
-    "Browse our portfolio of drywall projects — residential remodels, commercial buildouts, and ADU conversions.",
-};
+// Description comes from the CMS tagline (ADR-0004) — no hardcoded brand copy.
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return {
+    title: "Our Work",
+    description: settings.tagline,
+  };
+}
 
 export default async function PortfolioPage() {
   // Pre-fetch first page server-side so portfolio renders without client JS.

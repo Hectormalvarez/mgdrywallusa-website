@@ -84,7 +84,7 @@ describe('HeroSection', () => {
 
   it('falls back to default hero image when CMS image is absent', () => {
     const { container } = render(<HeroSection />);
-    const img = container.querySelector('img[src="/images/hero-drywall.png"]');
+    const img = container.querySelector('img[src="/images/hero.png"]');
     expect(img).toBeInTheDocument();
   });
 
