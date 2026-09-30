@@ -1,3 +1,5 @@
+import json
+import os
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -105,10 +107,17 @@ class Command(BaseCommand):
 
         SiteSettings.objects.create(
             site=default_site,
-            notification_emails="info@mgdrywallusa.com",
-            auto_responder_subject="Thank you for contacting MG Drywall USA",
+            notification_emails=os.getenv("SEED_NOTIFICATION_EMAILS", ""),
+            auto_responder_subject=os.getenv("SEED_AUTO_RESPONDER_SUBJECT", "Thank you for contacting us"),
         )
         self.stdout.write(self.style.SUCCESS("Created SiteSettings instance."))
+        if not os.getenv("SEED_NOTIFICATION_EMAILS"):
+            self.stdout.write(
+                self.style.WARNING(
+                    "No SEED_NOTIFICATION_EMAILS set — lead alerts will go nowhere until "
+                    "the owner sets notification emails in the admin."
+                )
+            )
 
     def _seed_services(self):
         home = HomePage.get_home_for_site()
@@ -117,26 +126,16 @@ class Command(BaseCommand):
             return
 
         if home.featured_services.count() == 0:
-            service_data = [
-                (
-                    "Level 5 Finishing",
-                    "level-5-finishing",
-                    "Flawless, glass-smooth surfaces for high-end residential interiors and architectural accent walls.",
-                    "paint",
-                ),
-                (
-                    "Drywall Repair & Patching",
-                    "drywall-repair-patching",
-                    "Seamless water damage repairs, stress crack fixes, and texture-matching for ceilings and walls.",
-                    "patch",
-                ),
-                (
-                    "ADU & Renovation Framing",
-                    "adu-renovation-framing",
-                    "Full-service drywall hanging and finishing for garage conversions, room additions, and basements.",
-                    "wall",
-                ),
-            ]
+            service_data = self._service_data()
+            demo = os.getenv("SEED_SERVICES_JSON") is None
+            if demo:
+                self.stdout.write(
+                    self.style.WARNING(
+                        "Seeding DEMO services (replace-me content). Set SEED_SERVICES_JSON "
+                        '— e.g. \'[{"name": "...", "slug": "...", "short_description": "...", "icon": "wall"}]\' '
+                        "— or edit them in the admin."
+                    )
+                )
             for order, (name, slug, desc, icon) in enumerate(service_data):
                 service, _ = Service.objects.get_or_create(
                     slug=slug,
@@ -155,3 +154,51 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Seeded {len(service_data)} default services."))
         else:
             self.stdout.write("Featured services already exist -- skipping.")
+
+    def _service_data(self):
+        """Service seed rows, from SEED_SERVICES_JSON when provided.
+
+        The env value is a JSON array of {name, slug, short_description, icon}.
+        Malformed JSON falls back to the labeled demo data rather than failing
+        the seed (idempotent bootstrap must never abort a container start).
+        """
+        raw = os.getenv("SEED_SERVICES_JSON")
+        if raw:
+            try:
+                parsed = json.loads(raw)
+                rows = [
+                    (
+                        str(item["name"]),
+                        str(item["slug"]),
+                        str(item.get("short_description", "")),
+                        str(item.get("icon", "wall")),
+                    )
+                    for item in parsed
+                ]
+                if rows:
+                    return rows
+                self.stdout.write(self.style.WARNING("SEED_SERVICES_JSON parsed to an empty list -- using demo data."))
+            except (json.JSONDecodeError, KeyError, TypeError) as exc:
+                self.stdout.write(self.style.WARNING(f"SEED_SERVICES_JSON invalid ({exc}) -- using demo data."))
+
+        # Labeled demo content (ADR-0004) — clearly generic drywall examples.
+        return [
+            (
+                "Level 5 Finishing",
+                "level-5-finishing",
+                "Flawless, glass-smooth surfaces for high-end residential interiors and architectural accent walls.",
+                "paint",
+            ),
+            (
+                "Drywall Repair & Patching",
+                "drywall-repair-patching",
+                "Seamless water damage repairs, stress crack fixes, and texture-matching for ceilings and walls.",
+                "patch",
+            ),
+            (
+                "ADU & Renovation Framing",
+                "adu-renovation-framing",
+                "Full-service drywall hanging and finishing for garage conversions, room additions, and basements.",
+                "wall",
+            ),
+        ]
