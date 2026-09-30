@@ -15,6 +15,15 @@ const inter = Inter({
 
 const siteUrl = getSiteUrl();
 
+/** Comma-separated CMS value → Schema.org type list; empty → generic default. */
+function parseSchemaTypes(value: string | undefined): string[] {
+  const types = (value ?? "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  return types.length > 0 ? types : ["DrywallContractor", "HomeAndConstructionBusiness"];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
   return {
@@ -62,9 +71,12 @@ export default async function RootLayout({
 }) {
   const settings = await getSiteSettings();
 
+  const schemaTypes = parseSchemaTypes(settings.seo.business_schema_type);
+
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": ["DrywallContractor", "HomeAndConstructionBusiness"],
+    // CMS-editable Schema.org types (ADR-0004); empty → generic default pair.
+    "@type": schemaTypes,
     name: settings.site_name,
     telephone: settings.phone_number,
     email: settings.contact_email,

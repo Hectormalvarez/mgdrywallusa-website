@@ -33,6 +33,7 @@ const mockSettings: SiteSettingsData = {
     postal_code: '78701',
     country: 'US',
     price_range: '$$',
+    business_schema_type: '',
   },
   nav: [
     { label: 'Services', href: '#services' },

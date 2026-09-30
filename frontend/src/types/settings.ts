@@ -12,6 +12,8 @@ export interface SiteSeoSettings {
   postal_code: string;
   country: string;
   price_range: string;
+  /** Comma-separated Schema.org types; empty → generic default pair (layout.tsx). */
+  business_schema_type: string;
 }
 
 export interface NavItem {

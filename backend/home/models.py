@@ -239,6 +239,16 @@ class HomePage(HeadlessPreviewMixin, Page):
     postal_code = models.CharField(max_length=20, default="", blank=True)
     country = models.CharField(max_length=10, default="US", blank=True)
     price_range = models.CharField(max_length=10, default="$$", blank=True)
+    business_schema_type = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=(
+            "Comma-separated Schema.org types for the JSON-LD block, "
+            "e.g. 'Electrician, HomeAndConstructionBusiness'. "
+            "Leave empty for the generic default pair."
+        ),
+    )
 
     content_panels = Page.content_panels + [
         MultiFieldPanel(
@@ -325,6 +335,7 @@ class HomePage(HeadlessPreviewMixin, Page):
                 FieldPanel("postal_code"),
                 FieldPanel("country"),
                 FieldPanel("price_range"),
+                FieldPanel("business_schema_type"),
             ],
             heading="Local SEO & Schema.org",
         ),
@@ -406,6 +417,7 @@ class HomePage(HeadlessPreviewMixin, Page):
             "postal_code": self.postal_code,
             "country": self.country,
             "price_range": self.price_range,
+            "business_schema_type": self.business_schema_type,
         }
 
     # ── Site integration helpers ─────────────────────────────────────────

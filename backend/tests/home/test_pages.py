@@ -87,6 +87,9 @@ def test_preview_serializes_api_fields(home_page, test_image):
     assert "height" in data["hero_image"]
     assert "alt" in data["hero_image"]
 
+    # Schema.org type reaches the frontend through the nested seo object
+    assert data["seo"]["business_schema_type"] == ""
+
     # Featured services list shape
     assert isinstance(data["featured_services"], list)
     assert len(data["featured_services"]) == 1
