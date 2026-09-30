@@ -69,17 +69,17 @@ class HomePage(HeadlessPreviewMixin, Page):
     hero_kicker = models.CharField(
         max_length=255,
         blank=True,
-        default="Trusted drywall professionals",
-        help_text="Short label above the headline, e.g. 'Trusted drywall professionals'",
+        default="Trusted local professionals",
+        help_text="Short label above the headline, e.g. 'Trusted local professionals'",
     )
     hero_heading = models.CharField(
         max_length=255,
-        default="MG Drywall USA",
+        default="Your Business Name",
         help_text="Main headline displayed prominently (keep under 50 characters)",
     )
     hero_subheading = models.TextField(
         blank=True,
-        default="Professional drywall installation, repair, and finishing for residential and commercial projects.",
+        default="Professional services delivered with care and craftsmanship.",
         help_text="Supporting text below the headline (1-2 sentences)",
     )
     hero_image = models.ForeignKey(
@@ -119,7 +119,7 @@ class HomePage(HeadlessPreviewMixin, Page):
     )
     services_subheading = models.TextField(
         blank=True,
-        default="Specialized drywall installation, repair, and finishing solutions tailored to residential and commercial needs.",
+        default="Specialized services tailored to residential and commercial needs.",
         help_text="Subtitle instruction text below the services header",
     )
 
@@ -155,21 +155,23 @@ class HomePage(HeadlessPreviewMixin, Page):
     # General & identity
     site_name = models.CharField(
         max_length=255,
-        default="MG Drywall USA",
+        default="Your Business Name",
         help_text="Business name used across headers, footers, and SEO metadata",
     )
     tagline = models.TextField(
         blank=True,
-        default="Professional drywall installation, repair, and finishing for residential and commercial projects across the nation.",
+        default="",
         help_text="Primary business tagline displayed in the footer",
     )
     phone_number = models.CharField(
         max_length=50,
-        default="+1-555-DRYWALL",
+        blank=True,
+        default="",
         help_text="Primary public contact phone number",
     )
     contact_email = models.EmailField(
-        default="info@mgdrywallusa.com",
+        blank=True,
+        default="",
         help_text="Primary public contact email address",
     )
     license_number = models.CharField(
@@ -232,9 +234,9 @@ class HomePage(HeadlessPreviewMixin, Page):
     instagram_url = models.URLField(blank=True, default="")
 
     # Local SEO & Schema.org defaults
-    address_locality = models.CharField(max_length=100, default="Austin", blank=True)
-    address_region = models.CharField(max_length=100, default="TX", blank=True)
-    postal_code = models.CharField(max_length=20, default="78701", blank=True)
+    address_locality = models.CharField(max_length=100, default="", blank=True)
+    address_region = models.CharField(max_length=100, default="", blank=True)
+    postal_code = models.CharField(max_length=20, default="", blank=True)
     country = models.CharField(max_length=10, default="US", blank=True)
     price_range = models.CharField(max_length=10, default="$$", blank=True)
 

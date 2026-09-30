@@ -17,12 +17,13 @@ class SiteSettings(BaseSiteSetting):
     # ── Lead Alerts & Auto-Responder ───────────────────────────────────
     notification_emails = models.CharField(
         max_length=500,
-        default="info@mgdrywallusa.com",
+        blank=True,
+        default="",
         help_text="Comma-separated emails to receive incoming quote requests",
     )
     auto_responder_subject = models.CharField(
         max_length=255,
-        default="Thank you for contacting MG Drywall USA",
+        default="Thank you for contacting us",
         help_text="Subject line for homeowner confirmation email",
     )
     auto_responder_message = models.TextField(
@@ -30,7 +31,7 @@ class SiteSettings(BaseSiteSetting):
             "Hi {name},\n\n"
             "Thank you for requesting a quote for your {project_tier} project. "
             "We have received your request and will follow up within one business day.\n\n"
-            "— MG Drywall USA"
+            "— Your Business Name"
         ),
         help_text="Email body sent to homeowners. Placeholders: {name}, {project_tier}, {phone}",
     )

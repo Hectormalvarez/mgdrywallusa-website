@@ -62,7 +62,7 @@ def add_operations_panel(request, panels):
     from home.models import HomePage
 
     primary = "#0A3161"
-    site_name = "MG Drywall USA"
+    site_name = "Your Business Name"
     home = HomePage.get_home_for_site()
     if home is not None:
         primary = getattr(home, "primary_color", primary) or primary
