@@ -56,7 +56,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-HOSTNAME="${CF_STATS_HOST:-mgdrywallusa.taylormadetech.net}"
+# Brand-free by default: the target hostname must come from the environment
+# (or .env) — a template clone has a different domain, so no hardcoded default.
+HOSTNAME="${CF_STATS_HOST:-}"
+[ -n "$HOSTNAME" ] || { echo "✗ CF_STATS_HOST not set (env or .env) — the site hostname to report on" >&2; exit 1; }
 MAX_DAYS=31
 
 DAYS=30

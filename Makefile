@@ -33,7 +33,7 @@ dev-seed:
 
 # ─── Quick health check for dev stack ──
 dev-health:
-	@DEV_URL="$${DEV_URL:-https://mgdrywallusa-dev.taylormadetech.net}"; \
+	@DEV_URL="$${DEV_URL:-http://localhost:8101}"; \
 	echo "\033[0;36m▶ Checking dev stack on $$DEV_URL...\033[0m"; \
 	curl -sf "$$DEV_URL/" > /dev/null && echo "\033[0;32m✓ Frontend: OK\033[0m" || echo "\033[0;31m✗ Frontend: FAIL\033[0m"; \
 	curl -sf "$$DEV_URL/api/v1/settings/" > /dev/null && echo "\033[0;32m✓ Backend API: OK\033[0m" || echo "\033[0;31m✗ Backend API: FAIL\033[0m"

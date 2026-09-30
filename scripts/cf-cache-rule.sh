@@ -41,7 +41,7 @@ TOKEN="${CLOUDFLARE_API_TOKEN:-}"
 [ -n "$ZONE_ID" ] || { echo "✗ CLOUDFLARE_ZONE_ID not set (env or .env)" >&2; exit 1; }
 [ -n "$TOKEN" ] || { echo "✗ CLOUDFLARE_API_TOKEN not set (env or .env)" >&2; exit 1; }
 
-RULE_DESC="mgdrywall-edge-caching (US-008, managed by cf-cache-rule.sh)"
+RULE_DESC="${RULE_DESC:-edge-caching (US-008, managed by cf-cache-rule.sh)}"
 API="https://api.cloudflare.com/client/v4"
 AUTH="Authorization: Bearer ${TOKEN}"
 CT="Content-Type: application/json"
