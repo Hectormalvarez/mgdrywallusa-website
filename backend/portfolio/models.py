@@ -21,6 +21,12 @@ class PortfolioItemTag(TaggedItemBase):
 class PortfolioPage(Page):
     intro = RichTextField(blank=True)
 
+    # Headless site: there are no Django page templates to render (US-005
+    # finding — the classic Preview button 500s with TemplateDoesNotExist).
+    # Visitors see portfolio changes live after publish; only HomePage keeps
+    # a working preview (via HeadlessPreviewMixin → Next.js draft mode).
+    preview_modes: list[str] = []
+
     content_panels = Page.content_panels + [
         FieldPanel("intro"),
     ]
@@ -33,6 +39,9 @@ class PortfolioPage(Page):
 
 
 class PortfolioItem(Page):
+    # See PortfolioPage — headless site, no Django-side preview.
+    preview_modes: list[str] = []
+
     SCOPE_CHOICES = [
         ("residential", "Residential"),
         ("commercial", "Commercial"),
