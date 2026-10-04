@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('home', '0013_alter_homepage_address_locality_and_more'),
+        ("home", "0013_alter_homepage_address_locality_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='homepage',
-            name='business_schema_type',
-            field=models.CharField(blank=True, default='', help_text="Comma-separated Schema.org types for the JSON-LD block, e.g. 'Electrician, HomeAndConstructionBusiness'. Leave empty for the generic default pair.", max_length=255),
+            model_name="homepage",
+            name="business_schema_type",
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="Comma-separated Schema.org types for the JSON-LD block, e.g. 'Electrician, HomeAndConstructionBusiness'. Leave empty for the generic default pair.",
+                max_length=255,
+            ),
         ),
     ]
