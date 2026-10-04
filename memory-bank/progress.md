@@ -35,7 +35,7 @@
 
 ## Known issues
 
-- **Visual baselines stale post-hero-rename** — refresh ONLY from the CI artifact (`playwright-report` → `homepage-actual.png` per project → copy into `__screenshots__/visual/homepage.spec.ts/homepage/`). Never regenerate locally (sandbox renders an empty portfolio section).
+- ~~Visual baselines stale post-hero-rename~~ — resolved: the rename was a `git mv` of the identical file (pixel-identical render); CI visual green on `2edbd1a`. Refresh-from-artifact procedure stands for future real visual changes.
 - **`FRONTEND_URL` in the host shell** breaks two jest preview-route tests (env correctly wins over Host header) — run `env -u FRONTEND_URL npm test`.
 - **WebKit broken in sandbox** — environmental; passes in CI.
 - **e2e needs free ports** — `MOCK_PORT=8010 HOST_FRONTEND_PORT=3100`.

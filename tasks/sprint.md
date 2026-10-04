@@ -17,7 +17,7 @@
 | T6 | Backend neutral defaults (home/models.py, site_settings/models.py, wagtail_hooks.py:65) + additive AlterField migrations only | Tmpl Tier2 | ✓ `3210980` |
 | T7 | Env-driven seed (services, notification email, auto-responder demo string); no new dependencies | Tmpl Tier2 | ✓ `cb878d0` |
 | T8 | `business_schema_type` cross-stack: HomePage SEO tab + APIField + TS type + `fields=` + layout.tsx; empty → current JSON-LD default; tests both sides | Tmpl Tier2 | ✓ `74c33b4` |
-| T9 | Hero rename (`hero-drywall.png`→`hero.png`, 3 refs) + portfolio meta description; isolated commit; baselines only from CI artifact | Tmpl Tier2 | ✓ `0f6270f` — baselines refresh from the wrap-up push's CI artifact |
+| T9 | Hero rename (`hero-drywall.png`→`hero.png`, 3 refs) + portfolio meta description; isolated commit; baselines only from CI artifact | Tmpl Tier2 | ✓ `0f6270f` — pure `git mv`, pixel-identical: baselines remain valid, no refresh needed (CI visual green on `2edbd1a`) |
 | T10 | watchdog.sh DIR env-driven (default: script dir); bootstrap-host.sh idempotent watchdog cron; README docs; US-011 cron line deferred | Tmpl Tier1 | ✓ `d63a55b` |
 | T11 | `docs/rebrand-checklist.md` + safe parameterizations (WAGTAIL_SITE_NAME, cf-script defaults, Makefile strings); checklist includes wagtail_hooks site_name | Tmpl Tier1 | ✓ `b02d090` |
 | T12 | Memory bank update + close-out | housekeeping | ✓ 2026-10-04 |
