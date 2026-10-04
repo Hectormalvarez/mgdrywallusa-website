@@ -1,51 +1,57 @@
 # Progress — MGDrywall USA
 
-*Status: visitor flow MVP-complete pending launch gate (US-002 + US-004 + US-005, see `docs/reviews/2026-09-20-launch-status-and-reproducibility.md`); `main` == `origin/main` (fully pushed, live); template-ization sprint planned post-launch, before custom features.*
+*Status: visitor flow + admin + CD + edge caching all shipped and live; template-ization (ADR-0004) complete 2026-10-01. **Launch NOT declared** — gated solely on the US-005 owner walkthrough (backlog #1, script included). Sprint history: `tasks/sprint*.md`.*
 
 ## What works (verified)
 
 ### Visitor
 - Home: hero (CMS copy), services grid, portfolio section with two multi-select filters + Clear, lead form.
-- Navigation: logo → home from anywhere; `#section` anchors resolve to `/#section` off the home page (Header + Footer); no dead ends on listing page.
-- `/portfolio`: filter toolbar (same component), back-to-home link, project cards → detail.
-- Lightbox: obvious enlarged controls, keyboard nav, focus trap/restore, per-photo context (project link, scope, finish tags, captions).
-- Project detail page: full project info, back to portfolio.
+- Navigation: logo → home from anywhere; `#section` anchors resolve off-home; no dead ends (US-001/US-003).
+- `/portfolio`: filter toolbar, back-to-home link, project cards → detail; global 404 escape hatches.
+- Lightbox: keyboard nav, focus trap/restore, per-photo context.
 - Lead form API: validated, photo attachments, honeypot, throttled; `{"errors": {field: [messages]}}` contract.
+- Phone number sitewide (US-002): header `tel:` link, drawer, footer; empty-number guards.
 
 ### Admin (owner)
-- Operations Hub: Leads queue, Portfolio management, Site Settings, Edit Home — sidebar "Edit Home" links to the real edit page (was a dead `#` link without a HomePage; now falls back to "Create Home" and never dead).
-- Fresh-DB bootstrap: post_migrate hook + `seed` guarantee a HomePage site root with services seeded (local DB fixed: Home → Portfolio → 6 items).
+- Operations Hub: Leads queue, Portfolio management, Edit Home (chrome on the homepage per ADR-0001), Site Settings (operational only).
+- Homepage draft preview via Next.js draft mode; portfolio pages intentionally have no Django-side preview (`preview_modes=[]`, `14d8575`).
+- Fresh-DB bootstrap: post_migrate hook + env-driven `seed` (HomePage root, demo-labeled services).
 
-### Tests
-- Backend 120 passed; frontend ~230 passed (coverage 96.73/86.73/95.03/98.67 vs thresholds 85/80/80/85); e2e Desktop Chrome green (see known issues for WebKit).
+### Platform
+- Edge caching per ADR-0002 (max-age=0 + SWR, TTL pinned 300s, purge-on-publish); stale-serving proven live.
+- CD per US-010/US-012: Access-protected SSH over the project tunnel, watchdog start-only convergence, drift warnings.
+- Template-ization per ADR-0004: brand copy out of code (one defaults module + neutral backend defaults + env-driven seed), rebrand checklist (`docs/rebrand-checklist.md`).
 
-## What's left (priority order — see `activeContext.md`)
+### Tests (as of 2026-10-01)
+- Backend 131 pytest passed (container); frontend 259 jest, tsc/eslint clean; e2e 128/128 in CI (Mobile Safari: CI only).
 
-1. ~~**US-001 (+US-003)** sitewide quote/call CTA + detail-page home links~~ — **DONE 2026-09-13** (pipeline closed; QA all-ACs PASS; review APPROVED).
-2. **US-002** sitewide phone visibility (SiteSettings-driven).
-3. **US-006** settings live preview — **drafted** from the owner (see `docs/stories/US-006-…`); pages preview via Draft Mode, settings saves are instantly live with no preview.
-4. **US-004** human mobile walkthrough.
-5. **US-005** owner edit→preview→publish walkthrough (covers settings preview via US-006).
-6. Regenerate visual baseline against real backend data.
-7. ~~Correct README's stale "single-page" intent~~ — **done 2026-09-13** (`119ae86`).
+## What's left (priority order — see `tasks/backlog.md`)
 
-## Known issues (pre-existing / environmental)
+1. **US-005 owner walkthrough** (backlog #1, script included) → then declare launch.
+2. **Direction decision placeholder** (backlog #0) — owner to restate.
+3. **US-011** cache analytics implementation (backlog #2, design locked).
+4. Tier-1 ops parameterization sprint (backlog #3); Tier-3 judgment calls (backlog #4).
+5. Visual baselines: refresh from the wrap-up push's CI artifact (hero rename landed).
 
-- **Visual baseline stale** — `tests/e2e/visual/` homepage screenshot predates filter/lightbox changes; regenerate with `--update-snapshots` once portfolio data renders through real wiring (never against the broken mock path).
-- **Portfolio e2e requires free ports** — Playwright reuses whatever listens on configured ports; with unrelated server on 8000, use `MOCK_PORT=8010 HOST_FRONTEND_PORT=3100`.
-- **WebKit broken in sandbox** — all Mobile Safari e2e errors are environmental ("WebKit encountered an internal error").
-- **`npm run lint` noise** — ~243 errors all from stale `frontend/.next.rootbak/`.
-- ~~**54 commits unpushed**~~ — resolved: `main` == `origin/main` as of 2026-09-20; all pushed, live.
-- ~~`mock-backend.mjs` uses *global* scenario state~~ — **fixed 2026-09-14**: per-request `X-E2E-Scenario` header (see activeContext, e2e isolation sprint); CI runs 4 parallel workers.
+## Known issues
+
+- **Visual baselines stale post-hero-rename** — refresh ONLY from the CI artifact (`playwright-report` → `homepage-actual.png` per project → copy into `__screenshots__/visual/homepage.spec.ts/homepage/`). Never regenerate locally (sandbox renders an empty portfolio section).
+- **`FRONTEND_URL` in the host shell** breaks two jest preview-route tests (env correctly wins over Host header) — run `env -u FRONTEND_URL npm test`.
+- **WebKit broken in sandbox** — environmental; passes in CI.
+- **e2e needs free ports** — `MOCK_PORT=8010 HOST_FRONTEND_PORT=3100`.
+- ~~`npm run lint` noise from `.next.rootbak`~~ — resolved 2026-10-01 (artifact deleted via the frontend container; lint clean).
 
 ## Milestones
 
 | Date | Milestone |
 |---|---|
-| 2026-09-12 | Visitor nav + portfolio filter + lightbox UX overhaul (micro-committed, fully gated) |
-| 2026-09-13 | Admin "Edit Home" root cause fixed; local DB parity with production |
-| 2026-09-13 | PO flow scrutiny; memory bank initialized; US-001…US-005 drafted |
-| 2026-09-13 | Feature pipeline for US-001+US-003: SDM + Architect gates approved; US-006 (settings live preview) drafted |
-
-| 2026-09-13 | US-001+US-003 shipped & pipeline closed: sitewide quote CTA, detail CTA band, 404 escape hatches |
-| 2026-09-20 | Status review published (`docs/reviews/2026-09-20-launch-status-and-reproducibility.md`): launch gate defined (US-002/004/005); reproducibility audit → template-ization sprint planned post-launch |
+| 2026-09-12 | Visitor nav + portfolio filter + lightbox UX overhaul |
+| 2026-09-13 | US-001+US-003 shipped & closed; memory bank initialized; US-001…US-006 drafted; US-002 shipped |
+| 2026-09-14 | US-006/US-007 shipped (chrome → homepage, ADR-0001); US-004 owner on-device pass; e2e isolation sprint |
+| 2026-09-15 | US-008 edge caching live (ADR-0002) |
+| 2026-09-16/21 | US-010 Access-SSH deploys; US-012 project-tunnel route enclosure |
+| 2026-09-20 | Status review: launch gate = US-002/004/005; reproducibility audit → template-ization planned |
+| 2026-09-26/27 | Cache analytics review; stale-serving fixed; US-011 design locked (ADR-0003) |
+| 2026-09-29 | Gate-Clear + Template-ization sprint opened (ADR-0004; SDM/Architect gates; human approval) |
+| 2026-10-01 | Template-ization executed (T4–T11, 8 commits); portfolio preview 500 found via walkthrough and fixed |
+| 2026-10-04 | Sprint CLOSED-WITH-DEFERRALS: walkthrough + launch deferred to backlog; memory bank pruned |
