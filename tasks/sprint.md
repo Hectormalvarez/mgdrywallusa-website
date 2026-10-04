@@ -3,15 +3,15 @@
 **Stories:** US-005 (Owner can run the site — close the launch gate) + Template-ization Tier 2 (ADR-0004)  
 **Pipeline:** PO ✓ · SDM ✓ (amended F1–F6) · Architect ✓ (Adjust verdict, V1–V6 folded in) · Human gate ✓ (approved 2026-09-29: plan, rootbak deletion, bundle-push policy, walkthrough) · Developer ✓ · QA ✓ (gates per commit) · **CLOSED-WITH-DEFERRALS 2026-10-04**  
 **Push policy:** the 6 stray docs commits bundle with the first sprint push.  
-**Status:** Template-ization complete. **Launch NOT declared** — US-005's owner walkthrough was cut from the sprint by the owner (2026-10-04) and moved to backlog #1 with the preserved script.
+**Status:** Template-ization complete. **US-005 owner walkthrough PASSED 2026-10-04 (steps ①②③) → US-005 closed → LAUNCH DECLARED 2026-10-04.** Sprint fully closed, no deferrals remaining on the gate.
 
 ## Tasks
 
 | ID | Task | Story | Status |
 |---|---|---|---|
 | T1 | US-005 prep: `make dev-up` + pre-flight + walkthrough script for the owner | US-005 | ✓ |
-| T2 | US-005 owner walkthrough (user, critical path): homepage draft→preview→publish; portfolio publish/unpublish; tagline preview (chrome moved to the homepage in US-007) | US-005 | ✗ cut by owner 2026-10-04 → backlog #1 |
-| T3 | Record results, close US-005, declare launch | US-005 | ✗ amended: US-005 stays In Progress; launch NOT declared |
+| T2 | US-005 owner walkthrough (user, critical path): homepage draft→preview→publish; portfolio publish/unpublish; tagline preview (chrome moved to the homepage in US-007) | US-005 | ✓ **passed 2026-10-04** (run from backlog #1 script; portfolio Preview button intentionally absent per `preview_modes=[]`) |
+| T3 | Record results, close US-005, declare launch | US-005 | ✓ **2026-10-04 — LAUNCH DECLARED** |
 | T4 | ADR-0004 + review-doc pointer (records additive-migration decision, squash rejected) | Tmpl | ✓ `2d656b2` |
 | T5 | Frontend `src/lib/defaults.ts` extraction (api.ts fallback, HeroSection FALLBACK, ServicesSection DEFAULT_SERVICES); client-safe; mocks/handlers import from it | Tmpl Tier2 | ✓ `caeaf3e` |
 | T6 | Backend neutral defaults (home/models.py, site_settings/models.py, wagtail_hooks.py:65) + additive AlterField migrations only | Tmpl Tier2 | ✓ `3210980` |
@@ -35,5 +35,5 @@
 
 ## Exit criteria (final)
 
-Template-ization merged, all gates green ✓ · rebrand checklist exists ✓ · backlog reflects all deferrals (incl. owner walkthrough + direction placeholder) ✓ · memory bank updated ✓ · ~~launch declared~~ → **deferred with US-005 to backlog #1**.
+Template-ization merged, all gates green ✓ · rebrand checklist exists ✓ · backlog reflects all deferrals ✓ · memory bank updated ✓ · **owner walkthrough passed + LAUNCH DECLARED 2026-10-04 ✓ — sprint fully closed.**
 

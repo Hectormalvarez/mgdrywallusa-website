@@ -18,7 +18,7 @@
 1. From any page, the quote form or phone is reachable in one visible click.
 2. Any project photo tells you what it shows and links to its project in one click. *(done)*
 3. Any page can return home without the browser back button. *(done except project detail + 404)*
-4. The owner can edit and publish content and see it live without a developer. *(admin side fixed 2026-09-13; end-to-end owner walkthrough pending — US-005)*
+4. The owner can edit and publish content and see it live without a developer. *(US-005 closed — owner walkthrough passed 2026-10-04, LAUNCH DECLARED)*
 
 ## Content-owner journey
 

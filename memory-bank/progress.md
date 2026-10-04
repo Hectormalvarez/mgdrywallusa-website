@@ -1,6 +1,6 @@
 # Progress — MGDrywall USA
 
-*Status: visitor flow + admin + CD + edge caching all shipped and live; template-ization (ADR-0004) complete 2026-10-01. **Launch NOT declared** — gated solely on the US-005 owner walkthrough (backlog #1, script included). Sprint history: `tasks/sprint*.md`.*
+*Status: **MVP SHIPPED — LAUNCH DECLARED 2026-10-04** (US-005 owner walkthrough passed ①②③). Visitor flow + admin + CD + edge caching + template-ization all shipped and live. Sprint history: `tasks/sprint*.md`.*
 
 ## What works (verified)
 
@@ -25,13 +25,12 @@
 ### Tests (as of 2026-10-01)
 - Backend 131 pytest passed (container); frontend 259 jest, tsc/eslint clean; e2e 128/128 in CI (Mobile Safari: CI only).
 
-## What's left (priority order — see `tasks/backlog.md`)
+## What's left (priority order — see `tasks/backlog.md`; launch gate cleared 2026-10-04, nothing blocks launch)
 
-1. **US-005 owner walkthrough** (backlog #1, script included) → then declare launch.
-2. **Direction decision placeholder** (backlog #0) — owner to restate.
-3. **US-011** cache analytics implementation (backlog #2, design locked).
-4. Tier-1 ops parameterization sprint (backlog #3); Tier-3 judgment calls (backlog #4).
-5. Visual baselines: refresh from the wrap-up push's CI artifact (hero rename landed).
+1. **US-011** cache analytics implementation (backlog #2, design locked) — next sprint.
+2. Tier-1 ops parameterization sprint (backlog #3); Tier-3 judgment calls (backlog #4).
+3. Post-launch caching items (backlog #6) — now unlocked.
+4. Remaining functionality questions → new backlog rows per owner direction.
 
 ## Known issues
 
@@ -55,3 +54,4 @@
 | 2026-09-29 | Gate-Clear + Template-ization sprint opened (ADR-0004; SDM/Architect gates; human approval) |
 | 2026-10-01 | Template-ization executed (T4–T11, 8 commits); portfolio preview 500 found via walkthrough and fixed |
 | 2026-10-04 | Sprint CLOSED-WITH-DEFERRALS: walkthrough + launch deferred to backlog; memory bank pruned |
+| 2026-10-04 | **US-005 walkthrough passed ①②③ → US-005 Done → LAUNCH DECLARED; MVP closed.** Stale local branches deleted; backlog rows #0/#1 resolved |

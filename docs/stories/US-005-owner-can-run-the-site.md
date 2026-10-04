@@ -1,6 +1,6 @@
 # US-005 — Owner can run the site without a developer
 
-**Status:** In Progress — backend pre-verification passed (publish/unpublish/invalid-save verified programmatically 2026-09-13); owner walkthrough pending · **Priority:** 4 · **Depends on:** —
+**Status:** ✅ Done — backend pre-verification passed (publish/unpublish/invalid-save verified programmatically 2026-09-13); **owner walkthrough passed 2026-10-04** (steps ①②③ of backlog row #1 script cleared at `localhost:8101`; portfolio Preview button intentionally absent per `preview_modes=[]`, `14d8575`). **LAUNCH DECLARED 2026-10-04.**
 
 ## Description
 
